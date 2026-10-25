@@ -1,0 +1,24 @@
+<header class="site-header">
+  <nav class="site-nav" aria-label="Primary navigation">
+    <a class="brand" href="{% url 'home' %}" aria-label="NULDL home">NULDL</a>
+    <ul class="nav-list">
+      <li>
+        <a class="nav-link" href="{% url 'home' %}"{% if request.resolver_match.url_name == "home" %} aria-current="page"{% endif %}>Home</a>
+      </li>
+    </ul>
+    <ul class="nav-actions">
+      {% if user.is_authenticated %}
+        <li>
+          <a class="nav-link" href="{% url 'account' %}"{% if request.resolver_match.url_name == "account" or request.resolver_match.url_name == "account_change_password" %} aria-current="page"{% endif %}>Account</a>
+        </li>
+      {% else %}
+        <li>
+          <a class="nav-link" href="{% url 'account_login' %}"{% if request.resolver_match.url_name == "account_login" or request.resolver_match.url_name == "account_request_login_code" or request.resolver_match.url_name == "account_confirm_login_code" %} aria-current="page"{% endif %}>Log in</a>
+        </li>
+        <li>
+          <a class="nav-link nav-link--primary" href="{% url 'account_signup' %}"{% if request.resolver_match.url_name == "account_signup" or request.resolver_match.url_name == "account_email_verification_sent" %} aria-current="page"{% endif %}>Join the Club</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</header>

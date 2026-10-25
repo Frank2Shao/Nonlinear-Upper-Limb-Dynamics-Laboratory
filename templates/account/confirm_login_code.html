@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+
+{% block title %}Enter sign-in code | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="login-code-title">
+    <p class="eyebrow">Password-free access</p>
+    <h1 id="login-code-title">Enter your sign-in code</h1>
+    <p class="lede">We sent a one-time code to {{ email }}. You can paste the complete code into the field below.</p>
+
+    <div class="panel">
+      <form class="stack" method="post" action="{% url 'account_confirm_login_code' %}">
+        {% csrf_token %}
+        {% include "account/includes/form_fields.html" with form=verify_form %}
+        {{ redirect_field }}
+        <div class="button-row">
+          <button class="button" type="submit" name="action" value="verify">Confirm code</button>
+          {% if can_resend %}
+            <button class="button button--secondary" type="submit" name="action" value="resend" formnovalidate>Request new code</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+
+    <form method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'account_login' %}">
+      <button class="button button--quiet" type="submit">Cancel</button>
+    </form>
+  </section>
+{% endblock %}

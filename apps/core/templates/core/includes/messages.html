@@ -1,0 +1,11 @@
+{% if messages %}
+  <div class="message-region" aria-live="polite" aria-atomic="true">
+    <ul class="message-list">
+      {% for message in messages %}
+        <li class="message{% if message.tags %} message--{{ message.tags }}{% endif %}" role="{% if 'error' in message.tags %}alert{% else %}status{% endif %}">
+          {{ message }}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}

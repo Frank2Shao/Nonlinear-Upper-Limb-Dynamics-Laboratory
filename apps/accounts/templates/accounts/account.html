@@ -1,0 +1,53 @@
+{% extends "core/base.html" %}
+
+{% block title %}Account | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="account-title">
+    <p class="eyebrow">Member settings</p>
+    <h1 id="account-title">Account</h1>
+
+    <div class="panel">
+      <h2>Account details</h2>
+      <dl class="definition-list">
+        <dt>Username</dt>
+        <dd>{{ user.username }}</dd>
+        <dt>Email</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>Email verification</dt>
+        <dd>{% if email_is_verified %}Verified{% else %}Not verified{% endif %}</dd>
+        <dt>USU review status</dt>
+        <dd>{{ user.get_usu_review_status_display }}</dd>
+      </dl>
+    </div>
+
+    <div class="panel">
+      <h2>USYD and USU details</h2>
+      <form
+        class="stack"
+        method="post"
+        x-data="{ isUsyd: {{ form.is_usyd_student.value|yesno:'true,false' }} }"
+        x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
+      >
+        {% csrf_token %}
+        {% include "account/includes/form_errors.html" with form=form %}
+        {% include "account/includes/field.html" with field=form.is_usyd_student %}
+        <div x-show="isUsyd || {{ form.usu_id.errors|yesno:'true,false' }}">
+          {% include "account/includes/field.html" with field=form.usu_id %}
+        </div>
+        <button class="button" type="submit">Update account</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Security</h2>
+      <div class="button-row">
+        <a class="button button--secondary" href="{% url 'account_change_password' %}">Change password</a>
+        <form method="post" action="{% url 'account_logout' %}">
+          {% csrf_token %}
+          <button class="button button--quiet" type="submit">Log out</button>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock %}

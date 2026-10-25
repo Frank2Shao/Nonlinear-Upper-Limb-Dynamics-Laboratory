@@ -53,10 +53,14 @@ AI 开发者一次只执行一个步骤。每一步必须：
 ## 三、固定技术边界
 
 - 使用 Python 3.13、Django 5.2 LTS 和 PostgreSQL；
+- 使用 `uv` 管理 Python 虚拟环境与依赖，提交 `pyproject.toml` 和 `uv.lock`；
+- 本地开发在主机环境运行 Django，PostgreSQL 通过 Docker Compose 运行；
 - 采用 Django 单体架构，不建立独立 SPA 或 REST API；
 - 页面使用 Django Templates，局部增强使用 HTMX 和 Alpine.js；
 - 样式使用 Tailwind CSS v4 与 Tailwind CLI；
 - 地图使用 MapLibre GL JS；
+- 使用 npm 管理并锁定前端依赖；HTMX、Alpine.js 和 MapLibre GL JS 作为本地静态资源提供，Production 不依赖第三方 CDN；
+- 浏览器端到端测试使用 Playwright；
 - 认证使用 django-allauth；
 - 开发、测试和生产均以 PostgreSQL 行为为准；
 - 核心流程必须在 JavaScript 失效时保留普通 HTTP 回退；
@@ -96,9 +100,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 建立可重现的 Python 和 Tailwind 工具环境。
 
-**指令：** 创建 `pyproject.toml`、`package.json` 和锁文件；加入 Django、django-allauth、PostgreSQL driver、pytest、pytest-django、coverage、Ruff、Tailwind CSS 与 Tailwind CLI；版本必须符合 `tech_stack.md`。
+**指令：** 使用 `uv` 创建 `pyproject.toml` 和 `uv.lock`，使用 npm 创建 `package.json` 和对应锁文件；Python 依赖加入 Django、django-allauth、PostgreSQL driver、Pillow、pytest、pytest-django、coverage 与 Ruff；前端依赖加入 Tailwind CSS、Tailwind CLI、HTMX、Alpine.js、MapLibre GL JS 与 Playwright；版本必须符合 `tech_stack.md`。
 
-**验证：** 在全新环境安装锁定依赖；确认 Python、Django、pytest、Ruff 和 Tailwind CLI 可调用；检查锁文件未引用未经批准的主要版本。
+**验证：** 在全新环境分别通过 `uv` 和 npm 安装锁定依赖；确认 Python、Django、pytest、Ruff、Tailwind CLI 和 Playwright 可调用；确认前端库能够从本地依赖解析；检查锁文件未引用未经批准的主要版本。
 
 **完成条件：** 后端和前端依赖均可从空环境重复安装。
 
@@ -116,9 +120,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 让开发和测试从开始即使用 PostgreSQL。
 
-**指令：** 创建 Docker Compose database service、健康检查和安全的开发变量示例；更新 `.gitignore`；不得加入真实凭据或 SQLite 回退。
+**指令：** 创建 Docker Compose PostgreSQL service、持久化 volume、健康检查和安全的开发变量示例；本机 `uv` 环境运行 Django，并通过映射端口连接容器中的 PostgreSQL；更新 `.gitignore`；不得加入真实凭据或 SQLite 回退。
 
-**验证：** 启动数据库并等待健康状态；从 Django 环境建立连接；确认停止数据库后连接会明确失败；扫描仓库确认 `.env`、数据库文件和凭据未被跟踪。
+**验证：** 启动数据库并等待健康状态；从本机 Django 环境建立连接；重启 PostgreSQL 容器后确认开发数据仍由 volume 保留；确认停止数据库后连接会明确失败；扫描仓库确认 `.env`、数据库文件和凭据未被跟踪。
 
 **完成条件：** 本地 PostgreSQL 可重复启动，Django 使用环境变量连接。
 
@@ -152,13 +156,31 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **完成条件：** 所有状态转换具有行为测试，应用层与数据库结果一致。
 
-### Step 8 — 创建最小 MemberProfile
+### Step 8 — 创建完整 MemberProfile 数据结构
 
 **目标：** 为邮箱验证后建立默认隐藏的会员资料。
 
-**指令：** 创建与 User 一对一的 MemberProfile；加入已确认的资料字段、发布状态、管理员隐藏状态和管理员维护的 Executive role；建立幂等创建 service；公开查询规则必须同时检查发布、管理员隐藏、账户启用和邮箱验证状态。
+**指令：** 创建与 User 一对一的 MemberProfile，并一次建立下列完整字段和规则；建立幂等创建 service；Phase 1 只提供数据结构、验证、自动创建和后台管理，会员编辑界面、预览、发布操作及公开页面留到 Phase 3。
 
-**验证：** 测试资料默认隐藏、创建 service 重复执行不产生重复记录、公开查询排除未发布或被隐藏资料、停用或未验证用户不公开；检查普通会员不能修改管理员字段。
+| 字段 | 类型与规则 |
+| --- | --- |
+| `user` | 必填 One-to-one relation；每个账户只能关联一个 Profile；账户删除时同步删除 |
+| `display_name` | 可空 String，最长 80 字符；去除首尾空格；非空值忽略大小写后唯一；空值统一保存为 `NULL`；显示时为空则回退到 Username |
+| `avatar` | 可空 Image；仅接受真实 JPG、PNG 或 WebP 文件；最大 5 MB；Development 使用本地 media 目录，Production storage 留待确认 |
+| `bio` | 可空 Text，最长 500 字符；只保存和输出纯文本，不允许 HTML |
+| `experience_level` | Choice；默认 `not_spec`；允许 `not_spec`、`under_one`、`one_to_three`、`over_three`，界面分别显示 `Not specified`、`< 1 year`、`1–3 years`、`> 3 years` |
+| `preferred_arm` | Choice；默认 `Not specified`；允许 `Not specified`、`Left`、`Right`、`Both` 对应的稳定内部值 |
+| `instagram_handle` | 可空 String，最长 30 字符；只保存 Instagram Username；保存前去除开头的 `@` |
+| `other_social_url` | 可空 URL；最多一个；仅允许 `https` |
+| `is_published` | 必填 Boolean；默认 `False`；会员可在 Phase 3 自行开启或关闭 |
+| `is_hidden_by_admin` | 必填 Boolean；默认 `False`；仅授权管理员可以修改 |
+| `executive_role` | 可空 String，最长 100 字符；自由文本；仅授权管理员可以修改；Phase 1 不公开展示 |
+| `created_at` | 必填 DateTime；创建时自动记录；用户不可修改 |
+| `updated_at` | 必填 DateTime；每次保存时自动更新；用户不可修改 |
+
+公开查询必须至少满足 `is_published` 为 `True` 且 `is_hidden_by_admin` 为 `False`，并同时排除账户未启用或邮箱未验证的 Profile。管理员专属字段不得出现在会员可写 form 中。
+
+**验证：** 测试一对一关系与级联删除；测试资料默认值、时间戳和创建 service 幂等性；测试 `display_name` 的清理、空值共存及忽略大小写唯一性；测试头像格式、真实图像内容和 5 MB 限制；测试 Bio 纯文本、Experience 与 Preferred arm choices、Instagram `@` 清理和仅限 `https` 的其他链接；测试公开查询排除未发布、被隐藏、停用或未验证用户；检查普通会员不能修改管理员字段。
 
 **完成条件：** Profile schema、创建 service 和公开边界均有测试保护。
 
@@ -166,7 +188,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 建立认证基础设施和项目 URL 集成。
 
-**指令：** 配置 username/password 登录、强制邮箱验证、Email verification by code、可选 Email Magic Code、Password reset、唯一 Email、enumeration prevention 和默认 rate limits；禁用 Social login、Phone login、MFA 及强制登录验证码；配置 Sites framework、authentication backend 和 redirects。
+**指令：** 配置 username/password 登录、强制邮箱验证、Email verification by code、可选 Email Magic Code、Password reset、唯一 Email、enumeration prevention 和默认 rate limits；未验证账户不得通过密码或 Magic Code 进入会员区域，只能继续验证或请求重发验证码；禁用 Social login、Phone login、MFA 及强制登录验证码；配置 Sites framework、authentication backend 和 redirects。
 
 **验证：** 依据锁定版本的官方文档核对 setting 名称；运行 system check；验证 signup、login、logout、verification、login code 和 password reset 的 URL name 可反向解析；确认禁用功能没有公开入口。
 
@@ -196,7 +218,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 提供安全的 Username/Password 账户入口。
 
-**指令：** 使用通用凭据错误信息；验证成功后返回原目标页面或 Account；Password reset 使用 allauth；登出只接受 POST。
+**指令：** 使用通用凭据错误信息；邮箱未验证账户不得建立可访问会员区域的登录状态，并应进入验证或验证码重发流程；验证成功后返回原目标页面或 Account；Password reset 使用 allauth；登出只接受 POST。
 
 **验证：** 测试正确登录、错误 Username、错误 Password、未验证账户、停用账户、开放 redirect 防护、Password reset 和 GET logout 被拒绝；确认错误信息不泄露账户存在性。
 
@@ -206,7 +228,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 提供可选的邮箱验证码登录方式。
 
-**指令：** 建立请求、确认和重发页面；保持密码登录为独立入口；对请求、尝试和重发应用 allauth rate limits；不得记录登录码。
+**指令：** 建立请求、确认和重发页面；保持密码登录为独立入口；未验证账户不得通过 Magic Code 进入会员区域，应引导完成注册邮箱验证；对请求、尝试和重发应用 allauth rate limits；不得记录登录码。
 
 **验证：** 测试有效、错误、过期和重复使用 code；测试未验证 Email、停用账户、频率限制和 enumeration prevention；检查密码登录没有被强制追加 code。
 
@@ -216,9 +238,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 让会员管理本人账户和身份声明。
 
-**指令：** 展示只读 Username、Email 验证状态、USYD 声明、条件 USU ID 和本人审核状态；提供 Password change 与 POST logout；所有更新通过受控 form/service 完成。
+**指令：** 展示只读 Username、只读 Email、Email 验证状态、USYD 声明、条件 USU ID 和本人审核状态；Phase 1 不提供 Email 修改入口；提供 Password change 与 POST logout；所有更新通过受控 form/service 完成。
 
-**验证：** 测试 Anonymous 被重定向、会员只能查看和修改本人信息、非 USYD 不能提交 ID、修改 ID 回到 `pending`、取消 USYD 清除审核信息、普通会员不能写入审核字段。
+**验证：** 测试 Anonymous 被重定向、会员只能查看和修改本人信息、Username 与 Email 无法通过页面或伪造请求修改、非 USYD 不能提交 ID、修改 ID 回到 `pending`、取消 USYD 清除审核信息、普通会员不能写入审核字段。
 
 **完成条件：** Account 的访问控制与状态转换测试全部通过。
 
@@ -256,9 +278,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 生成可重现的 Phase 1 样式和静态资源。
 
-**指令：** 建立 Tailwind 输入、source scanning、Development watch 和 Production build；集中定义深黑、炭灰、暖白、金色、字体、间距、Focus 和小圆角 tokens；仅使用获准或本地占位资产。
+**指令：** 建立 Tailwind 输入、source scanning、Development watch 和 Production build；通过 npm 锁定前端依赖，将 HTMX、Alpine.js 和 MapLibre GL JS 作为版本固定的本地静态资源提供；集中定义深黑、炭灰、暖白、金色、字体、间距、Focus 和小圆角 tokens；仅使用获准或本地占位资产；Production 不使用 Tailwind Play CDN 或第三方库 CDN。
 
-**验证：** 执行 Development watch smoke test 和 Production CSS build；确认模板使用的固定 class 被扫描；检查 Production 不依赖 Tailwind Play CDN；验证关键文字、按钮和 Focus 对比度达到 WCAG 2.2 AA。
+**验证：** 执行 Development watch smoke test 和 Production CSS build；确认模板使用的固定 class 被扫描；断开外部网络后确认 Phase 1 页面仍能加载所需 CSS 与 JavaScript；检查 Production 不依赖 Tailwind Play CDN 或第三方库 CDN；验证关键文字、按钮和 Focus 对比度达到 WCAG 2.2 AA。
 
 **完成条件：** CSS 可从锁定依赖重复生成，关键页面没有缺失样式或对比度阻塞。
 
@@ -266,9 +288,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 形成可重复运行的 Phase 1 检查链。
 
-**指令：** 配置 pytest、pytest-django、coverage、Ruff 和 Django checks；禁止测试访问外部网络；加入 Secret、敏感日志、公开字段和上传边界检查；为 CI 保留单一检查入口。
+**指令：** 配置 pytest、pytest-django、coverage、Ruff、Django checks 和 Playwright；禁止测试访问外部网络；加入 Secret、敏感日志、公开字段和上传边界检查；使用 Playwright 覆盖 Phase 1 核心浏览器流程，并为 CI 保留单一检查入口。
 
-**验证：** 从干净 PostgreSQL test database 运行 migrations、Ruff、system checks 和全部测试；运行 Production deployment check；确认测试失败会产生非零结果；检查日志不包含 Password、验证码、完整 USU ID 或 session token。
+**验证：** 从干净 PostgreSQL test database 运行 migrations、Ruff、system checks、全部 pytest 测试和 Playwright 核心流程；运行 Production deployment check；确认测试失败会产生非零结果；检查日志不包含 Password、验证码、完整 USU ID 或 session token。
 
 **完成条件：** 全部检查可重复运行，任何失败都会阻止继续交付。
 
@@ -276,7 +298,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **目标：** 确认账户与认证基础可以交付给下一阶段。
 
-**指令：** 使用全新环境执行安装、数据库启动、migrate、CSS build 和应用启动；手工走查注册、邮箱验证、密码登录、Magic Code、Account 更新、USU 审核和 POST logout；更新 README 与 `progress.md`。
+**指令：** 使用全新环境通过 `uv` 和 npm 执行锁定依赖安装、PostgreSQL 启动、migrate、CSS build 和本机 Django 启动；使用 Playwright 并辅以手工检查走查注册、邮箱验证、密码登录、Magic Code、Account 更新、USU 审核和 POST logout；更新 README 与 `progress.md`。
 
 **验证：** 运行完整自动化套件；执行桌面与手机 smoke test；确认未提交 Secret、`.env`、数据库、真实会员资料或用户上传文件；检查未公开 University Branding。
 
@@ -296,7 +318,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **展开条件：** Phase 2 已验收，公开页面结构和 media 策略可用。
 
-**范围：** Profile edit、preview、publish、unpublish、Members list、Member detail、Admin hide/unhide 和 Avatar validation。
+**范围：** 基于 Phase 1 已建立的完整字段实现 Profile edit、preview、publish、unpublish、Members list、Member detail 和 Admin hide/unhide；根据届时确定的 media 策略补充上传处理。
 
 **关键约束：** 资料默认隐藏；公开必须由会员主动开启；管理员隐藏不修改会员自述；Executive role 首期不公开；上传需要验证类型、大小和真实图像内容，并移除不必要 metadata。
 

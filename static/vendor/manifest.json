@@ -1,0 +1,25 @@
+{
+  "packages": {
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "alpinejs": "3.17.5",
+    "htmx.org": "2.0.11",
+    "maplibre-gl": "6.15.0"
+  },
+  "files": {
+    "static/vendor/alpine/alpine.min.js": "b4036e9e9ac22fa6f6ae1ba292e015e1f3e9c85d0d79e73e4c8eb9bb139b522e",
+    "static/vendor/htmx/htmx.min.js": "d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717",
+    "static/vendor/maplibre/maplibre-gl.mjs": "41198b23679a7d8892183408bbef2eabdc74745beb90261f6be0f660b7aeb2fd",
+    "static/vendor/maplibre/maplibre-gl.css": "a90798a1953017790e590f7e1bd35ff103a8a4263972cb47290b78adf86f8c20",
+    "static/fonts/inter-latin-400-normal.woff2": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
+    "static/fonts/inter-latin-500-normal.woff2": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
+    "static/fonts/inter-latin-600-normal.woff2": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
+    "static/fonts/barlow-condensed-latin-600-normal.woff2": "215a93c696f442034a46fbb382958f753fda60e30490683aeea6b235fcbb2b66",
+    "static/fonts/barlow-condensed-latin-700-normal.woff2": "3787a5a419171630e6890cfa47c4da067474d005cd0ff8dc11ec090fdc3ee2b8",
+    "static/fonts/barlow-condensed-latin-800-normal.woff2": "2515494e8cc2ca07c86ea78766cfa104b796aa6ed5d66821c01d51dbb0b52bce",
+    "static/vendor/licenses/htmx.txt": "d3d2456f76414f2456104660ebd65aff1c04cd7966b942bdabd63f3cdb316a38",
+    "static/vendor/licenses/maplibre-gl.txt": "ee5fc05a0677eaf69601d2c7db0d9ecd6cc27c3abc1d0733bc9ed34707cf8ef2",
+    "static/vendor/licenses/inter.txt": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345",
+    "static/vendor/licenses/barlow-condensed.txt": "046ee27d8bddc6b6ee08eee53c96dbf3ec1f6df561644e018507dd8ffcb11d31"
+  }
+}

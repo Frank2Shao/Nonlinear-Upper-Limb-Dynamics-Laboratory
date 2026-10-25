@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+
+{% block title %}Home | NULDL{% endblock %}
+
+{% block content %}
+  <section aria-labelledby="home-title">
+    <p class="eyebrow">Strength. Technique. Community.</p>
+    <h1 id="home-title">Nonlinear Upper Limb Dynamics Laboratory</h1>
+    <p class="lede">NULDL is preparing its club website and member services.</p>
+    {% if not user.is_authenticated %}
+      <p><a class="button" href="{% url 'account_signup' %}">Join the Club</a></p>
+    {% endif %}
+  </section>
+{% endblock %}

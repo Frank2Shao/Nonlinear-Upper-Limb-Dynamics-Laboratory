@@ -1,0 +1,22 @@
+{% extends "core/base.html" %}
+
+{% block title %}Email code login | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="request-code-title">
+    <p class="eyebrow">Password-free access</p>
+    <h1 id="request-code-title">Request a sign-in code</h1>
+    <p class="lede">Enter the verified email address for your active account.</p>
+
+    <div class="panel">
+      <form class="stack" method="post" action="{{ request_login_code_url }}">
+        {% csrf_token %}
+        {% include "account/includes/form_fields.html" with form=form %}
+        {{ redirect_field }}
+        <button class="button" type="submit">Request code</button>
+      </form>
+    </div>
+
+    <p><a href="{{ login_url }}">Use username and password instead</a>.</p>
+  </section>
+{% endblock %}

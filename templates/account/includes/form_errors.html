@@ -1,0 +1,14 @@
+{% if form.non_field_errors %}
+  <div class="error-summary" role="alert" tabindex="-1" data-error-summary>
+    <p>Please correct the following error.</p>
+    {{ form.non_field_errors }}
+  </div>
+{% endif %}
+{% for hidden_field in form.hidden_fields %}
+  {{ hidden_field }}
+  {% if hidden_field.errors %}
+    <div class="error-summary" role="alert" tabindex="-1" data-error-summary>
+      {{ hidden_field.errors }}
+    </div>
+  {% endif %}
+{% endfor %}

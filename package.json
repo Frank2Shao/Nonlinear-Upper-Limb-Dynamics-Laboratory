@@ -1,0 +1,27 @@
+{
+  "name": "nuldl-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Website for the Nonlinear Upper Limb Dynamics Laboratory",
+  "scripts": {
+    "assets:vendor": "node scripts/build-static-assets.mjs",
+    "assets:check": "node scripts/build-static-assets.mjs --check",
+    "css:watch": "tailwindcss -i ./static_src/css/site.css -o ./static/css/site.css --watch",
+    "css:watch:smoke": "node scripts/check-css-watch.mjs",
+    "css:build": "tailwindcss -i ./static_src/css/site.css -o ./static/css/site.css --minify",
+    "static:build": "npm run assets:vendor && npm run css:build",
+    "static:check": "npm run assets:check && npm run css:build"
+  },
+  "dependencies": {
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "alpinejs": "3.17.5",
+    "htmx.org": "2.0.11",
+    "maplibre-gl": "6.15.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@tailwindcss/cli": "4.3.0",
+    "tailwindcss": "4.3.0"
+  }
+}

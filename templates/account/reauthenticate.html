@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+
+{% block title %}Confirm password | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="reauthenticate-title">
+    <p class="eyebrow">Account security</p>
+    <h1 id="reauthenticate-title">Confirm your password</h1>
+    <p class="lede">Enter your password to continue.</p>
+
+    <div class="panel">
+      <form class="stack" method="post" action="{% url 'account_reauthenticate' %}">
+        {% csrf_token %}
+        {% include "account/includes/form_fields.html" with form=form %}
+        {{ redirect_field }}
+        <button class="button" type="submit">Confirm</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+
+{% block title %}Verify email | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="verify-email-title">
+    <p class="eyebrow">Email verification</p>
+    <h1 id="verify-email-title">Verify your email</h1>
+    <p class="lede">We sent a one-time code to {{ email }}. You can paste the complete code into the field below.</p>
+
+    <div class="panel">
+      <form class="stack" method="post" action="{% url 'account_email_verification_sent' %}">
+        {% csrf_token %}
+        {% include "account/includes/form_fields.html" with form=verify_form %}
+        {{ redirect_field }}
+        <div class="button-row">
+          <button class="button" type="submit" name="action" value="verify">Verify email</button>
+          {% if can_resend %}
+            <button class="button button--secondary" type="submit" name="action" value="resend" formnovalidate>Request new code</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+
+    {% if can_change %}
+      <details class="panel"{% if change_form.errors %} open{% endif %}>
+        <summary>Use a different email address</summary>
+        <form class="stack" method="post" action="{% url 'account_email_verification_sent' %}">
+          {% csrf_token %}
+          {% include "account/includes/form_fields.html" with form=change_form %}
+          {{ redirect_field }}
+          <button class="button button--secondary" type="submit" name="action" value="change">Change email</button>
+        </form>
+      </details>
+    {% endif %}
+
+    {% if cancel_url %}
+      <p><a href="{{ cancel_url }}">Cancel</a></p>
+    {% else %}
+      <form method="post" action="{% url 'account_logout' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'account_login' %}">
+        <button class="button button--quiet" type="submit">Cancel</button>
+      </form>
+    {% endif %}
+  </section>
+{% endblock %}

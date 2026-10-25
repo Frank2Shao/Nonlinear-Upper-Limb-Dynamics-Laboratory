@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+
+{% block title %}Join the Club | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="signup-title">
+    <p class="eyebrow">Membership</p>
+    <h1 id="signup-title">Join the Club</h1>
+    <p class="lede">Create an account, then verify your email to become a member.</p>
+
+    <div class="panel">
+      <form
+        class="stack"
+        method="post"
+        action="{% url 'account_signup' %}"
+        x-data="{ isUsyd: {{ form.is_usyd_student.value|yesno:'true,false' }} }"
+        x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
+      >
+        {% csrf_token %}
+        {% include "account/includes/form_errors.html" with form=form %}
+        {% include "account/includes/field.html" with field=form.username %}
+        {% include "account/includes/field.html" with field=form.email %}
+        {% include "account/includes/field.html" with field=form.password1 %}
+        {% include "account/includes/field.html" with field=form.password2 %}
+        {% include "account/includes/field.html" with field=form.is_usyd_student %}
+        <div x-show="isUsyd || {{ form.usu_id.errors|yesno:'true,false' }}">
+          {% include "account/includes/field.html" with field=form.usu_id %}
+        </div>
+        {{ redirect_field }}
+        <button class="button" type="submit">Create account</button>
+      </form>
+    </div>
+
+    <p>Already have an account? <a href="{{ login_url }}">Log in</a>.</p>
+  </section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+
+{% block title %}Log out | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="logout-title">
+    <p class="eyebrow">Member access</p>
+    <h1 id="logout-title">Log out</h1>
+    <p class="lede">Are you sure you want to end your current session?</p>
+
+    <form class="button-row" method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      {{ redirect_field }}
+      <button class="button" type="submit">Log out</button>
+      <a class="button button--quiet" href="{% url 'account' %}">Cancel</a>
+    </form>
+  </section>
+{% endblock %}

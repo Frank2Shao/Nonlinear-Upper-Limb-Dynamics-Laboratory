@@ -1,0 +1,4 @@
+{% include "account/includes/form_errors.html" with form=form %}
+{% for field in form.visible_fields %}
+  {% include "account/includes/field.html" with field=field %}
+{% endfor %}

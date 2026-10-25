@@ -1,0 +1,26 @@
+{% extends "core/base.html" %}
+
+{% block title %}Log in | NULDL{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="login-title">
+    <p class="eyebrow">Member access</p>
+    <h1 id="login-title">Log in</h1>
+    <p class="lede">Use your username and password, or request a one-time code by email.</p>
+
+    <div class="panel">
+      <form class="stack" method="post" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {% include "account/includes/form_fields.html" with form=form %}
+        {{ redirect_field }}
+        <button class="button" type="submit">Log in</button>
+      </form>
+    </div>
+
+    <div class="button-row">
+      <a class="button button--secondary" href="{% url 'account_request_login_code' %}">Log in by email code</a>
+      <a class="button button--quiet" href="{% url 'account_reset_password' %}">Forgot password?</a>
+    </div>
+    <p>Need an account? <a href="{{ signup_url }}">Join the Club</a>.</p>
+  </section>
+{% endblock %}

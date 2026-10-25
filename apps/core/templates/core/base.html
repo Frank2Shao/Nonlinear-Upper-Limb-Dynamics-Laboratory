@@ -1,0 +1,23 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}NULDL{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
+  </head>
+  <body
+    x-data
+    x-init="$nextTick(() => { const target = document.querySelector('[aria-invalid=true], [data-error-summary]'); if (target) target.focus(); })"
+  >
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    {% include "core/includes/header.html" %}
+    {% include "core/includes/messages.html" %}
+    <main class="page-shell" id="main-content" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+    {% include "core/includes/footer.html" %}
+  </body>
+</html>

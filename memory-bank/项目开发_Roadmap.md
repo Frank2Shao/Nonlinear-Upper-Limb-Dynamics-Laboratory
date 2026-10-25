@@ -3,8 +3,8 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **候选域名：** `nuldl.com`  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1 尚未开始  
-**最后更新：** 2026 年 10 月 22 日
+**当前阶段：** Phase 1 已完成；Phase 2 尚未开始
+**最后更新：** 2026 年 10 月 25 日
 
 ## 一、文档体系
 
@@ -48,7 +48,7 @@
 
 | Phase | 名称 | 主要依赖 | 当前状态 |
 | --- | --- | --- | --- |
-| 1 | 项目基础、账户与 USU ID 审核 | 已确认的 Design 与 Tech Stack | `Not started` |
+| 1 | 项目基础、账户与 USU ID 审核 | 已确认的 Design 与 Tech Stack | `Complete` |
 | 2 | 英文宣传网站 | Phase 1 页面框架 | `Not started` |
 | 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Not started` |
 | 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Not started` |
@@ -90,7 +90,7 @@
 
 ### 阶段状态
 
-`Not started`
+`Complete`
 
 ## 六、Phase 2：英文宣传网站
 
