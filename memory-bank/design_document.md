@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 10 月 22 日
+**最后更新：** 2026 年 10 月 25 日
 
 ## 一、文档边界
 
@@ -21,7 +21,7 @@
 
 ## 二、产品定位
 
-NULDL 网站首先承担社团信息发布和会员入口功能，随后扩展为活动报名及基础会员管理系统。
+NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功能，随后扩展为活动报名及基础会员管理系统。
 
 社团以 USU 社团体系为基础，同时允许社会爱好者参加。网站账户与 USU 资格分别管理：
 
@@ -115,6 +115,8 @@ NULDL 网站首先承担社团信息发布和会员入口功能，随后扩展�
 - 有效会员是已完成邮箱验证且账户未停用的用户；
 - 任何邮箱均可注册；
 - 成为会员不要求 USYD 或 USU 身份；
+- 公开文案将网站账户参与资格与 Constitution 下的投票权、Executive eligibility 等治理权利明确区分；
+- 面向社会参与者时，不将网站账户描述为 USU constitutional membership；
 - 首期不收取网站会员费；
 - 会员退出后的数据保留与账户处理暂未确定。
 
@@ -186,7 +188,7 @@ Log in / Account
 
 桌面端 Header 使用以下结构：
 
-- 左侧显示 NULDL 品牌标志与名称；
+- 左侧显示 `NULDL Armwrestling Club` 文字品牌；
 - 中间显示主要页面导航；
 - 右侧显示 `Log in` 或账户入口，并始终突出 `Join the Club`；
 - 移动端将页面导航收纳为菜单，同时保留清晰的招新入口。
@@ -367,10 +369,11 @@ Registered Member 选择 Cancel registration
 ### 7.4 Home
 
 - Hero 以强视觉建立品牌识别，核心操作为 `Join the Club`；
-- `View Upcoming Events` 作为次级操作；
+- Phase 2 使用 `New to Armwrestling?` 作为次级操作；`View Upcoming Events` 在 Phase 4 Events 页面可用后再加入；
 - Hero 下方直接展示独立的 `New to Armwrestling?` 板块，说明无需经验、基本训练方式、安全原则和加入路径；
-- 首页活动预览采用紧凑日程布局，突出日期、活动名称、时间、地点和报名状态；
-- 首页活动区只展示少量近期活动，并提供进入完整 Events 页面的入口；
+- Phase 2 首页使用紧凑静态日程卡展示 `1 December 2026`、`3:00–7:00 pm`、`Training Session` 和 `Venue details to be confirmed`；
+- Phase 2 日程卡只提供信息及 `Join the Club` 入口，不提供报名状态、报名操作或失效的 Events 链接；
+- Phase 4 建立 Event 数据后，首页活动区改为少量近期活动预览，并提供完整 Events 页面入口；
 - 首期 Hero 使用抽象线条、波形和简单静态图形，复杂人体结构与受力轨迹后置。
 
 ### 7.5 Events
@@ -387,6 +390,140 @@ Registered Member 选择 Cancel registration
 - 键盘 focus 和手机点击均可操作；
 - 地图脚本或瓦片加载失败时，地点名称和地址仍可访问；
 - 坐标未确认的地点不得显示虚假 Marker。
+
+### 7.7 Phase 2 英文内容基线
+
+以下内容已经由项目负责人确认。实现时可以进行不改变含义的语法、标点和响应式断行调整；不得增加未经确认的地点、联系人、University affiliation、法律结论或活动承诺。
+
+#### Home
+
+- Metadata title：`NULDL Armwrestling Club | Training and Community`
+- Metadata description：`Learn armwrestling technique, practise under supervision and join a welcoming strength-sport community. Beginners are welcome.`
+- Hero eyebrow：`STUDYING CHAOTIC UPPER-LIMB INTERACTIONS SINCE 2026.`
+- Hero heading：`Nonlinear Upper Limb Dynamics Laboratory`
+- Hero introduction：`NULDL Armwrestling Club is an armwrestling community based near Sydney’s CBD, welcoming people of all experience levels. Learn the fundamentals, develop your technique and practise with purpose in a supervised environment.`
+- Primary action：`Join the Club`
+- Secondary action：`New to Armwrestling?`
+
+`New to Armwrestling?`
+
+`Join Us !`
+
+- `Beginner Induction`：`Learn the basic rules, positions and safety principles before your first practice pull.`
+- `Supervised Practice`：`Develop technique through structured practice using dedicated armwrestling equipment.`
+- `Technique and Rules`：`Build a clearer understanding of movement, leverage, match rules and training methods.`
+- `Community and Competition`：`Take part in social training sessions, workshops and internal competitions.`
+
+`Upcoming Session`
+
+- `1 December 2026`
+- `3:00–7:00 pm`
+- `Venue details to be confirmed`
+- `Training Session`
+- `Further attendance details will be published before the session.`
+- Anonymous session action：`Join`
+- Authenticated member：不显示 Hero 或 Session 招新按钮
+
+#### About
+
+- Metadata title：`About NULDL Armwrestling Club`
+- Metadata description：`Learn about NULDL Armwrestling Club, our training activities and our approach to technique, safety and inclusive participation.`
+- Heading：`About NULDL Armwrestling Club`
+- Introduction：`Nonlinear Upper Limb Dynamics Laboratory is a student-led, community-focused armwrestling club.`
+
+`Our Purpose`
+
+`Our purpose is to make armwrestling more accessible as a strength-and-skill sport while building a welcoming community for participants from different backgrounds and experience levels.`
+
+`We provide structured instruction, supervised practice and opportunities to learn about armwrestling technique, rules, training methods and risk-aware participation.`
+
+`What We Do`
+
+- `Beginner induction sessions`
+- `Regular supervised practice pulls`
+- `Technique and rules workshops`
+- `Internal competitions`
+
+`Who Can Participate?`
+
+`The website is open to students and community enthusiasts. After creating an account and verifying their email address, users can access member features and participate in eligible activities.`
+
+`Website access does not automatically provide voting rights or eligibility for an Executive position. Those rights are governed separately by the club’s constitutional requirements.`
+
+`How We Train`
+
+`Good armwrestling depends on technique, control and respect for your training partner. Sessions combine instruction with supervised practice so that participants can develop progressively.`
+
+`Beginners are welcome, and competitive ambition is encouraged without creating unnecessary barriers for new participants.`
+
+- Anonymous page action：`Join`
+- Authenticated member：不显示页面招新按钮
+
+#### Beginners & Safety
+
+- Metadata title：`Beginners and Safety | NULDL Armwrestling Club`
+- Metadata description：`Learn what to expect at your first NULDL Armwrestling Club session and review the essential safety principles for participation.`
+- Heading：`Beginners Are Welcome`
+
+`You do not need previous armwrestling experience to attend a beginner session. Your first session will introduce the basic rules, safe positioning, equipment and fundamental techniques before controlled practice begins.`
+
+`What to Expect`
+
+1. `Introductions to the session and equipment`
+2. `Explanations of basic rules and positions`
+3. `Technique demonstrations`
+4. `Guided and supervised practice pulls`
+5. `Time to ask questions and review your technique`
+
+`Armwrestling Involves Risk`
+
+`Armwrestling is a high-intensity competitive activity. Possible injuries include muscle strain, tendon or ligament injury, joint sprain or dislocation, and bone injury or fracture. Some risks cannot be completely predicted or avoided.`
+
+`Before Participating`
+
+`Do not participate if a medical condition or previous injury makes competitive physical activity unsuitable for you. Relevant concerns may include previous shoulder, elbow or wrist injuries, musculoskeletal conditions, cardiovascular or cerebrovascular disease, osteoporosis or neurological conditions.`
+
+`If you are uncertain about your fitness to participate, do not take part until you have obtained appropriate advice.`
+
+`During Training`
+
+- `Follow the instructions of the session supervisor.`
+- `Use the equipment only as directed.`
+- `Train with control and respect your partner’s experience level.`
+- `Do not force a movement through pain or loss of control.`
+- `Stop immediately if you experience pain, numbness, dizziness or other discomfort.`
+
+`Shared Responsibility`
+
+`Safe training depends on clear communication, controlled practice and respect between participants. Ask for clarification whenever an instruction or position is unclear.`
+
+- 不显示页面底部招新按钮组。
+- Conditional Development/Preview action：`Read the Draft Risk Notice`，位于 `Armwrestling Involves Risk` panel 内并居中显示。
+
+#### Risk Notice — Development/Preview only
+
+- Metadata title：`Draft Risk Notice | NULDL Armwrestling Club`
+- Robots directive：`noindex, nofollow`
+- Draft banner：`DRAFT — NOT APPROVED FOR PARTICIPATION USE`
+- Introductory notice：`This draft is displayed for development and review purposes only. It has not been approved as the final NULDL Armwrestling Club Risk Notice and must not be relied upon as the terms for participation.`
+
+当前 Draft 正文：
+
+> This public arm wrestling experience is a voluntary, high-intensity competitive activity. Arm wrestling involves inherent risks of injury, including but not limited to muscle strain, tendon or ligament injury, joint sprain or dislocation, bone injury and fracture. Some risks may not be fully foreseeable or avoidable.
+>
+> Before participating, please confirm that you do not have a condition that makes competitive physical activity unsuitable for you, including previous shoulder, elbow or wrist injuries or other musculoskeletal conditions, cardiovascular or cerebrovascular disease, osteoporosis, neurological conditions, or similar health concerns. If you are unsure about your fitness to participate, do not take part. Stop immediately if you experience pain, numbness, dizziness or other discomfort.
+>
+> By participating, you acknowledge and voluntarily accept the potential risks described above and confirm that you are choosing to participate based on your own physical condition. To the maximum extent permitted by law, the activity organiser, venue provider and relevant staff accept no liability for injury or loss arising from the inherent or obvious risks of the activity. Nothing in this notice excludes or limits any liability that cannot lawfully be excluded or limited. By participating, you acknowledge that you have read and understood this risk notice and voluntarily choose to take part.
+>
+> By participating, you acknowledge that you have read and understood this risk notice. If you are unsure about your health or the risks of the activity, do not participate.
+
+实现时必须逐字使用上述正文，包括源文件中重复的 acknowledgement；在最终文本获批前不得擅自修订法律或责任限制措辞。Development 和 Preview 可以显示上述 banner 与正文；Production 必须禁用正文路由、从导航和 sitemap 排除该页面，并且不得提供报名功能。
+
+#### Global Footer
+
+- Social link text：`Follow NULDL Armwrestling Club on Instagram: @nuldl_armwrestlingclub`
+- Social link target：`https://www.instagram.com/nuldl_armwrestlingclub/`
+- Phase 2 不公开联系邮箱。
 
 ## 八、状态与异常处理
 
@@ -453,9 +590,10 @@ Registered Member 选择 Cancel registration
 
 ### 9.6 Logo 与图像资产
 
-- 正式品牌方向为不含 USYD 元素的 NULDL 字母标志；
-- 新 Logo 应提供 SVG、透明 PNG、深色背景版、浅色背景版、独立标志版和横向组合版；
-- 新 Logo 完成前，现有 Logo 仅可用于本地开发占位，不得随公开版本部署；
+- Phase 2 使用仓库根目录外 `../../Logo_without_USYD.png` 作为已确认的主视觉 Logo 源文件；
+- 源文件为方形黑底完整组合图，适合 Home Hero 或较大的品牌展示区域；
+- Header 使用文字 `NULDL Armwrestling Club`，不在小尺寸导航中缩放完整 Logo；
+- 实现阶段从源文件生成响应式尺寸和压缩的网页版本，不改变图形内容，并保留原始源文件；
 - 未获得书面批准前，不使用 USYD 名称、Logo、校徽或视觉规范；
 - 首期以黑金抽象图形、线条、波形和简单静态结构作为主要视觉素材；
 - 肌肉、骨骼、关节轴线和受力轨迹等复杂插画在基础框架与功能稳定后统一设计；
@@ -467,6 +605,7 @@ Registered Member 选择 Cancel registration
 ### 9.7 内容原则
 
 - 首期所有面向用户的正式内容使用英文；
+- 对外使用缩写时必须完整写作 `NULDL Armwrestling Club`；不得单独使用 `NULDL`，Instagram Username 等外部标识除外；
 - 技术错误不得直接暴露给用户；
 - 安全内容采用清晰、直接和非营销化表达；
 - Risk Notice draft 必须在非正式环境中明确标记；
@@ -530,10 +669,9 @@ Registered Member 选择 Cancel registration
 1. Risk Notice 最终文本及 USU 确认结果；
 2. 未来是否需要为未成年人增加额外措施；
 3. University Branding 的书面批准范围；
-4. 新 NULDL Logo 的最终文件及公开使用版本；
-5. 复杂人体结构、受力轨迹插画的最终范围和制作时间；
-6. 训练地点的地址、坐标和联系人；
-7. 会员退出、账户删除和数据保留规则；
-8. 中文版本的时间和范围。
+4. 复杂人体结构、受力轨迹插画的最终范围和制作时间；
+5. 训练地点的准确地址、坐标和可以公开使用的地点名称；
+6. 会员退出、账户删除和数据保留规则；
+7. 中文版本的时间和范围。
 
 待确认事项不得由开发者自行补全。任何决定都应先更新本文档，再进入技术和实施文件。

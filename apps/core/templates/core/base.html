@@ -4,7 +4,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}NULDL{% endblock %}</title>
+    <title>{% block title %}NULDL Armwrestling Club{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}NULDL Armwrestling Club member services and public information.{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="NULDL Armwrestling Club">
+    <meta property="og:title" content="{% block open_graph_title %}NULDL Armwrestling Club{% endblock %}">
+    <meta property="og:description" content="{% block open_graph_description %}NULDL Armwrestling Club member services and public information.{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    {% block extra_head %}{% endblock %}
     <link rel="stylesheet" href="{% static 'css/site.css' %}">
     <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
   </head>

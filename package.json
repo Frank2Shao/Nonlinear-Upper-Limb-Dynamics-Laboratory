@@ -6,11 +6,13 @@
   "scripts": {
     "assets:vendor": "node scripts/build-static-assets.mjs",
     "assets:check": "node scripts/build-static-assets.mjs --check",
+    "images:build": "python scripts/build_home_images.py",
+    "images:check": "python scripts/build_home_images.py --check",
     "css:watch": "tailwindcss -i ./static_src/css/site.css -o ./static/css/site.css --watch",
     "css:watch:smoke": "node scripts/check-css-watch.mjs",
     "css:build": "tailwindcss -i ./static_src/css/site.css -o ./static/css/site.css --minify",
-    "static:build": "npm run assets:vendor && npm run css:build",
-    "static:check": "npm run assets:check && npm run css:build"
+    "static:build": "npm run assets:vendor && npm run images:build && npm run css:build",
+    "static:check": "npm run assets:check && npm run images:check && npm run css:build"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "5.3.0",

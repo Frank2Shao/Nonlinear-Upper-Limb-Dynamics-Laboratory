@@ -9,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DEBUG = False
+RISK_NOTICE_DRAFT_VISIBLE = False
 
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -98,6 +99,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.safety.context_processors.risk_notice_visibility",
             ],
         },
     },

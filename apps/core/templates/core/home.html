@@ -1,14 +1,95 @@
 {% extends "core/base.html" %}
+{% load static %}
 
-{% block title %}Home | NULDL{% endblock %}
+{% block title %}NULDL Armwrestling Club | Training and Community{% endblock %}
+{% block meta_description %}Learn armwrestling technique, practise under supervision and join a welcoming strength-sport community. Beginners are welcome.{% endblock %}
+{% block open_graph_title %}NULDL Armwrestling Club | Training and Community{% endblock %}
+{% block open_graph_description %}Learn armwrestling technique, practise under supervision and join a welcoming strength-sport community. Beginners are welcome.{% endblock %}
 
 {% block content %}
-  <section aria-labelledby="home-title">
-    <p class="eyebrow">Strength. Technique. Community.</p>
-    <h1 id="home-title">Nonlinear Upper Limb Dynamics Laboratory</h1>
-    <p class="lede">NULDL is preparing its club website and member services.</p>
-    {% if not user.is_authenticated %}
-      <p><a class="button" href="{% url 'account_signup' %}">Join the Club</a></p>
-    {% endif %}
-  </section>
+  <div class="public-page home-page">
+    <section class="home-hero" aria-labelledby="home-title">
+      <div class="home-hero__content">
+        <p class="eyebrow">Studying chaotic upper-limb interactions since 2026.</p>
+        <h1 id="home-title">Nonlinear Upper Limb Dynamics Laboratory</h1>
+        <p class="lede">NULDL Armwrestling Club is an armwrestling community based near Sydney’s CBD, welcoming people of all experience levels. Learn the fundamentals, develop your technique and practise with purpose in a supervised environment.</p>
+        <div class="button-row home-hero__actions">
+          {% if not user.is_authenticated %}
+            <a class="button" data-home-primary href="{% url 'account_signup' %}">Join the Club</a>
+          {% endif %}
+          <a class="button button--secondary" href="#new-to-armwrestling">New to Armwrestling?</a>
+        </div>
+      </div>
+      <picture class="home-hero__media">
+        <source
+          type="image/webp"
+          srcset="{% static 'images/brand/nuldl-club-logo-480.webp' %} 480w, {% static 'images/brand/nuldl-club-logo-800.webp' %} 800w, {% static 'images/brand/nuldl-club-logo-1200.webp' %} 1200w"
+          sizes="(min-width: 54rem) 32rem, calc(100vw - 2rem)"
+        >
+        <img
+          class="home-hero__logo"
+          src="{% static 'images/brand/nuldl-club-logo-800.webp' %}"
+          width="800"
+          height="800"
+          alt="Nonlinear Upper Limb Dynamics Laboratory logo"
+          decoding="async"
+          fetchpriority="high"
+        >
+      </picture>
+    </section>
+
+    <section class="public-section" id="new-to-armwrestling" aria-labelledby="new-to-armwrestling-title">
+      <div class="public-section__header">
+        <p class="eyebrow">Start with the fundamentals</p>
+        <h2 id="new-to-armwrestling-title">New to Armwrestling?</h2>
+        <h2>Join Us !</h2>
+      </div>
+
+      <div class="card-grid">
+        <article class="content-card">
+          <h3>Beginner Induction</h3>
+          <p>Learn the basic rules, positions and safety principles before your first practice pull.</p>
+        </article>
+        <article class="content-card">
+          <h3>Supervised Practice</h3>
+          <p>Develop technique through structured practice using dedicated armwrestling equipment.</p>
+        </article>
+        <article class="content-card">
+          <h3>Technique and Rules</h3>
+          <p>Build a clearer understanding of movement, leverage, match rules and training methods.</p>
+        </article>
+        <article class="content-card">
+          <h3>Community and Competition</h3>
+          <p>Take part in social training sessions, workshops and internal competitions.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="public-section session-card" aria-labelledby="upcoming-session-title">
+      <p class="eyebrow">Next training date</p>
+      <h2 id="upcoming-session-title">Upcoming Session</h2>
+      <dl class="session-details">
+        <div>
+          <dt>Date</dt>
+          <dd><time datetime="2026-12-01">1 December 2026</time></dd>
+        </div>
+        <div>
+          <dt>Time</dt>
+          <dd>3:00–7:00 pm</dd>
+        </div>
+        <div>
+          <dt>Session</dt>
+          <dd>Training Session</dd>
+        </div>
+        <div>
+          <dt>Venue</dt>
+          <dd>Venue details to be confirmed</dd>
+        </div>
+      </dl>
+      <p class="session-note">Further attendance details will be published before the session.</p>
+      {% if not user.is_authenticated %}
+        <a class="button" data-session-join href="{% url 'account_signup' %}">Join</a>
+      {% endif %}
+    </section>
+  </div>
 {% endblock %}

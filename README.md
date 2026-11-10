@@ -1,6 +1,6 @@
 # Nonlinear Upper Limb Dynamics Laboratory website
 
-This repository contains the NULDL website and member account system. Phase 1 provides registration, mandatory email verification, password and Magic Code login, account identity management, USU ID review in Django Admin, and a responsive local-asset interface.
+This repository contains the NULDL website and member account system. Phase 1 provides registration, mandatory email verification, password and Magic Code login, account identity management, USU ID review in Django Admin, and a responsive local-asset interface. Phase 2 adds the English Home, About, Beginners & Safety, environment-gated Draft Risk Notice, project error pages, metadata, sitemap, approved Instagram footer, and public-page accessibility checks.
 
 NULDL uses neutral project branding. This repository does not claim to be an official University of Sydney website and does not include University logos, crests, or other unapproved brand assets.
 
@@ -60,7 +60,23 @@ Apply migrations after pulling schema changes:
 python -m uv run --env-file .env python manage.py migrate
 ```
 
-## Automated Phase 1 acceptance
+## Automated acceptance
+
+The Phase 2 acceptance command creates a temporary clean uv environment, installs the locked Python and npm dependencies, starts PostgreSQL, applies migrations, runs the complete project quality gate, starts the Development server, and runs desktop and mobile Playwright smoke tests for the public website:
+
+```powershell
+python -m uv run --env-file .env python scripts\accept_phase_2.py
+```
+
+The shared quality and security gate can be run separately:
+
+```powershell
+python -m uv run --env-file .env python scripts\verify_project.py
+```
+
+Both commands return a non-zero exit status if any required check fails. The Phase 1 commands remain available for historical verification.
+
+### Phase 1 compatibility
 
 The Step 20 acceptance command creates a temporary clean uv environment, installs the locked Python and npm dependencies, starts PostgreSQL, applies migrations, runs the complete Phase 1 quality gate, starts the local Django server, and runs desktop and mobile Playwright smoke tests:
 
@@ -73,8 +89,6 @@ The underlying quality and security gate can be run separately:
 ```powershell
 python -m uv run --env-file .env python scripts\verify_phase_1.py
 ```
-
-Both commands return a non-zero exit status if any required check fails.
 
 ## Manual Phase 1 walkthrough
 
@@ -96,6 +110,18 @@ Use synthetic identities only. Do not enter real member details or real USU IDs.
 9. Confirm keyboard navigation, visible focus, error association, code paste, and absence of horizontal scrolling on desktop and mobile widths.
 10. Confirm pages use NULDL-only branding and contain no University logo, crest, or official-affiliation claim.
 
+## Manual Phase 2 review
+
+Use desktop and mobile-width browsers and review the following without entering real member data:
+
+1. Confirm Home, About, and Beginners & Safety contain the approved English copy and have working Header, Footer, keyboard navigation, visible focus, and no horizontal scrolling.
+2. Confirm the Home Logo is sharp and undistorted, and the static session reads `1 December 2026`, `3:00–7:00 pm`, and `Venue details to be confirmed` without registration controls.
+3. Confirm the Footer links only to Instagram `@nuldl_armwrestlingclub` and does not publish a contact Email.
+4. In Development, confirm Draft Risk Notice displays `DRAFT — NOT APPROVED FOR PARTICIPATION USE`; confirm Production configuration keeps the draft unavailable.
+5. Confirm 403, 404, and 500 responses use the project page shell and disclose no traceback, exception details, internal paths, or secrets.
+6. Confirm metadata and `/sitemap.xml` include only the approved public pages and exclude authentication, Admin, error, Draft Risk Notice, and future-phase routes.
+7. Confirm there are no external fonts or CDN requests, no real member details, and no University logo, crest, or affiliation claim. University branding remains excluded until written approval is recorded.
+
 ## Security and data boundaries
 
 - Never commit `.env`, credentials, verification or login codes, database dumps, real member data, or user uploads.
@@ -115,4 +141,4 @@ Use synthetic identities only. Do not enter real member details or real USU IDs.
 - `scripts/`: asset, quality-gate, and acceptance tooling
 - `memory-bank/`: product, architecture, implementation, roadmap, and progress records
 
-Phase 2 has not started. Current scope and unresolved external decisions are recorded in `memory-bank/progress.md` and `memory-bank/项目开发_Roadmap.md`.
+Phase 2 implementation is ready for Step 28 acceptance. Current scope and unresolved external decisions are recorded in `memory-bank/progress.md` and `memory-bank/项目开发_Roadmap.md`.

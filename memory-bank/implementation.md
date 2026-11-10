@@ -4,7 +4,7 @@
 **文档职责：** 为 AI 开发者提供可验证、可逐步执行的开发指令  
 **实施根目录：** `../`  
 **文档状态：** Progressive  
-**最后更新：** 2026 年 10 月 22 日
+**最后更新：** 2026 年 10 月 25 日
 
 ## 一、输入与优先级
 
@@ -304,15 +304,93 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **完成条件：** Phase 1 的 Roadmap 退出门槛全部满足；记录遗留问题；向项目负责人申请更新 `architecture.md`，并在获批后再展开 Phase 2。
 
-## 六、Phase 2 概要：英文宣传网站
+## 六、Phase 2：英文宣传网站
 
-**展开条件：** Phase 1 已验收，真实模板结构、Design Tokens 和认证导航稳定。
+**展开条件：** Phase 1 已验收；全局模板、Design Tokens、认证导航、静态资源和 Playwright 门禁稳定；Phase 2 英文内容已经记录在 `design_document.md`。
 
-**范围：** Home、About、Beginners & Safety、Risk Notice、403、404、500、metadata、Open Graph 和 sitemap。Home 以 `Join the Club` 为主操作，使用紧凑活动日程；复杂人体结构和受力插画继续后置。
+**范围边界：** 本阶段只实现静态英文宣传页面和相关展示基础。不增加 Event、RiskNoticeVersion 或其他数据库模型，不创建 migration，不建立 CMS，不提供活动报名。正式活动数据、Risk Notice 版本管理和报名继续属于 Phase 4。
 
-**关键约束：** 正式环境只展示已确认 Risk Notice；Preview 必须标记 draft；不得制造 University 官方部门或正式研究实验室的误解；页面遵循既定黑金视觉、字体和新手友好比例。
+### Step 21 — 建立公开页面基础与品牌命名
 
-**阶段验证：** 公共页面内容、导航、SEO metadata、error pages、键盘、窄屏、内容放大、对比度和 JavaScript 失效路径全部通过；Production 在 Risk Notice 未确认时不得开放报名。
+**目标：** 为 Phase 2 页面建立一致的 metadata、内容组件和响应式导航基础。
+
+**指令：** 扩展全局 base template，提供每页可覆盖的 description、robots、Open Graph 和附加 head 内容边界；建立可复用的 public page、section、card、CTA 和状态样式；将 Header 对外品牌文字改为 `NULDL Armwrestling Club`，不得单独显示 `NULDL`；建立键盘可用的移动导航，但只链接当前已经存在的页面；保持 Anonymous 与 Member 的认证入口行为不变。
+
+**验证：** 增加模板测试，检查 metadata block、唯一页面标题、品牌完整名称、Anonymous/Member 导航差异、当前页状态和不存在失效链接；使用 Playwright 验证桌面及手机导航、键盘操作、Focus、菜单展开关闭和禁用 JavaScript 时的基础链接；运行现有认证与全局模板回归测试。
+
+**完成条件：** 公共页面共享基础可复用，Header 不出现含义不明的单独 `NULDL`，认证流程与无 JavaScript 导航没有回归。
+
+### Step 22 — 完成 Home、Logo 与静态日程
+
+**目标：** 用已确认内容完成招新导向的正式首页。
+
+**指令：** 按 `design_document.md` 实现 Hero、`Join the Club`、`New to Armwrestling?`、训练内容、参与资格和 Upcoming Session；静态日程只显示 `1 December 2026`、`3:00–7:00 pm`、`Training Session` 与 `Venue details to be confirmed`，不建立 Event model、报名状态或 Events 链接；将仓库根目录外 `../../Logo_without_USYD.png` 作为源资产纳入仓库，保留原始文件并通过可重复流程生成适合 Hero 的响应式、压缩网页版本；Header 继续使用文字品牌；不得改动 Logo 图形内容或加入 University Branding。
+
+**验证：** 测试 Home 的标题、正文、CTA 目标、静态日程及缺少 Events 链接；验证 Anonymous 与 Member 的 CTA 行为；检查源图和生成图尺寸、格式、文件大小、可重复生成及浏览器加载；使用 Playwright 检查 desktop/mobile 无水平溢出、Logo 不失真、文字不被裁切、CTA 可用及 JavaScript 关闭后的内容完整性。
+
+**完成条件：** Home 使用获准英文内容和新 Logo，静态日程准确，页面不提前引入 Phase 4 功能或受限 Branding。
+
+### Step 23 — 完成 About 与 Beginners & Safety
+
+**目标：** 提供清晰的社团介绍、新手参与说明和安全基础信息。
+
+**指令：** 在 `core` 中建立 About 与 Beginners & Safety 的命名 URL、views 和 templates；逐项采用 `design_document.md` 已确认文案；About 使用 `student-led`，明确网站参与资格与 constitutional governance rights 的边界；Beginners & Safety 展示 induction、supervised practice、dedicated equipment、活动风险和停止参与条件；加入 Header 导航和当前页标识；不得公开 USYD、University affiliation、联系邮箱或具体训练地点。
+
+**验证：** 测试两条 URL、状态码、模板、Heading 层级、metadata、准确文案、导航及 CTA；扫描公开响应，确认没有单独 `NULDL`、`USYD`、`Sydney University`、`University of Sydney`、Email、USU ID 或未经批准地点；使用 Playwright 检查手机换行、键盘导航、内容放大和禁用 JavaScript 后的可读性。
+
+**完成条件：** About 与 Beginners & Safety 内容完整、事实边界明确，并进入所有适用的公开导航。
+
+### Step 24 — 实施 Draft Risk Notice 环境隔离
+
+**目标：** 允许 Development 和 Preview 审阅 draft，同时确保 Production 不公开正文。
+
+**指令：** 在 `safety` 中建立 Risk Notice view、URL 和 template；正文逐字使用 `design_document.md` 保存的当前 draft，包括源文本的重复 acknowledgement；显示 `DRAFT — NOT APPROVED FOR PARTICIPATION USE`、说明文字和 `noindex, nofollow`；通过显式配置控制 draft 可见性，默认安全关闭，Development 和获准 Preview 明确开启，Production 强制关闭；关闭时页面返回 404，并从 Header、页面 CTA 和 sitemap 排除；不得编辑责任限制文本，不得增加确认或报名表单。
+
+**验证：** 分别测试 draft 开启和关闭配置；检查开启时正文、banner、robots、导航及 Beginners CTA，关闭时返回 404 且没有可发现链接；验证 Production settings 无法公开 draft；检查页面没有 POST、checkbox、报名入口或 RiskNoticeVersion 数据访问；运行敏感信息和 Branding 回归测试。
+
+**完成条件：** Draft 只在明确允许的非正式环境可见，Production 无法通过直接 URL、导航或 sitemap 获取正文。
+
+### Step 25 — 建立 403、404 与 500 页面
+
+**目标：** 让公开错误状态保持一致、可理解且不暴露内部信息。
+
+**指令：** 建立共享视觉下的 403、404 和 500 templates，并接入 Django handlers；提供返回 Home 的明确操作；错误页面只使用中性英文说明，不显示 traceback、Exception、内部路径、Secret 或虚构联系方式；在 `DEBUG=False` 条件下验证真实 handler 行为。
+
+**验证：** 对三个状态执行模板和 handler 测试，确认正确状态码、页面标题、唯一 H1、Home link 和无敏感内容；使用 Playwright 在 desktop/mobile 检查布局、键盘 Focus、CSS 加载及无 JavaScript 可用性；确认现有权限测试仍返回预期状态。
+
+**完成条件：** 403、404 和 500 均使用项目页面壳、保持正确 HTTP 状态且不泄露技术细节。
+
+### Step 26 — 完成 Metadata、Open Graph、Sitemap 与 Footer
+
+**状态：** 已完成并通过项目负责人验证（2026 年 10 月 27 日）。
+
+**目标：** 建立可验证的搜索与分享基础，并加入唯一获准的公开社交入口。
+
+**指令：** 为 Home、About 和 Beginners & Safety 使用已确认 title 与 description；建立通用 Open Graph site name、页面 title、description 和 URL；在最终域名未确认前不硬编码 canonical host；建立只包含 Production 可公开页面的 sitemap；Footer 加入 Instagram `@nuldl_armwrestlingclub` 及 HTTPS 链接，不加入联系邮箱；draft Risk Notice 只在允许环境使用 `noindex, nofollow`，且永不进入 Production sitemap。
+
+**验证：** 测试每页 title、description、Open Graph 值、绝对或环境派生 URL、Instagram 文本与目标；解析 sitemap 并确认只包含允许页面、无认证页面、无 error page、无 draft Risk Notice 和无后续 Phase 路由；检查没有硬编码 `nuldl.com`、测试 host 或未经批准 Branding。
+
+**完成条件：** 所有正式公开页面具有准确 metadata，sitemap 与环境可见性一致，Footer 只公开已批准的 Instagram。
+
+### Step 27 — 完成响应式与 Accessibility 验证
+
+**目标：** 对 Phase 2 全部公开页面执行统一的 WCAG 2.2 AA 风险检查。
+
+**指令：** 在现有 Playwright 工具上扩展公共页面测试；覆盖 Header、移动菜单、Hero、Logo、CTA、长文、安全列表、Draft banner、Footer 和错误页面；检查语义 landmarks、Heading 顺序、link name、Focus、键盘顺序、触控目标、文本重排、200% 内容放大、颜色对比度、reduced motion 和图片替代文本；不引入未经确认的新测试框架或外部网络服务。
+
+**验证：** 在 desktop、mobile 和 200% 放大场景运行公共页面 browser suite；执行键盘-only 路径、JavaScript disabled smoke、reduced-motion 检查和关键前景/背景对比度计算；确认浏览器没有 page error、外部资源请求、水平溢出或不可见 Focus；运行完整 pytest 与现有认证 browser 回归。
+
+**完成条件：** Phase 2 页面在目标场景下可读、可操作且没有已知 WCAG 2.2 AA 阻塞问题。
+
+### Step 28 — Phase 2 质量门禁与阶段验收
+
+**目标：** 在全新环境验证英文宣传网站，并形成可交接的阶段结果。
+
+**指令：** 扩展单一质量入口以覆盖 Phase 2 静态资产、页面、environment gating、metadata、sitemap、error handlers 和 Playwright 公共流程；在全新环境执行锁定依赖安装、PostgreSQL 启动、migrate、静态资源构建、Development server 和 Production 配置检查；人工复核全部英文文案、Logo、Instagram、日期时间、地点占位、Risk Notice draft 标识和禁止 Branding；更新 README、`progress.md` 与 Roadmap。
+
+**验证：** 运行 Ruff、format check、migration drift、Django checks、完整 pytest、coverage、Production deploy check、collectstatic 和 Playwright desktop/mobile suite；确认没有新增 migration、Secret、真实会员资料、外部字体/CDN、未经批准 University Branding 或 Production draft Risk Notice；从干净环境复现全部检查。
+
+**完成条件：** Roadmap 的 Phase 2 退出门槛全部满足；记录遗留内容与外部依赖；将阶段标记为 `Ready for review`；向项目负责人申请更新 `architecture.md`，获得批准并完成阶段验收后才能标记 `Complete` 和展开 Phase 3。
 
 ## 七、Phase 3 概要：会员资料
 

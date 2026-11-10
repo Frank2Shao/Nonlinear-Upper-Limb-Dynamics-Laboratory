@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+
+{% block title %}Access Denied | NULDL Armwrestling Club{% endblock %}
+{% block meta_description %}This page is not available with your current access.{% endblock %}
+{% block open_graph_title %}Access Denied | NULDL Armwrestling Club{% endblock %}
+{% block open_graph_description %}This page is not available with your current access.{% endblock %}
+
+{% block content %}
+  <article class="public-page public-page--content">
+    <header class="public-section__header">
+      <p class="eyebrow">403</p>
+      <h1>Access Denied</h1>
+      <p class="lede">You do not have permission to access this page.</p>
+    </header>
+    <div class="cta-panel public-page__action">
+      <a class="button" href="{% url 'home' %}">Return Home</a>
+    </div>
+  </article>
+{% endblock %}

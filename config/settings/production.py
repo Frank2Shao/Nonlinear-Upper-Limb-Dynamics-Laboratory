@@ -5,6 +5,7 @@ from .base import *
 SECRET_KEY = required_env("DJANGO_SECRET_KEY")
 
 DEBUG = False
+RISK_NOTICE_DRAFT_VISIBLE = False
 
 STORAGES["staticfiles"] = {
     "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",

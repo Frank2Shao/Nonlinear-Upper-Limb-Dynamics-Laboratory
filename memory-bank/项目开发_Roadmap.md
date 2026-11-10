@@ -3,12 +3,12 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **候选域名：** `nuldl.com`  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1 已完成；Phase 2 尚未开始
-**最后更新：** 2026 年 10 月 25 日
+**当前阶段：** Phase 1 与 Phase 2 已完成；Phase 3 尚未开始
+**最后更新：** 2026 年 10 月 29 日
 
 ## 一、文档体系
 
-本项目使用四份文档管理需求与实施：
+本项目使用六份文档管理需求、实施和已完成状态：
 
 | 文档 | 唯一职责 | 权威内容 |
 | --- | --- | --- |
@@ -16,6 +16,8 @@
 | [tech_stack.md](tech_stack.md) | 技术决策 | 技术选型、版本、架构、环境、安全、部署和运维边界 |
 | [implementation.md](implementation.md) | 代码实施方案 | Apps、模型、约束、URL、配置、测试、migration 和执行顺序 |
 | [项目开发_Roadmap.md](项目开发_Roadmap.md) | 阶段与进度 | 依赖、交付物、退出门槛、状态和外部阻塞事项 |
+| [architecture.md](architecture.md) | 已实施架构 | 已经落地并通过验证的结构、边界和理由 |
+| [progress.md](progress.md) | 执行记录 | 各步骤实际修改、验证结果、修补和下一步门槛 |
 
 内容发生冲突时，先按职责确定权威文件，再修改引用该决定的下游文档。Roadmap 不重复维护字段级模型或配置项。
 
@@ -30,7 +32,7 @@
 5. 增加地点信息和地图；
 6. 完成正式环境、安全、运维及外部审批。
 
-首期结束时，NULDL 应具备公开信息展示、会员注册、USU ID 人工审核、公开资料、活动报名、报名取消、Risk Notice 版本追溯和地点地图功能。
+首期结束时，NULDL Armwrestling Club 网站应具备公开信息展示、会员注册、USU ID 人工审核、公开资料、活动报名、报名取消、Risk Notice 版本追溯和地点地图功能。
 
 ## 三、状态定义
 
@@ -49,7 +51,7 @@
 | Phase | 名称 | 主要依赖 | 当前状态 |
 | --- | --- | --- | --- |
 | 1 | 项目基础、账户与 USU ID 审核 | 已确认的 Design 与 Tech Stack | `Complete` |
-| 2 | 英文宣传网站 | Phase 1 页面框架 | `Not started` |
+| 2 | 英文宣传网站 | Phase 1 页面框架 | `Complete` |
 | 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Not started` |
 | 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Not started` |
 | 5 | 地点与地图 | 已确认地点；Phase 2 页面系统 | `Not started` |
@@ -96,7 +98,7 @@
 
 ### 目标
 
-使用中性的 NULDL Branding 完成首期英文公开信息页面。
+使用中性的 `NULDL Armwrestling Club` Branding 完成首期英文公开信息页面。
 
 ### 主要交付物
 
@@ -105,14 +107,18 @@
 - Beginners & Safety；
 - Risk Notice 页面；
 - Header、Footer 和公开导航；
+- 已确认的新 Logo Hero 展示和文字 Header 品牌；
+- `1 December 2026, 3:00–7:00 pm` 静态训练日程；
+- Instagram `@nuldl_armwrestlingclub`；
 - 403、404 和 500 页面；
 - 基础 metadata、sitemap 和 accessibility 支持。
 
 ### 依赖
 
 - Phase 1 基础模板和静态文件流程；
-- 已确认的英文页面内容；
-- Risk Notice 在预览阶段可以使用明确标记的 draft，正式环境需要确认文本；
+- 已确认并记录在 `design_document.md` 的英文页面内容；
+- 已确认的 `Logo_without_USYD.png` 源文件；
+- Risk Notice 当前为 draft，Development 和 Preview 使用明确 draft 标记，Production 禁用正文；
 - 不使用未经批准的 USYD Branding。
 
 ### 退出门槛
@@ -120,13 +126,18 @@
 - 所有计划页面具有完整英文内容；
 - 桌面、手机、键盘和内容放大场景可用；
 - 导航不存在指向未完成功能的失效入口；
+- 对外缩写统一写作 `NULDL Armwrestling Club`；
+- Home 准确展示日期、时间和未确认地点状态，且不提前提供活动报名；
 - Preview 中的临时 Risk Notice 具有清晰 draft 标记；
 - Production 不公开未经确认的 Risk Notice 或 University Branding；
+- Footer 只公开已确认的 Instagram，不公开联系邮箱；
 - 页面测试、accessibility 检查和浏览器 smoke test 通过。
 
 ### 阶段状态
 
-`Not started`
+`Complete`
+
+验收结果：Step 21–28 已完成并通过项目负责人验证；Home、About、Beginners & Safety、公开导航、响应式与 accessibility、Draft Risk Notice 环境隔离、共享视觉的 403、404、500 页面、准确 Metadata/Open Graph、公开 sitemap、已批准 Instagram Footer、共享项目质量门禁及全新环境端到端验收均已落地。项目负责人已完成最终人工走查并确认 Phase 2 验收通过。Risk Notice 最终文本、University Branding、地点详情、Production 域名与 Provider、数据保留规则及中文版本继续按外部依赖或后续阶段管理。
 
 ## 七、Phase 3：会员资料管理
 
@@ -302,10 +313,10 @@
 
 | 事项 | 最晚需要时间 | 当前影响 |
 | --- | --- | --- |
-| Risk Notice 最终文本 | Phase 4 正式启用报名前 | 不阻塞 Phase 1；限制正式报名 |
+| Risk Notice 最终文本 | Phase 4 正式启用报名前 | Phase 2 仅允许非正式环境展示 draft；Production 禁用正文；限制正式报名 |
 | 未成年人未来附加措施 | Risk Notice 确认时 | 当前按已确认首期规则实施 |
-| University Branding 批准 | 任何相关内容公开前 | 使用中性 NULDL Branding |
-| 地点地址和坐标 | Phase 5 开始前 | 不阻塞 Phase 1-4 |
+| University Branding 批准 | 任何相关内容公开前 | 使用中性 `NULDL Armwrestling Club` Branding，不公开 USYD affiliation |
+| 地点地址和坐标 | Phase 5 开始前 | Phase 2 日程显示 `Venue details to be confirmed`；不阻塞其他公开内容 |
 | Hosting 与相关 Provider | Phase 6 开始前 | 不阻塞本地开发 |
 | 会员退出和数据保留规则 | 对外提供删除流程前 | 首期不实现退出工作流 |
 | 中文版本 | 首期完成后再决定 | 不进入首期范围 |
@@ -318,7 +329,7 @@
 2. 已完成的主要交付物；
 3. 尚未通过的退出门槛；
 4. 新的外部依赖或阻塞；
-5. 对其他三份文档产生的变更。
+5. 对其他项目文档产生的变更。
 
 Roadmap 不记录逐个代码文件的完成情况。具体开发任务、测试和实现顺序维护在 `implementation.md` 或项目任务系统中。
 
@@ -329,7 +340,7 @@ Roadmap 不记录逐个代码文件的完成情况。具体开发任务、测试
 - 新的模型、约束、URL 或测试方案修改 `implementation.md`；
 - 阶段、依赖、交付物或进度变化修改本 Roadmap；
 - 涉及范围扩大的决定需要先确认，再更新文件；
-- 修改一份文件时检查其他三份文件是否需要同步引用，但不复制完整内容。
+- 修改一份文件时检查其他项目文档是否需要同步引用，但不复制完整内容。
 
 ## 十五、项目资料
 
@@ -342,6 +353,7 @@ Roadmap 不记录逐个代码文件的完成情况。具体开发任务、测试
 - `Nonlinear Upper Limb Dynamics Laboratory constitution.pdf`；
 - `3_ClubSociety_Agreement_Armwrestling_NULDL.pdf`；
 - `Armwrestling_Risk_Notice_EN.pdf`；
-- `Armwrestling_Risk_Notice_CN.pdf`。
+- `Armwrestling_Risk_Notice_CN.pdf`；
+- `Logo_without_USYD.png`。
 
 当前没有其他未提供的原始构思文件。

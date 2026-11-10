@@ -1,14 +1,18 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 10 月 25 日
-**对应进度：** Phase 1, Step 20
-**当前状态：** Phase 1 已通过全新环境自动化验收与人工走查并完成；Phase 2 尚未开始
+**最后更新：** 2026 年 10 月 29 日
+**对应进度：** Phase 2, Step 28
+**当前状态：** Phase 1 与 Phase 2 已完成；Phase 3 尚未开始
 
 ## 一、当前架构结论
 
 仓库当前包含项目治理文档、基础 Git 配置、可重现的 Python 与前端依赖元数据、能够通过 Django system check 的项目骨架、由 Docker Compose 管理的本地 PostgreSQL 环境、Development、Test、Production 分环境 settings、具有受保护身份状态转换的 Custom User、完整的 MemberProfile 数据与公开查询边界，以及可重复构建的本地静态资源 pipeline。Python 运行时限定为 3.13.x，后端依赖由 `uv` 锁定，前端依赖由 npm 锁定。Django 已能加载六个项目 App，并从主机 `uv` 环境连接容器中的 PostgreSQL 18.6。
 
-当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Home 继续保持英文占位，HTMX 与 MapLibre 只完成本地资产准备，Phase 2 尚未展开。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
+当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 另含无报名能力的静态日程及由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 只公开三个正式页面，始终排除 Draft、认证、Account、Admin、错误页面和后续 Phase 路由。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 与 MapLibre 仍只完成本地资产准备。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
+
+Phase 2 现有统一 Playwright accessibility 门禁覆盖全部正式公开页、Draft 及真实错误页，并在 desktop、mobile、200% 内容放大、键盘、无 JavaScript 和 reduced-motion 场景检查语义、Focus、触控目标、重排、对比度、替代文本、错误及网络边界。
+
+Phase 2 已建立跨阶段共享项目门禁和全新临时 uv environment 端到端验收入口。初次完整验收通过 234 个测试并达到 94% branch coverage；阶段人工走查后的公开页面文案、CTA 与布局修订又通过 24 个 Django 页面测试、4 个相关 Playwright 场景及静态与 Ruff 检查。项目负责人已确认最终人工验收，Phase 2 状态为 `Complete`。
 
 ## 二、已实施的依赖架构
 
@@ -87,12 +91,12 @@ ASGI / WSGI ───────────→ config.settings.production
 
 | App | 已建立边界 | 当前未实现 |
 | --- | --- | --- |
-| `core` | 公共站点与全局页面功能的归属位置 | 页面、模板、通用组件和 error pages |
+| `core` | Home、About、Beginners & Safety、全局页面壳、通用组件和 403/404/500 error pages | 后续 Phase 的业务页面 |
 | `accounts` | Custom User、标准与专用审核权限、Email/USU ID 规范化、USYD 声明、状态转换、受控审核服务、signup、Magic Code request 与 Account identity forms、完整认证流程、`/account/` 本人身份信息管理，以及 `/admin/` 最小权限 USU ID 审核 | 统一认证页面表现及其他业务 App 的后台管理 |
 | `members` | MemberProfile schema、字段验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、会员字段白名单和 Admin 模型配置 | 资料编辑页面、预览、发布操作、公开列表和详情页 |
 | `events` | 活动与报名功能的归属位置 | Event、EventRegistration、报名和取消逻辑 |
 | `locations` | 地点与地图数据功能的归属位置 | Location、地点页面和地图输出 |
-| `safety` | Risk Notice 与安全内容功能的归属位置 | RiskNoticeVersion、安全页面和当前版本服务 |
+| `safety` | 环境隔离的静态 Draft Risk Notice 页面 | RiskNoticeVersion、正式 Risk Notice 和当前版本服务 |
 
 `accounts` 已建立 Custom User、领域服务及两条业务 migrations；`members` 已建立完整 Profile 数据边界及首条 migration；其余四个业务 App 仍只具备 package、AppConfig 和空 migration package。
 
@@ -257,6 +261,82 @@ ASGI / WSGI ───────────→ config.settings.production
 - README 是新开发者的操作入口，明确 PowerShell 工具检查、`.env.example` 复制、uv/npm 锁定安装、Compose PostgreSQL、migrate、static build、runserver、质量门禁、端到端验收和合成数据人工走查。Development console Email 仅用于本地读取 code；真实 SMTP 与 Production Provider 仍未选择。
 - 自动验收在临时 environment 中通过 184 个测试并保持 93% branch coverage；项目负责人随后完成并确认注册、两种登录、Account、USU review、POST logout、键盘、mobile 和 Branding 人工走查。该结果满足 Phase 1 退出门槛，不代表 Phase 2 页面或 Production provider 已实施。
 
+### 3.19 Phase 2 公开页面基础、品牌与响应式导航
+
+- `core/base.html` 继续作为唯一前台页面壳，并在既有 title 之外增加 description、robots、Open Graph title/description、当前请求 URL 和额外 head 扩展区块。后续公开页面可以覆盖内容，不需要复制完整 `<head>`；最终页面 metadata 仍由对应页面及 Step 26 固定。
+- 对外页面壳、Home 占位、Account、allauth 认证模板和 Footer 统一使用完整 `NULDL Armwrestling Club` 品牌名称。Header 的可访问名称与可见文字一致，不再以含义不完整的单独缩写作为品牌入口。
+- Header 使用原生 `details`/`summary` 作为移动菜单控制。标记默认展开，使 desktop 和禁用 JavaScript 的 mobile 页面始终具有可访问链接；Alpine.js 仅在已加载且匹配手机宽度时执行初始收起，后续 Enter、Space、点击和展开状态均由浏览器原生 disclosure 行为负责。
+- 导航继续依据认证状态输出 Anonymous 的 Login/Signup 或 Member 的 Account，并使用既有 URL name 标记当前页。Step 21 没有创建 About、Events、Members 或 Locations 链接，避免在对应页面建立前出现失效入口。
+- `static_src/css/site.css` 增加 public page、section header、responsive card grid、content card、CTA panel 和 status banner 基础类；这些类只建立 Phase 2 页面复用边界，不代表 Home、About、安全页面或 Risk Notice 内容已经实施。
+- Playwright 通过独立 public foundation scenario 验证 1440px desktop 与 390px mobile、skip link、可见 Focus、菜单键盘开关、无 JavaScript 链接、无水平溢出、page error 和同源网络边界。项目负责人完整回归共运行 186 个测试并全部通过。
+
+### 3.20 Home、响应式 Logo 与静态日程
+
+- Home 继续由 `apps.core` 的既有根路径 view 服务，不新增 Model、migration 或业务 API。模板使用 `design_document.md` 已确认的英文 Hero、新手说明、训练内容、参与资格、Metadata 和 Open Graph 文案。
+- Hero 与 Upcoming Session 的主要操作按认证状态在服务端分支：Anonymous 使用 `Join the Club` 进入 Signup，authenticated member 使用 `Account` 进入本人账户页；`New to Armwrestling?` 是普通页内锚点，全部操作在禁用 JavaScript 时仍可用。
+- Upcoming Session 是模板内的静态信息，只展示已确认的 `1 December 2026`、`3:00–7:00 pm`、`Training Session` 和 `Venue details to be confirmed`，并附已批准的后续信息说明。当前没有 Event model、报名状态、报名操作或 Events 路由。
+- 已批准的 `Logo_without_USYD.png` 以原始字节保存在 `static_src/images/brand/`，尺寸为 1254 × 1254、大小为 1,776,890 bytes，SHA-256 为 `1bc738b3a7af5719a296bc0aecc67f2ea943d1acf7eadb499c3dd28592308944`。源文件不直接作为页面下载资产，且图形内容未被重新设计。
+- `scripts/build_home_images.py` 使用锁定版 Pillow 从受 hash、格式、尺寸和色彩模式保护的源图确定性生成 480、800、1200px 方形 WebP。生成物分别为 32,364、69,400、125,860 bytes；`package.json` 将生成与漂移检查接入现有 `static:build` 和 `static:check`。
+- Home `<picture>` 通过 width descriptor 与 `sizes` 选择响应式 Logo，`img` 保留明确宽高、方形 aspect ratio、非空替代文本和 `object-fit: contain`。Header 继续只使用文字品牌，没有缩放完整 Logo，也没有加入 University Branding。
+- Django 测试锁定获准内容、Metadata、Anonymous/Member CTA、静态日程、无 Events 链接、源图完整性、生成图格式/尺寸/压缩与可重复性。Playwright 验证 desktop、mobile 和禁用 JavaScript 时的 Logo 加载与比例、无水平溢出、文字/CTA 不被裁切、CTA 目标及内容完整性；项目负责人完整回归共运行 195 个测试并全部通过。
+
+### 3.21 About 与 Beginners & Safety 公开信息页
+
+- About 与 Beginners & Safety 继续归属 `apps.core`，分别由 `/about/` 和 `/beginners-safety/` 具名路由提供；页面是无数据库依赖的服务端渲染公开内容，不引入 Model、migration 或 API。
+- 两页各自覆盖全局 Metadata/Open Graph block，并使用 `design_document.md` 已批准的英文内容。About 明确呈现 student-led club 的定位，但不声明 University affiliation；Beginners & Safety 呈现 induction、supervised practice、dedicated equipment、主要风险和停止训练条件，但不充当版本化 Risk Notice。
+- Header 在既有 Home 与认证操作之间加入两个公开页面链接，并继续使用 URL name 输出当前页状态。Anonymous CTA 指向 Signup，authenticated member CTA 指向 Account；导航和 CTA 均为普通链接，不依赖 JavaScript。
+- 公开内容组件样式建立受限正文宽度、卡片列表、编号步骤、安全列表与提示面板，复用既有 tokens、focus 和 responsive page shell。页面不公开联系邮箱、具体地点或未经批准的 University Branding。
+- Django 测试锁定 URL、模板、Metadata、文案、受限内容、导航与 CTA；Playwright 验证 desktop/mobile、键盘访问、200% content zoom、禁用 JavaScript、可见内容边界、无横向溢出和同源网络隔离。项目负责人完整回归共运行 207 个测试并全部通过。
+
+### 3.22 Draft Risk Notice 环境隔离
+
+- `RISK_NOTICE_DRAFT_VISIBLE` 在公共 settings 中默认关闭。Development 明确设为开启，Test 明确保持关闭，Production 强制关闭且不读取同名环境变量，因此部署环境无法通过变量意外公开 Draft。
+- `config.settings.preview` 继承 Production 的 Secret、PostgreSQL、SMTP、HTTPS 与 manifest static 配置，并要求显式解析 `RISK_NOTICE_DRAFT_VISIBLE`。缺少该变量时 Preview settings 安全失败；只有获准私有 Preview 明确提供 `true` 才显示 Draft。
+- `/risk-notice/` 由 `apps.safety` 的具名路由和无数据库 view 提供。路由始终可反向解析以支持条件模板链接，但 view 在开关关闭时抛出 404，不渲染 Draft template，也不查询数据库。
+- Safety context processor 只向 RequestContext 暴露 Draft 可见性的 Boolean，不暴露环境变量或其他 settings。Header 和 Beginners & Safety 据此同时显示或隐藏链接，避免关闭状态留下可发现入口。
+- Draft template 逐字保存获准的四段当前正文，包括重复 acknowledgement；页面使用明确 Draft banner、说明文字及 `noindex, nofollow`，没有 POST、checkbox、报名确认或责任限制文本改写。
+- 本步没有创建 RiskNoticeVersion、Model、migration、Event 关系或 sitemap。正式版本管理、历史确认和报名事务仍属于 Phase 4；Step 26 建立 sitemap 时必须继续排除 Draft。
+- Django 测试覆盖环境矩阵、默认关闭、404、逐字正文、重复段落、robots、条件导航、无表单和零数据库查询；Playwright 覆盖 desktop/mobile、键盘、禁用 JavaScript、布局及同源网络隔离。项目负责人完整回归共运行 216 个测试并全部通过。
+
+### 3.23 全局 403、404 与 500 错误处理
+
+- 项目根 URLConf 显式注册三个 Django error handlers。403 与 404 接受 Django 传入的 `exception` 关键字参数后立即丢弃；500 只接收 request。异常对象、错误消息和内部状态不会进入 template context。
+- handlers 由 `apps.core.views` 提供，并分别以 403、404 和 500 状态渲染固定模板。错误响应因此保持原始 HTTP 语义，不通过 redirect 或 200 页面掩盖错误。
+- 三个模板继承唯一全局页面壳，复用 Header、Footer、本地 CSS、Focus 与响应式基础；页面使用中性英文标题、唯一 H1 和普通 `Return Home` link，不提供虚构联系方式或依赖 JavaScript 的恢复操作。
+- 错误页面不输出 traceback、Exception、内部文件路径、Secret 或异常原文。Step 25 没有引入错误监控 Provider、客户端错误上报、Model、migration 或外部资源。
+- 测试使用独立 URLConf 将合成的 PermissionDenied、缺失路由和未处理异常送入真实 handlers，避免在生产 URL 中建立测试入口。Playwright 验证三个状态的 desktop/mobile、CSS、键盘 Focus、无 JavaScript、无横向溢出和同源网络隔离；项目负责人完整回归共运行 221 个测试并全部通过。
+
+### 3.24 公开 Metadata、Sitemap 与 Footer 边界
+
+- Home、About 和 Beginners & Safety 在各自模板中覆盖准确的 title、description 与 Open Graph title/description；公共页面壳统一提供 `website` type、`NULDL Armwrestling Club` site name 及由当前 request 派生的绝对 URL。
+- 最终域名仍未确认，因此页面没有 canonical link，也不硬编码 `nuldl.com` 或测试 host；部署环境的 host 配置继续由对应 settings 控制。
+- `/sitemap.xml` 由 `apps.core` 的无数据库 view 和 XML template 生成。公开范围由 `PUBLIC_SITEMAP_URL_NAMES` 显式 allowlist 决定，当前只包含 Home、About 和 Beginners & Safety，避免自动 URL 发现误收录认证、管理、错误、Draft 或未来路由。
+- Draft Risk Notice 即使在 Development 或获准 Preview 开启，也始终保留 `noindex, nofollow` 且不进入 sitemap；Production 继续强制关闭 Draft 正文。
+- Footer 公开唯一获准联系渠道 Instagram `@nuldl_armwrestlingclub` 的 HTTPS 链接，不公开 Email，也不加入 University Logo、Crest 或 affiliation 表述。
+- Django 测试解析真实 sitemap XML 并锁定精确 allowlist，同时验证 metadata、环境派生 URL、Footer 与禁止内容；项目负责人专项回归 44 个测试、完整回归 230 个测试均通过。
+
+### 3.25 Phase 2 统一 Accessibility 浏览器门禁
+
+- `phase2-accessibility.mjs` 在一个锁定 Chromium 会话中统一遍历 Home、About、Beginners & Safety、Draft Risk Notice、403、404 和 500 页面，减少各步骤独立 smoke test 之间的覆盖差异。
+- 测试使用既有 `browser-support.mjs` 建立只允许当前 live-server origin 的 context；任何外部 HTTP(S) 请求和浏览器 page error 都会使统一场景失败。
+- Desktop 与 mobile 检查共享 landmarks、Heading 顺序、link name、图片 alt、页面特有组件、Footer、横向溢出及可见内容裁切。Home 另验证 Logo 解码、自然尺寸和替代文本。
+- Mobile 场景打开原生 disclosure 后检查全部可见交互目标至少为 24px，并从 skip link、品牌、Menu 到全部导航操作验证真实 Tab 顺序、可见 Focus 和 viewport 内位置。
+- 200% 内容放大使用 640px viewport 与根字体 200% 模拟 320 CSS px reflow；所有目标页面必须保持无横向溢出和可读内容边界。
+- JavaScript disabled 场景要求相同公开与错误页面、Header 链接、主内容和 Footer 继续可用；`prefers-reduced-motion: reduce` context 验证媒体查询命中及 animation/transition 时长被压缩。
+- 关键正文、弱化正文、主要按钮、Draft banner 和 Focus indicator 使用浏览器计算样式执行 WCAG 对比度计算；该自动化属于已实施页面的风险门禁，不表示形式化 WCAG 认证。
+- Django wrapper 以 `DEBUG=False`、开启 Draft 并复用 `tests.error_urls` 启动 `StaticLiveServerTestCase`，因此同一场景可以验证真实 403/404/500 handler、静态资源和 Draft 环境分支，而不建立生产测试 URL。
+- 本门禁没有引入新依赖、外部 accessibility service、Model 或 migration，也没有因测试结果修改生产 template 或 CSS。项目负责人专项 1 个测试、浏览器回归 7 个测试及完整 231 个测试均通过。
+
+### 3.26 Phase 2 共享质量门禁与全新环境验收
+
+- `scripts/verify_project.py` 取代阶段专属脚本成为共享项目门禁，固定执行 npm 锁定安装、Chromium 准备、静态资源 build/check/watch、Ruff lint/format、migration drift、Django check、干净 PostgreSQL branch coverage 测试、Production deploy check 和 manifest `collectstatic`，并传播任何子命令失败。
+- `scripts/verify_phase_1.py` 保留为兼容 wrapper，使既有 Phase 1 命令继续委派到同一共享门禁，避免门禁逻辑分叉。
+- `scripts/accept_phase_2.py` 使用 `UV_PROJECT_ENVIRONMENT` 在 OS 临时目录建立独立锁定环境，等待 Docker PostgreSQL、执行 Development migration 与共享门禁，再在动态 loopback port 启动真实 Development server 并运行 Phase 2 smoke；所有退出路径都会终止 server 并清理临时环境。
+- `phase2-development-smoke.mjs` 在 desktop/mobile 下覆盖正式公开页、Draft 分支、错误页与认证入口，验证 CSS、响应式布局、页面错误及同源网络边界，不向 Development database 写入合成会员数据。
+- `tests/test_phase2_acceptance.py` 锁定命令失败传播、运行中 server 清理及 README 验收说明；`tests/test_quality_gate.py` 直接验证共享门禁，防止兼容 wrapper 掩盖真实入口。
+- 初次全新环境验收通过 234 个测试、94% branch coverage、Production 检查与 browser smoke。人工走查后的 Home、About 和 Beginners & Safety 内容与 CTA 收尾通过专项 Django/Playwright、静态与 Ruff 验证，项目负责人确认最终验收。
+- 该架构只完成 Phase 2 已定义页面与验收边界。Risk Notice 最终文本、University Branding、地点、Production Provider、数据保留和中文版本仍由后续批准或阶段处理；Phase 3 尚未实施。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -264,18 +344,25 @@ ASGI / WSGI ───────────→ config.settings.production
 | `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example` 与 `uv.lock`。 |
 | `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值，供开发者复制为未跟踪的 `.env`。 |
 | `AGENTS.md` | 定义仓库级开发约束，包括编码前必读文档、架构变更审批、计划目录、测试原则、命名规范和敏感数据限制。 |
-| `README.md` | 提供 Phase 1 项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、自动验收、人工核心流程、安全数据边界和目录职责；明确中性 NULDL Branding 与 Phase 2 未开始状态。 |
+| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1/2 自动验收、人工核心流程、安全数据边界和目录职责；明确中性 NULDL Branding。 |
 | `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
-| `package.json` | 定义锁定的浏览器 library、字体与前端开发工具，并提供 vendor copy/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
+| `package.json` | 定义锁定的浏览器 library、字体与前端开发工具，并提供 vendor copy/check、Home 图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
 | `package-lock.json` | 记录完整 npm 依赖树、下载来源和完整性信息，供 `npm ci` 可重复安装；不手工编辑。 |
 | `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、MapLibre GL JS、字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
+| `scripts/build_home_images.py` | 校验获准 Home Logo 源文件的 SHA-256、格式、尺寸与模式，并以锁定 Pillow 确定性生成或检查三个响应式 WebP 版本。 |
 | `scripts/check-css-watch.mjs` | 在临时目录启动 Tailwind `--watch=always`，确认首次 watch build 完成后终止进程并清理临时输出。 |
 | `scripts/verify_steps_17_18.py` | 提供 Step 17–18 原子联合门禁，顺序执行依赖与 Chromium 准备、资产 build/check、watch smoke、完整测试、Django/Ruff 检查和 Production collectstatic。 |
-| `scripts/verify_phase_1.py` | 提供 Phase 1 本地/CI 单入口质量安全门禁，执行锁定依赖和浏览器准备、静态构建、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
+| `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
+| `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
 | `scripts/accept_phase_1.py` | 提供 Step 20 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与完整 Phase 1 门禁、启动并可靠清理本机 Django server，再运行 desktop/mobile Playwright smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、组件样式、响应式布局、focus 和 reduced-motion。 |
+| `scripts/accept_phase_2.py` | 提供 Step 28 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与共享项目门禁、启动并可靠清理真实 Development server，再运行 Phase 2 desktop/mobile Playwright smoke。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面 section/card/list/CTA/status/safety panel、Home Hero/Logo/日程组件、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
+| `static_src/images/brand/Logo_without_USYD.png` | 保存获准 Home Logo 的未改动 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
+| `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
+| `static/images/brand/nuldl-club-logo-800.webp` | 从获准源图生成的 800 × 800 WebP，并作为 Home Logo 默认 `img` fallback。 |
+| `static/images/brand/nuldl-club-logo-1200.webp` | 从获准源图生成的 1200 × 1200 WebP，供较高像素密度或较宽 Hero 使用。 |
 | `static/fonts/inter-latin-400-normal.woff2` | 本地 Inter Latin 400 字重文件，供正文常规文本使用。 |
 | `static/fonts/inter-latin-500-normal.woff2` | 本地 Inter Latin 500 字重文件，供中等强调文本使用。 |
 | `static/fonts/inter-latin-600-normal.woff2` | 本地 Inter Latin 600 字重文件，供按钮、导航与加重正文使用。 |
@@ -295,23 +382,30 @@ ASGI / WSGI ───────────→ config.settings.production
 | `manage.py` | 本地运行 Django management command 的命令行入口，默认加载 `config.settings.development`。 |
 | `config/__init__.py` | 将 `config` 标记为 Python package。 |
 | `config/settings/__init__.py` | 将 `config.settings` 标记为环境配置 package，不隐式选择具体环境。 |
-| `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware，以及严格的环境变量与 PostgreSQL URL 解析函数。 |
-| `config/settings/development.py` | 定义本地 Debug、Console Email、local media 和环境变量驱动的 PostgreSQL 配置。 |
-| `config/settings/test.py` | 定义关闭 Debug 的自动化测试环境、独立 PostgreSQL test database、in-memory Email 和快速 Password hasher。 |
-| `config/settings/production.py` | 定义环境变量驱动的 Production Secret、hosts、PostgreSQL、SMTP、HTTPS 安全设置及 `ManifestStaticFilesStorage`；缺少必填值时拒绝加载。 |
-| `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入精确匹配 Home 的 core URLConf、项目 accounts URLConf，并将 `/accounts/` 委托给 `allauth.urls`。 |
+| `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware、默认关闭的 Draft 开关与 Safety context processor，以及严格的环境变量与 PostgreSQL URL 解析函数。 |
+| `config/settings/development.py` | 定义本地 Debug、Console Email、local media、环境变量驱动的 PostgreSQL 配置，并明确开启 Draft Risk Notice。 |
+| `config/settings/test.py` | 定义关闭 Debug 的自动化测试环境、独立 PostgreSQL test database、in-memory Email、快速 Password hasher 及默认关闭的 Draft Risk Notice。 |
+| `config/settings/preview.py` | 继承 Production 安全配置并要求显式的 Draft Risk Notice Boolean 开关；缺少变量时拒绝加载。 |
+| `config/settings/production.py` | 定义环境变量驱动的 Production Secret、hosts、PostgreSQL、SMTP、HTTPS 安全设置及 `ManifestStaticFilesStorage`，并强制关闭 Draft Risk Notice；缺少必填值时拒绝加载。 |
+| `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入 core、safety 和 accounts URLConf，将 `/accounts/` 委托给 `allauth.urls`，并注册 403、404 与 500 handlers。 |
 | `config/asgi.py` | 暴露 ASGI application 入口，默认加载 Production settings。 |
 | `config/wsgi.py` | 暴露 WSGI application 入口，默认加载 Production settings。 |
 | `apps/__init__.py` | 将 `apps` 标记为承载领域 App 的 Python package。 |
 | `apps/core/__init__.py` | 将 `core` 标记为 Python package。 |
 | `apps/core/apps.py` | 定义 `CoreConfig`，将 `apps.core` 注册为 Django App。 |
-| `apps/core/views.py` | 提供站点 Home view，渲染全局页面壳中的英文占位首页。 |
-| `apps/core/urls.py` | 将空路径映射为命名路由 `home`；精确匹配保证其他根级 URL 可继续交给对应 App。 |
-| `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、标题和内容扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
-| `apps/core/templates/core/home.html` | 提供继承全局页面壳的英文 Home 占位内容，并为 Anonymous 提供真实 Signup 入口。 |
-| `apps/core/templates/core/includes/header.html` | 根据认证状态输出 Home、Login、Signup 或 Account 导航，覆盖认证子路由的当前项状态，并使用响应式站点样式。 |
+| `apps/core/views.py` | 提供 Home、About 与 Beginners & Safety 的无数据库公开页面 views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view，以及不向模板传递异常详情的 403、404 与 500 handlers。 |
+| `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
+| `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
+| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格和无报名能力的静态日程。 |
+| `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA。 |
+| `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
+| `apps/core/templates/core/errors/403.html` | 使用共享页面壳呈现中性 Access Denied 状态和 Return Home 操作，保持 HTTP 403。 |
+| `apps/core/templates/core/errors/404.html` | 使用共享页面壳呈现中性 Page Not Found 状态和 Return Home 操作，保持 HTTP 404。 |
+| `apps/core/templates/core/errors/500.html` | 使用共享页面壳呈现中性 Something Went Wrong 状态和 Return Home 操作，保持 HTTP 500。 |
+| `apps/core/templates/core/sitemap.xml` | 输出符合 sitemap XML namespace 的公开 URL 列表；内容只来自 view 的显式 Production 公开页面 allowlist。 |
+| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，根据认证状态提供 Home、About、Beginners & Safety、Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；以 URL name 标记当前页，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航。 |
 | `apps/core/templates/core/includes/messages.html` | 将 Django messages 输出到 polite live region，并为错误和非错误反馈提供相应 ARIA role。 |
-| `apps/core/templates/core/includes/footer.html` | 提供中性实验室名称和动态年份的全局页脚，不使用未经授权的大学品牌资产。 |
+| `apps/core/templates/core/includes/footer.html` | 提供完整 `NULDL Armwrestling Club` 名称、动态年份和已批准的 Instagram HTTPS 链接；不公开联系邮箱或未经授权的大学品牌资产。 |
 | `apps/core/migrations/__init__.py` | 将 `core.migrations` 标记为 migration package；当前没有 migration。 |
 | `apps/accounts/__init__.py` | 将 `accounts` 标记为 Python package。 |
 | `apps/accounts/apps.py` | 定义 `AccountsConfig`，将 `apps.accounts` 注册为 Django App。 |
@@ -360,6 +454,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/locations/migrations/__init__.py` | 将 `locations.migrations` 标记为 migration package；当前没有 migration。 |
 | `apps/safety/__init__.py` | 将 `safety` 标记为 Python package。 |
 | `apps/safety/apps.py` | 定义 `SafetyConfig`，将 `apps.safety` 注册为 Django App。 |
+| `apps/safety/context_processors.py` | 将当前环境是否允许 Draft Risk Notice 作为单一 Boolean 提供给全局 RequestContext，供 Header 与页面 CTA 同步控制可发现性。 |
+| `apps/safety/urls.py` | 将 `/risk-notice/` 映射为命名路由 `safety:risk_notice`。 |
+| `apps/safety/views.py` | 在 Draft 开关开启时渲染静态 Risk Notice；关闭时抛出 404，全程不访问数据库。 |
+| `apps/safety/templates/safety/risk_notice.html` | 逐字呈现获准 Draft 正文、重复 acknowledgement、Draft banner 和 `noindex, nofollow`；不提供确认或报名表单。 |
 | `apps/safety/migrations/__init__.py` | 将 `safety.migrations` 标记为 migration package；当前没有 migration。 |
 | `tests/__init__.py` | 将顶层 `tests` 标记为 Python package。 |
 | `tests/conftest.py` | 提供全套测试自动启用的外部网络隔离，只允许 loopback、Django test host 和当前数据库 host，并对外部 DNS/socket 连接立即失败。 |
@@ -376,18 +474,39 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_magic_code_authentication.py` | 验证 Magic Code 的有效、错误、过期、单次使用、重发、请求限制、账户资格、enumeration prevention、密码登录独立性及敏感日志边界。 |
 | `tests/test_account_page.py` | 验证 Account 访问控制、本人数据隔离、Email verification 显示、form 初始化、USYD/USU ID 状态转换、只读与审核字段防伪造、Password change 和 POST logout 页面边界。 |
 | `tests/test_user_admin.py` | 验证 UserAdmin 配置、四类角色权限差异、Verify/Reject、直接编辑防护、重新提交、审核人停用及前台敏感信息边界。 |
-| `tests/test_global_templates.py` | 验证全局页面壳、Anonymous/Member Header、当前导航、skip link、landmarks、唯一 H1、移动端 viewport、消息播报、本地 Alpine 加载和普通导航/form 基线。 |
+| `tests/test_global_templates.py` | 验证全局页面壳、metadata/head blocks、完整品牌、Anonymous/Member Header、当前导航、已实施公开页面链接、无失效链接、skip link、landmarks、唯一 H1/title、消息播报、本地 Alpine 和普通导航/form 基线。 |
+| `tests/test_public_foundation_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 21 公开页面 Playwright scenario。 |
+| `tests/test_home_page.py` | 验证 Home 获准英文内容与 Metadata、静态日程、无 Events/报名入口、响应式 Logo 引用、受限 Branding 边界及 Anonymous/Member CTA。 |
+| `tests/test_home_images.py` | 验证获准 Logo 源文件的精确 hash、大小、格式、尺寸与模式，以及 WebP 生成物的尺寸、格式、压缩和可重复性。 |
+| `tests/test_home_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 22 Home Playwright scenario。 |
+| `tests/test_public_information_pages.py` | 验证 About 与 Beginners & Safety 的 URL、模板、Metadata、获准文案、受限内容、Header 当前页、Anonymous/Member CTA 和未实施功能边界。 |
+| `tests/test_public_information_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 23 公开信息页 Playwright scenario。 |
+| `tests/test_draft_risk_notice.py` | 验证 Draft 环境矩阵、默认关闭、Production 强制关闭、Preview 显式开关、404、逐字正文、重复 acknowledgement、robots、条件链接、无表单和零数据库查询。 |
+| `tests/test_draft_risk_notice_browser.py` | 以开启 Draft 的 Django `StaticLiveServerTestCase` 调用 Step 24 Playwright scenario。 |
+| `tests/error_urls.py` | 提供只在测试中使用的合成 403/500 endpoints，并复用项目 URL 与 handlers 验证真实 Django 错误分派；不进入生产 URLConf。 |
+| `tests/test_error_pages.py` | 在 `DEBUG=False` 下验证真实 403、404、500 handlers 的状态码、模板、title、唯一 H1、Home link、CSS 和敏感内容隔离。 |
+| `tests/test_error_pages_browser.py` | 以隔离错误 URLConf 启动真实测试站点并调用 Step 25 Playwright scenario。 |
+| `tests/test_phase2_accessibility_browser.py` | 在 `DEBUG=False` 下开启 Draft 并复用隔离错误 URLConf，以真实静态 live server 调用 Step 27 统一 accessibility Playwright scenario。 |
+| `tests/test_public_metadata_sitemap_footer.py` | 验证三个正式公开页面的准确 Metadata/Open Graph、环境派生 URL、无硬编码 canonical host、sitemap XML 精确 allowlist、Draft 永久排除，以及 Footer 的获准 Instagram 与禁止内容边界。 |
 | `tests/test_authentication_templates.py` | 验证项目认证模板覆盖、共享页面壳、Alpine/no-JavaScript 边界、ARIA error 关联、数字 code attributes 及 Password/code 不回显。 |
 | `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 精确版本与 SHA-256、无第三方 CDN、design tokens、focus/reduced-motion 和关键颜色 contrast。 |
 | `tests/test_authentication_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Node Playwright；显式按 UTF-8 捕获输出，失败时保留真实浏览器诊断。 |
 | `tests/test_phase1_browser_flows.py` | 编排 Phase 1 Signup/verification、Password login/Account update、Magic Code 和 Admin USU review 浏览器流程，并从隔离的 Playwright storage state 读取服务端 Session code 以继续真实流程。 |
 | `tests/test_phase1_acceptance.py` | 验证 Step 20 验收命令失败传播、运行中 Development server 清理，以及 README 对锁定安装、自动验收和人工 Phase 1 流程的覆盖。 |
+| `tests/test_phase2_acceptance.py` | 验证 Step 28 全新环境验收的命令顺序、失败传播、Development server 清理，以及 README 对共享门禁、自动验收和人工 Phase 2 流程的覆盖。 |
 | `tests/test_quality_security.py` | 验证敏感文件及高置信凭据扫描、测试外部网络阻断、认证与身份日志隐私、Anonymous 页面私有字段隔离和 HttpOnly Session cookie。 |
 | `tests/test_quality_gate.py` | 验证统一门禁不会吞掉子命令失败，非零退出会作为验收失败传播。 |
 | `tests/browser/browser-support.mjs` | 为 Playwright scenarios 提供必填环境变量读取、只允许当前 live-server origin 的 browser context，以及外部请求断言。 |
 | `tests/browser/authentication-ui.mjs` | 在 Chromium 中执行小屏、键盘、Alpine、整串 code 输入、无 JavaScript fallback 和服务端错误焦点的端到端断言，并复用同源网络隔离。 |
 | `tests/browser/phase1-core-flows.mjs` | 在 Chromium 中执行 Phase 1 注册验证、两种登录、账户更新、登出和 Admin USU review 操作，所有场景均使用同源网络限制。 |
 | `tests/browser/development-server-smoke.mjs` | 对真实 Development server 执行 desktop/mobile Home、Signup、Login、Account redirect、CSS、布局、page error、同源请求和 Branding smoke checks。 |
+| `tests/browser/phase2-development-smoke.mjs` | 对真实 Development server 执行 Phase 2 desktop/mobile 正式页面、Draft 分支、错误页、认证入口、CSS、布局、page error 和同源请求 smoke checks。 |
+| `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
+| `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、文字可见性、无水平溢出和同源网络边界。 |
+| `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |
+| `tests/browser/draft-risk-notice.mjs` | 在 Chromium 中验证 Step 24 Draft Risk Notice 的条件入口、banner、robots、desktop/mobile、键盘、无 JavaScript、内容可见性、无水平溢出和同源网络边界。 |
+| `tests/browser/error-pages.mjs` | 在 Chromium 中验证 Step 25 三个错误状态的正确响应、desktop/mobile、项目 CSS、键盘 Focus、无 JavaScript、无水平溢出和同源网络边界。 |
+| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界。 |
 | `memory-bank/design_document.md` | 产品与体验设计的权威来源，定义用户、页面、流程、权限、业务规则、隐私、Accessibility、内容和 Branding 边界。 |
 | `memory-bank/tech_stack.md` | 技术决策的权威来源，定义框架、版本策略、单体架构、环境、安全、部署和运维边界。 |
 | `memory-bank/implementation.md` | 代码实施顺序的权威来源，将当前 Phase 拆分为一次只执行一个的可验证步骤，并规定模型、配置、测试和 migration 要求。 |

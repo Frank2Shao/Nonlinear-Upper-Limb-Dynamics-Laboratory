@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+
+{% block title %}Page Not Found | NULDL Armwrestling Club{% endblock %}
+{% block meta_description %}The requested page could not be found.{% endblock %}
+{% block open_graph_title %}Page Not Found | NULDL Armwrestling Club{% endblock %}
+{% block open_graph_description %}The requested page could not be found.{% endblock %}
+
+{% block content %}
+  <article class="public-page public-page--content">
+    <header class="public-section__header">
+      <p class="eyebrow">404</p>
+      <h1>Page Not Found</h1>
+      <p class="lede">The page you requested could not be found.</p>
+    </header>
+    <div class="cta-panel public-page__action">
+      <a class="button" href="{% url 'home' %}">Return Home</a>
+    </div>
+  </article>
+{% endblock %}

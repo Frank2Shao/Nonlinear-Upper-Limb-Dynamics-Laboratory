@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+
+{% block title %}Beginners and Safety | NULDL Armwrestling Club{% endblock %}
+{% block meta_description %}Learn what to expect at your first NULDL Armwrestling Club session and review the essential safety principles for participation.{% endblock %}
+{% block open_graph_title %}Beginners and Safety | NULDL Armwrestling Club{% endblock %}
+{% block open_graph_description %}Learn what to expect at your first NULDL Armwrestling Club session and review the essential safety principles for participation.{% endblock %}
+
+{% block content %}
+  <article class="public-page public-page--content">
+    <header class="public-section__header">
+      <h1>Beginners Are Welcome</h1>
+      <p class="lede">You do not need previous armwrestling experience to attend a beginner session. Your first session will introduce the basic rules, safe positioning, equipment and fundamental techniques before controlled practice begins.</p>
+      <p>Develop technique through structured practice using dedicated armwrestling equipment.</p>
+    </header>
+
+    <section class="public-section content-section" aria-labelledby="expect-title">
+      <h2 id="expect-title">What to Expect</h2>
+      <ol class="step-list">
+        <li>Introductions to the session and equipment</li>
+        <li>Explanations of basic rules and positions</li>
+        <li>Technique demonstrations</li>
+        <li>Guided and supervised practice pulls</li>
+        <li>Time to ask questions and review your technique</li>
+      </ol>
+    </section>
+
+    <section class="public-section safety-panel" aria-labelledby="risk-title">
+      <h2 id="risk-title">Armwrestling Involves Risk</h2>
+      <p>Armwrestling is a high-intensity competitive activity. Possible injuries include muscle strain, tendon or ligament injury, joint sprain or dislocation, and bone injury or fracture. Some risks cannot be completely predicted or avoided.</p>
+      {% if draft_risk_notice_visible %}
+        <div class="safety-panel__action">
+          <a class="button button--secondary" data-draft-risk-notice href="{% url 'safety:risk_notice' %}">Read the Draft Risk Notice</a>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="public-section content-section" aria-labelledby="before-title">
+      <h2 id="before-title">Before Participating</h2>
+      <p>Do not participate if a medical condition or previous injury makes competitive physical activity unsuitable for you. Relevant concerns may include previous shoulder, elbow or wrist injuries, musculoskeletal conditions, cardiovascular or cerebrovascular disease, osteoporosis or neurological conditions.</p>
+      <p>If you are uncertain about your fitness to participate, do not take part until you have obtained appropriate advice.</p>
+    </section>
+
+    <section class="public-section content-section" aria-labelledby="during-title">
+      <h2 id="during-title">During Training</h2>
+      <ul class="safety-list">
+        <li>Follow the instructions of the session supervisor.</li>
+        <li>Use the equipment only as directed.</li>
+        <li>Train with control and respect your partner’s experience level.</li>
+        <li>Do not force a movement through pain or loss of control.</li>
+        <li>Stop immediately if you experience pain, numbness, dizziness or other discomfort.</li>
+      </ul>
+    </section>
+
+    <section class="public-section content-section" aria-labelledby="responsibility-title">
+      <h2 id="responsibility-title">Shared Responsibility</h2>
+      <p>Safe training depends on clear communication, controlled practice and respect between participants. Ask for clarification whenever an instruction or position is unclear.</p>
+    </section>
+
+  </article>
+{% endblock %}

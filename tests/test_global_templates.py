@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
@@ -36,7 +38,37 @@ def test_home_uses_accessible_global_page_shell(client):
     assert 'id="main-content" tabindex="-1"' in content
     assert '<footer class="site-footer">' in content
     assert content.count("<h1") == 1
+    assert content.count("<title>") == 1
     assert 'href="/" aria-current="page"' in content
+
+
+def test_global_shell_exposes_metadata_and_head_extension_blocks(client):
+    response = client.get(reverse("home"))
+
+    content = response.content.decode()
+    assert "<title>NULDL Armwrestling Club | Training and Community</title>" in content
+    assert '<meta name="description" content="' in content
+    assert '<meta name="robots" content="index, follow">' in content
+    assert '<meta property="og:type" content="website">' in content
+    assert '<meta property="og:site_name" content="NULDL Armwrestling Club">' in content
+    assert (
+        '<meta property="og:title" content="NULDL Armwrestling Club | Training and Community">'
+        in content
+    )
+    assert '<meta property="og:description" content="' in content
+    assert '<meta property="og:url" content="http://testserver/">' in content
+
+    base_template = (
+        Path(__file__).parents[1] / "apps" / "core" / "templates" / "core" / "base.html"
+    ).read_text(encoding="utf-8")
+    for block_name in (
+        "meta_description",
+        "meta_robots",
+        "open_graph_title",
+        "open_graph_description",
+        "extra_head",
+    ):
+        assert f"{{% block {block_name} %}}" in base_template
 
 
 def test_anonymous_header_shows_authentication_links(client):
@@ -48,6 +80,14 @@ def test_anonymous_header_shows_authentication_links(client):
     assert "Log in" in content
     assert "Join the Club" in content
     assert f'href="{reverse("account")}"' not in content
+    assert (
+        'aria-label="NULDL Armwrestling Club home">NULDL Armwrestling Club</a>'
+        in content
+    )
+    assert ">NULDL</a>" not in content
+    assert 'class="nav-disclosure"' in content
+    assert "window.matchMedia('(max-width: 42rem)')" in content
+    assert '<summary class="nav-toggle">Menu</summary>' in content
 
 
 def test_member_header_shows_account_link(client, verified_member):
@@ -103,3 +143,5 @@ def test_primary_navigation_works_without_javascript(client):
     assert f'href="{reverse("home")}"' in content
     assert f'href="{reverse("account_login")}"' in content
     assert f'href="{reverse("account_signup")}"' in content
+    for unavailable_path in ("/events/", "/members/", "/locations/"):
+        assert f'href="{unavailable_path}"' not in content

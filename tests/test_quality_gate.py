@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from scripts.verify_phase_1 import run
+from scripts.verify_project import run
 
 
 def test_quality_gate_propagates_command_failures(monkeypatch):

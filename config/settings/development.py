@@ -5,6 +5,7 @@ from .base import *
 SECRET_KEY = required_env("DJANGO_SECRET_KEY")
 
 DEBUG = True
+RISK_NOTICE_DRAFT_VISIBLE = True
 
 ALLOWED_HOSTS = required_csv_env("DJANGO_ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = required_csv_env("DJANGO_CSRF_TRUSTED_ORIGINS")

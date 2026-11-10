@@ -5,6 +5,7 @@ from .base import *
 SECRET_KEY = "test-only-secret-key-not-for-any-deployed-environment"
 
 DEBUG = False
+RISK_NOTICE_DRAFT_VISIBLE = False
 
 ALLOWED_HOSTS = ["testserver"]
 

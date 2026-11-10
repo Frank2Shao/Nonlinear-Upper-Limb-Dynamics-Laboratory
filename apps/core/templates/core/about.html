@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+
+{% block title %}About NULDL Armwrestling Club{% endblock %}
+{% block meta_description %}Learn about NULDL Armwrestling Club, our training activities and our approach to technique, safety and inclusive participation.{% endblock %}
+{% block open_graph_title %}About NULDL Armwrestling Club{% endblock %}
+{% block open_graph_description %}Learn about NULDL Armwrestling Club, our training activities and our approach to technique, safety and inclusive participation.{% endblock %}
+
+{% block content %}
+  <article class="public-page public-page--content">
+    <header class="public-section__header">
+      <h1>About NULDL Armwrestling Club</h1>
+      <p class="lede">Nonlinear Upper Limb Dynamics Laboratory is a student-led, community-focused armwrestling club.</p>
+    </header>
+
+    <section class="public-section content-section" aria-labelledby="our-purpose-title">
+      <h2 id="our-purpose-title">Our Purpose</h2>
+      <p>Our purpose is to make armwrestling more accessible as a strength-and-skill sport while building a welcoming community for participants from different backgrounds and experience levels.</p>
+      <p>We provide structured instruction, supervised practice and opportunities to learn about armwrestling technique, rules, training methods and risk-aware participation.</p>
+    </section>
+
+    <section class="public-section content-section" aria-labelledby="what-we-do-title">
+      <h2 id="what-we-do-title">What We Do</h2>
+      <ul class="card-grid public-card-list">
+        <li class="content-card">Beginner induction sessions</li>
+        <li class="content-card">Regular supervised practice pulls</li>
+        <li class="content-card">Technique and rules workshops</li>
+        <li class="content-card">Internal competitions</li>
+      </ul>
+    </section>
+
+    <section class="public-section content-section" aria-labelledby="participation-title">
+      <h2 id="participation-title">Who Can Participate?</h2>
+      <p>The website is open to students and community enthusiasts. After creating an account and verifying their email address, users can access member features and participate in eligible activities.</p>
+      <p>Website access does not automatically provide voting rights or eligibility for an Executive position. Those rights are governed separately by the club’s constitutional requirements.</p>
+    </section>
+
+    <section class="public-section content-section" aria-labelledby="training-title">
+      <h2 id="training-title">How We Train</h2>
+      <p>Good armwrestling depends on technique, control and respect for your training partner. Sessions combine instruction with supervised practice so that participants can develop progressively.</p>
+      <p>Beginners are welcome, and competitive ambition is encouraged without creating unnecessary barriers for new participants.</p>
+    </section>
+
+    {% if not user.is_authenticated %}
+      <div class="public-page__join-action">
+        <a class="button" data-public-primary href="{% url 'account_signup' %}">Join</a>
+      </div>
+    {% endif %}
+  </article>
+{% endblock %}

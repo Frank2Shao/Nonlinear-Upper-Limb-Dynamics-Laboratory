@@ -1,9 +1,9 @@
 # NULDL 开发进度
 
-**最后更新：** 2026 年 10 月 25 日
-**当前阶段：** Phase 1
-**当前步骤：** Step 20 — Phase 1 端到端验收
-**状态：** Phase 1 已通过自动化与人工验收并完成；Phase 2 尚未开始
+**最后更新：** 2026 年 10 月 29 日
+**当前阶段：** Phase 2 已完成；Phase 3 尚未开始
+**当前步骤：** Step 28 — 完成 Phase 2 质量门禁与阶段验收
+**状态：** Step 21–28 及 Phase 2 退出门槛已通过项目负责人验收
 
 ## Step 1 — 建立执行基线
 
@@ -738,3 +738,275 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 - Phase 1 已完成。Phase 2 仍为 `Not started`，本步骤没有实现 Home 正式内容、About、Beginners & Safety、Risk Notice、error pages、metadata、sitemap 或其他 Phase 2 功能。
 - Risk Notice、University Branding、Logo、地点、正式 hosting/SMTP/media/monitoring/map provider、数据保留和中文版本等外部事项仍按 Roadmap 保持待确认，不因 Phase 1 完成而被隐式决定。
 - `implementation.md` 只保留 Phase 2 概要；必须由项目负责人明确授权后，才能基于真实 Phase 1 架构展开 Phase 2 微步骤并开始实施。
+
+## Step 21 — 建立公开页面基础与品牌命名
+
+### 已完成
+
+- 扩展全局 `base.html`，增加每页可覆盖的 description、robots、Open Graph title、Open Graph description 和额外 head 内容区块，并输出环境派生的当前页面 Open Graph URL。
+- 将全局默认标题、Home、Account 和全部项目认证页面标题中的对外品牌统一为 `NULDL Armwrestling Club`；Home 占位说明与 Footer 同步使用完整品牌名称。
+- 将 Header 文字品牌改为 `NULDL Armwrestling Club`，保留 Home、Anonymous 的 Login/Signup 及 Member 的 Account 行为和当前页标识。
+- 使用原生 `details` 与 `summary` 建立移动导航；桌面和禁用 JavaScript 时默认提供全部有效链接，Alpine.js 只在手机宽度初始化时收起菜单，后续展开与关闭继续使用浏览器原生键盘行为。
+- Header 继续只链接已经存在的 Home、认证和 Account 路由，没有提前加入 About、Events、Members 或 Locations。
+- 在 Tailwind source 中建立可复用的 public page、section、card、CTA 和 status 样式，并增加 desktop/mobile 导航、Focus、菜单开关和布局规则；重新生成 minified `static/css/site.css`。
+- 扩展 `tests/test_global_templates.py`，覆盖 metadata、唯一 title、完整品牌名称、导航 disclosure、Anonymous/Member 差异、当前页状态和不存在失效链接。
+- 新建 `tests/test_public_foundation_browser.py` 与 `tests/browser/public-foundation.mjs`，以真实 Django live server 和 Chromium 覆盖 desktop/mobile 导航、键盘 Focus、菜单展开关闭、无水平溢出、禁用 JavaScript、page error 与外部网络边界。
+
+### 验证结果
+
+- 项目负责人运行 `npm.cmd run static:check`，vendor hash 检查和 Tailwind production build 均通过，并再次重复运行确认结果可复现。
+- 项目负责人运行全局模板、公开页面浏览器、认证模板和认证浏览器专项测试，共 22 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件，共 186 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 Model、schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 73 个文件均已格式化。
+- `git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次浏览器专项测试发现关闭状态的原生 `details` 在 desktop 会由浏览器隐藏导航子项。Header 改为标记默认 `open`，并只在 Alpine.js 已加载且处于手机宽度时移除 `open`；desktop 与无 JavaScript 场景因此始终保留基础链接，手机增强场景仍默认收起且可以原生键盘切换。
+- 第二次浏览器专项测试确认导航显示已正常，剩余失败来自 `Join the Club` 同时匹配 Header 与 Home 占位 CTA。测试 locator 限定到 `Primary navigation` 后通过，没有修改产品行为或放宽断言。
+
+### 当前边界与下一步门槛
+
+- Step 21 只建立公开页面共享基础、品牌命名和响应式导航；Home 仍为占位内容，未加入 Logo、正式 Hero、训练内容或静态日程。
+- About、Beginners & Safety、Draft Risk Notice、error pages、sitemap 和 Instagram Footer 尚未实施，仍属于 Step 22–26。
+- 当前 metadata 提供安全的全局默认值与覆盖边界；Home、About 和 Beginners & Safety 的最终已确认 title、description 和完整 Open Graph 值在对应页面及 Step 26 实施。
+- Step 21 已通过项目负责人验证。不得开始 Step 22，直至项目负责人明确授权。
+
+## Step 22 — 完成 Home、Logo 与静态日程
+
+### 已完成
+
+- 将 Home 占位页替换为 `design_document.md` 已确认的正式英文内容，完成 Metadata、Hero、新手说明、四项训练内容、参与资格和 Upcoming Session。
+- Hero 的 Anonymous 主要操作为 `Join the Club` 并进入 Signup；authenticated member 显示 `Account` 并进入本人账户页；两类用户均可通过普通页内链接进入 `New to Armwrestling?`。
+- Upcoming Session 只展示 `1 December 2026`、`3:00–7:00 pm`、`Training Session` 和 `Venue details to be confirmed`，附已确认的后续信息说明；没有新增 Event model、报名状态、报名操作或 Events 链接。
+- 将仓库外已批准的 `Logo_without_USYD.png` 按原始字节纳入 `static_src/images/brand/`；保留 1254 × 1254 RGB PNG、1,776,890 bytes 和 SHA-256 `1bc738b3a7af5719a296bc0aecc67f2ea943d1acf7eadb499c3dd28592308944`，未重新设计图形内容。
+- 新增 `scripts/build_home_images.py`，使用锁定版 Pillow 确定性生成 480、800 和 1200px 方形 WebP；脚本在 build/check 时校验源图 hash、格式、尺寸与模式，并逐字节检查生成物是否过期。
+- 将图片 build/check 接入 `package.json` 的 `static:build` 与 `static:check`；生成文件大小分别为 32,364、69,400 和 125,860 bytes，均显著小于原始 PNG。
+- Home 使用 `<picture>`、响应式 `srcset`/`sizes`、明确宽高、方形比例和替代文本加载 Logo；Header 继续使用文字品牌，没有加入 University Branding。
+- 扩展 Home、图片资产和全局模板测试，并新增 Playwright Home scenario，覆盖 desktop、mobile、无 JavaScript、Logo 加载及比例、无水平溢出、文字/CTA 可见性、CTA 目标、内容完整性和同源网络边界。
+
+### 验证结果
+
+- 项目负责人运行 `npm.cmd run static:check`，vendor assets、Home 图片逐字节可重复性检查和 Tailwind production build 全部通过。
+- Step 22 Home、图片、浏览器、公开页面基础及全局模板专项测试共 17 个，全部通过。
+- 完整 pytest 套件共 195 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 Model、schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 77 个文件均已格式化。
+- `git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- Step 22 浏览器测试、Home 内容测试和图片构建测试首次运行均通过。
+- 相关回归测试最初有 1 个失败：Step 21 的全局模板测试仍固定断言旧 Home title。将该断言更新为已批准的 `NULDL Armwrestling Club | Training and Community` 及对应 Open Graph title 后，17 个专项及相关回归测试全部通过；生产页面和业务行为未因此修改。
+- Ruff 首次检查只发现两个新 Python 文件的 import 排序，以及四个文件的格式差异；使用锁定 Ruff 机械修复后 lint 与 format check 全部通过，没有业务逻辑变化。
+
+### 当前边界与下一步门槛
+
+- Home 日程仍是明确的静态宣传内容，不代表活动报名开放，也不建立 Phase 4 Event 领域能力。
+- Header 保持文字品牌；源 Logo 只用于 Home 大尺寸展示，公开响应及生成文件名不包含受限 University Branding。
+- About、Beginners & Safety、Draft Risk Notice、error pages、sitemap 和 Instagram Footer 仍未实施，属于 Step 23–26。
+- Step 22 已通过项目负责人验证。不得开始 Step 23，直至项目负责人明确授权。
+
+## Step 23 — 完成 About 与 Beginners & Safety
+
+### 已完成
+
+- 在 `apps.core` 中新增 `/about/` 与 `/beginners-safety/` 两个具名公开路由、对应 views 和独立模板，不新增 Model、migration 或业务 API。
+- About 使用已批准的英文 Metadata、介绍、`Our Purpose`、`What We Do`、`Who Can Participate` 与 `How We Train` 内容，明确区分 student-led club 与未声明的 University affiliation。
+- Beginners & Safety 使用已批准的英文内容，覆盖 induction、supervised practice、dedicated armwrestling equipment、主要风险及停止训练条件；没有提前加入 Step 24 Draft Risk Notice 页面或链接。
+- 两个页面均按认证状态在服务端提供 CTA：Anonymous 进入 Signup，authenticated member 进入 Account；普通链接和页面内容在禁用 JavaScript 时仍可用。
+- Header 加入 About 与 Beginners & Safety 导航，并使用既有 URL name 机制输出 `aria-current="page"`；未加入 Events、Members、Locations 或 Risk Notice 等尚未实施的入口。
+- 扩展公开内容页面样式，支持正文宽度、内容卡片、步骤列表、安全提示与 CTA，并重新生成提交的 minified CSS。
+- 新增 Django 页面测试和 Playwright scenario，覆盖路由、模板、Metadata、获准文案、受限内容、导航、CTA、desktop/mobile、键盘、200% content zoom、无 JavaScript、无横向溢出及同源网络边界。
+
+### 验证结果
+
+- 项目负责人运行 `npm.cmd run static:check`，vendor assets、Home 图片可重复性检查和 Tailwind production build 全部通过。
+- Step 23 与相关公开页面回归专项测试共 26 个，全部通过。
+- 完整 pytest 套件共 207 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 79 个文件均已格式化。
+
+### 测试期间的针对性修补
+
+- 首次专项运行有 3 个失败：两个 Django 测试错误读取 `HttpResponse.template_name`，改为从测试客户端记录的 `response.templates` 检查模板；一个 Playwright 可读性 helper 将已折叠移动导航中的隐藏链接误判为裁切，改为跳过 `checkVisibility()` 为 false 的元素。
+- 上述修补只修正测试实现，没有改变生产页面、内容或业务行为。
+- Ruff format check 首次发现一个新增测试文件存在两处机械格式差异；使用锁定 Ruff 格式化后通过，没有业务逻辑变化。
+
+### 当前边界与下一步门槛
+
+- About 与 Beginners & Safety 是公开宣传信息，不建立活动报名、会员目录、地点地图或 Safety 版本化领域能力。
+- 页面不声明 USYD/University affiliation，不公开联系邮箱或具体训练地点；安全内容不构成已确认的正式 Risk Notice。
+- Draft Risk Notice、error pages、sitemap 和 Instagram Footer 仍未实施，属于 Step 24–26。
+- Step 23 已通过项目负责人验证。不得开始 Step 24，直至项目负责人明确授权。
+
+## Step 24 — 实施 Draft Risk Notice 环境隔离
+
+### 已完成
+
+- 在 `apps.safety` 中新增 `/risk-notice/` 具名 URL、view 和独立 template；路由保持可反向解析，但 view 只在当前环境明确允许时渲染，否则返回 404。
+- 在公共 settings 中将 `RISK_NOTICE_DRAFT_VISIBLE` 默认设为关闭；Development 明确开启，Test 默认关闭，Production 强制关闭且不读取同名环境变量。
+- 新增 `config.settings.preview`，继承 Production 安全配置并要求显式提供 `RISK_NOTICE_DRAFT_VISIBLE`；未提供开关时拒绝加载，获准 Preview 可通过明确的 `true` 值开启 Draft。
+- 在 `.env.example` 中只以注释形式说明 Preview 专用开关，没有改变本地 Development 的既有启动要求，也没有提供 Production 开启路径。
+- Draft 页面逐字采用 `design_document.md` 已确认的四段当前正文，包括源文本中重复的 acknowledgement；同时显示 `DRAFT — NOT APPROVED FOR PARTICIPATION USE`、指定说明文字及 `noindex, nofollow`。
+- 新增只暴露 Draft 可见性 Boolean 的 template context processor。开启时 Header 显示 `Draft Risk Notice`，Beginners & Safety 显示 `Read the Draft Risk Notice`；关闭时公开页面不输出上述链接。
+- 页面没有 POST、checkbox、确认、报名、Event、RiskNoticeVersion、Model 或数据库访问；本步没有创建 migration，也没有改动责任限制文本。
+- 新增 Django 环境及页面测试和 Playwright scenario，覆盖 Development、Preview、Production、默认关闭、直接 URL、逐字正文、重复 acknowledgement、banner、robots、条件导航、Beginners CTA、无数据查询、无表单，以及 desktop/mobile、键盘、无 JavaScript、布局和同源网络边界。
+
+### 验证结果
+
+- 项目负责人运行 `npm.cmd run static:check`，vendor assets、Home 图片可重复性检查和 Tailwind production build 全部通过。
+- Step 24 与相关公开页面回归专项测试共 27 个，全部通过。
+- 完整 pytest 套件共 216 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 85 个文件均已格式化。
+- `git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次本地专项运行有 1 个失败：零查询断言使用查询捕获器，但测试没有声明 pytest database fixture。为该测试补充 `django_db` 标记后，零查询断言和全部专项测试通过；生产 view、template 和 settings 行为未修改。
+- Ruff 首次检查只发现新增测试文件的 import 排序与一处机械格式差异；使用锁定 Ruff 整理后 lint 与 format check 全部通过，没有业务逻辑变化。
+
+### 当前边界与下一步门槛
+
+- 当前 Risk Notice 仍是只供 Development 和获准 Preview 审阅的静态 Draft，不是最终参与条款，也不建立 Phase 4 的版本管理或报名确认能力。
+- 项目尚未建立 sitemap；关闭 Draft 时直接 URL 返回 404，Header 与页面 CTA 均不产生可发现链接。Step 26 建立 sitemap 时仍必须排除 Draft Risk Notice。
+- Production 强制关闭 Draft，无法通过 `RISK_NOTICE_DRAFT_VISIBLE` 环境变量公开正文。
+- 403、404、500 页面、正式 sitemap 和 Instagram Footer 仍未实施，属于 Step 25–26。
+- Step 24 已通过项目负责人验证。不得开始 Step 25，直至项目负责人明确授权。
+
+## Step 25 — 建立 403、404 与 500 页面
+
+### 已完成
+
+- 在 `apps.core.views` 中新增 403、404 与 500 handlers，并在项目根 URLConf 显式注册 `handler403`、`handler404` 和 `handler500`。
+- 新增三个继承全局页面壳的英文错误模板，分别使用 `Access Denied`、`Page Not Found` 和 `Something Went Wrong`，保持唯一 H1、项目 Header/Footer、现有 CSS 及明确的 `Return Home` 操作。
+- handlers 保持正确的 403、404 与 500 HTTP 状态码，不将接收到的 exception 内容传入 template context，也不输出 traceback、异常类型、内部路径、Secret、技术细节或虚构联系方式。
+- 错误页面全部使用普通 HTML link；返回 Home、Header 和 Footer 在 JavaScript 关闭时仍可使用，没有增加错误监控 Provider、外部资源或客户端路由。
+- 新增隔离的测试 URLConf，以真实 `PermissionDenied`、缺失路由和未处理异常触发三个 Django handlers，不向生产 URL 暴露合成错误入口。
+- 新增 Django handler 测试和 Playwright scenario，覆盖状态码、模板、页面标题、唯一 H1、Home link、CSS、敏感内容隔离、desktop/mobile、键盘 Focus、无 JavaScript、无水平溢出及同源网络边界。
+- 本步没有新增 Model、migration 或配置变量，也没有修改 Step 24 Draft Risk Notice 或实现 Step 26 sitemap、最终 Metadata 与 Footer 内容。
+
+### 验证结果
+
+- 项目负责人运行 `npm.cmd run static:check`，vendor assets、Home 图片可重复性检查和 Tailwind production build 全部通过。
+- Step 25 错误页面与既有 Admin/Account 权限回归测试共 31 个，全部通过。
+- 完整 pytest 套件共 221 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 88 个文件均已格式化。
+- `git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次专项运行中 403、404、三个既有 Admin 权限测试及浏览器 403 场景失败。根因是 Django 通过关键字 `exception=` 调用 403/404 handler，而初始 handler 将该参数命名为 `_exception`，触发 `TypeError` 并转为 500。
+- 将两个 handler 的参数名改为 Django 要求的 `exception`，并在函数内明确丢弃，不将异常对象传入页面。修补后错误页面及权限回归共 31 个测试全部通过；既有权限规则没有改变。
+- Ruff 首次检查只发现新增测试文件的 import 排序和 handler 的机械格式差异；使用锁定 Ruff 整理后通过，没有业务逻辑变化。
+
+### 当前边界与下一步门槛
+
+- 错误页面提供一致、安全的公开恢复界面，但不建立错误监控、事件上报或用户支持联系方式；相关 Provider 仍由 Phase 6 决定。
+- Step 25 只建立错误 handlers 与页面，不实施 sitemap、Instagram Footer 或 Phase 2 最终 metadata 收尾。
+- Step 25 已通过项目负责人验证。不得开始 Step 26，直至项目负责人明确授权。
+
+## Step 26 — 完成 Metadata、Open Graph、Sitemap 与 Footer
+
+### 已完成
+
+- 为 Home、About 和 Beginners & Safety 固定已确认的英文 title、description，以及通用 Open Graph type、site name、页面 title、description 和 URL。
+- Open Graph URL 由当前 request 构造；最终域名尚未确认，因此没有加入 canonical link，也没有硬编码候选域名或测试 host。
+- 在 `apps.core` 建立 `/sitemap.xml`，使用显式 URL name allowlist，只输出 Home、About 和 Beginners & Safety 三个 Production 公开页面的绝对 URL。
+- Draft Risk Notice 无论环境开关是否开启都不进入 sitemap；认证、Account、Admin、错误页面及后续 Phase 路由同样不在 sitemap 中。
+- Footer 加入已确认的 Instagram `@nuldl_armwrestlingclub` 及 HTTPS 目标，不公开联系邮箱，也不加入未经批准的 University Branding。
+- 新增 `tests/test_public_metadata_sitemap_footer.py`，覆盖准确 metadata、环境派生 Open Graph URL、canonical host 边界、sitemap XML 与 allowlist、Draft 排除、Footer 文本和目标，以及敏感 Branding/联系信息边界。
+- 本步没有新增 Model、migration、配置变量、外部资源或后续 Phase 功能。
+
+### 验证结果
+
+- 项目负责人运行 `npm.cmd run static:check`，vendor assets、Home 图片可重复性检查和 Tailwind production build 全部通过。
+- Step 26 专项及相关页面回归测试共 44 个，全部通过。
+- 完整 pytest 套件共 230 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 89 个文件均已格式化。
+- `git diff --check` 未发现格式错误，仅报告 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次专项测试即 44 个全部通过，完整测试即 230 个全部通过，没有功能性测试失败。
+- Ruff 首次检查只发现新增和调整文件的 import 排序与机械换行差异；使用锁定 Ruff 整理后通过，没有业务逻辑变化。
+
+### 当前边界与下一步门槛
+
+- sitemap 使用明确 allowlist，不从全部 URLConf 自动发现页面；后续新增公开页面必须经过对应阶段确认后显式加入。
+- 正式 canonical host 仍待最终域名确认；当前 Open Graph URL 安全地跟随部署环境 request。
+- Step 26 已通过项目负责人验证。不得开始 Step 27，直至项目负责人明确授权。
+
+## Step 27 — 完成响应式与 Accessibility 验证
+
+### 已完成
+
+- 新增统一 Phase 2 Playwright accessibility 场景，覆盖 Home、About、Beginners & Safety、Draft Risk Notice，以及真实 403、404 和 500 页面。
+- 在 desktop、mobile、200% 内容放大、JavaScript disabled 和 `prefers-reduced-motion` 场景下检查全部目标页面。
+- 统一检查 Header、移动菜单、Hero、Logo、CTA、长文、安全列表、Draft banner、Footer 和错误页面的可用性。
+- 检查语义 landmarks、唯一 H1、Heading 顺序、link name、图片替代文本、键盘顺序、可见 Focus、Focus 位置和移动菜单键盘操作。
+- 检查至少 24px 的可见交互目标、文本重排、内容裁切、水平溢出、Logo 加载、关键文字与 Focus 对比度，以及 reduced-motion 时长限制。
+- 复用既有 `browser-support.mjs` 同源网络隔离，统一确认浏览器没有 page error 或外部 HTTP(S) 请求。
+- 新增 `tests/test_phase2_accessibility_browser.py`，通过开启 Draft、关闭 Debug 并复用隔离 error URLConf 的 `StaticLiveServerTestCase` 启动统一场景。
+- 本步没有修改生产 template、CSS、Model、migration、依赖或环境配置，也没有引入新测试框架或外部 accessibility 服务。
+
+### 验证结果
+
+- 项目负责人运行 Step 27 专项测试，共 1 个测试，全部通过。
+- Phase 2 accessibility、既有公开页面及认证浏览器回归共 7 个测试，全部通过。
+- 完整 pytest 套件共 231 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过。
+- 开发者侧另行确认静态资产检查、Node.js 语法、差异格式检查及同源 Playwright 场景通过。
+
+### 测试期间的针对性修补
+
+- 新增 Playwright 场景首次直接运行即通过，没有发现需要修补的生产 accessibility 阻塞。
+- 开发者首次启动正式 pytest 时，Docker Desktop daemon 未运行，PostgreSQL 连接在测试建立阶段超时；该环境问题未进入测试主体。项目负责人启动环境后，专项、浏览器回归和完整测试均通过。
+
+### 当前边界与下一步门槛
+
+- 本步提供针对已实施 Phase 2 页面和当前组件的自动化 WCAG 2.2 AA 风险检查，不构成对全部 WCAG 成功标准的形式化认证。
+- Draft Risk Notice 继续只在明确允许的非正式环境可见；统一场景通过测试设置开启 Draft，不改变 Production 强制关闭边界。
+- Step 27 已通过项目负责人验证。不得开始 Step 28，直至项目负责人明确授权。
+
+## Step 28 — 完成 Phase 2 质量门禁与阶段验收
+
+### 已完成
+
+- 新增 `scripts/verify_project.py` 作为跨阶段共享项目门禁，统一执行锁定前端依赖与 Chromium 准备、静态资源构建及检查、watch smoke、Ruff lint/format、migration drift、Django system check、干净 PostgreSQL branch coverage 测试、Production deploy check 和 manifest `collectstatic`。
+- 将 `scripts/verify_phase_1.py` 保留为调用共享门禁的兼容入口，避免既有本地与 CI 调用失效。
+- 新增 `scripts/accept_phase_2.py`，在 OS 临时目录创建全新锁定 uv environment，等待 Docker PostgreSQL、执行 migration 与共享门禁，再启动真实 Development server 并运行 Phase 2 desktop/mobile browser smoke；脚本在成功或失败后均清理 server 和临时 environment。
+- 新增 `tests/browser/phase2-development-smoke.mjs` 与 `tests/test_phase2_acceptance.py`，覆盖公开页面、Draft 环境分支、错误页、认证入口、静态资源、同源网络边界、失败传播和清理行为。
+- 更新 `tests/test_quality_gate.py` 与 `README.md`，使共享门禁、Phase 2 自动验收及人工走查成为后续开发者的明确入口。
+- 根据阶段人工走查完成 Home、About 与 Beginners & Safety 的获准文案、CTA 显示条件和版式收尾，并同步 `design_document.md`。About 匿名 `Join` 按钮最终占内容宽度 90%，高度较上一版降低 15%；登录后不显示该 CTA。
+
+### 验证结果
+
+- 项目负责人首次在全新环境运行 Phase 2 端到端验收：锁定安装、PostgreSQL migration、静态资源 build/check/watch、Ruff lint/format、migration drift、Django check、Production deploy check、collectstatic、共享项目门禁和 Development browser smoke 全部通过。
+- 该次完整 pytest 共 234 个测试全部通过，branch coverage 为 94%，终端最终报告 `Phase 2 end-to-end acceptance passed.`。
+- 人工反馈修改后，开发者侧专项 Django 页面测试 24 个和相关 Playwright 浏览器测试 4 个全部通过；`static:check`、Ruff lint/format 与差异格式检查通过。
+- 浏览器实测 About `Join` 按钮字体为 32px、高度约 74.80px、宽度约为内容区的 90%，水平偏移约 0.01px，外层边框为 0；项目负责人随后确认最终人工验收完成。
+
+### 验收期间的针对性修补
+
+- 初始 Step 28 全新环境门禁直接通过，没有自动化验收阻塞。
+- 人工走查后按获准范围调整公开页面内容与 CTA；没有扩展 Model、migration、认证规则、Provider 或后续 Phase 功能。
+- About 按钮居中断言最初以包含左侧提示边框的父容器测量，几何中心受到装饰边框影响；断言改为测量实际 action wrapper 后通过，生产布局规则未因此扩大。
+
+### Phase 2 结论与边界
+
+- Phase 2 的页面内容、响应式、Accessibility、错误处理、Metadata、Sitemap、Footer、共享门禁、全新环境验收及人工走查均已完成，阶段状态更新为 `Complete`。
+- Risk Notice 最终文本、University Branding 批准、地点详情、Production 域名与 Provider、数据保留规则及中文版本仍属于已记录的外部依赖或后续阶段事项，不影响本阶段已定义退出门槛。
+- Phase 3 尚未开始；本步未实施或展开 Phase 3 功能。
