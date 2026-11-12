@@ -1,18 +1,34 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 10 月 29 日
-**对应进度：** Phase 2, Step 28
-**当前状态：** Phase 1 与 Phase 2 已完成；Phase 3 尚未开始
+**最后更新：** 2026 年 11 月 12 日
+**对应进度：** Phase 3, Step 36
+**当前状态：** Phase 1、Phase 2 与 Phase 3 已完成；Phase 4 尚未开始
 
 ## 一、当前架构结论
 
 仓库当前包含项目治理文档、基础 Git 配置、可重现的 Python 与前端依赖元数据、能够通过 Django system check 的项目骨架、由 Docker Compose 管理的本地 PostgreSQL 环境、Development、Test、Production 分环境 settings、具有受保护身份状态转换的 Custom User、完整的 MemberProfile 数据与公开查询边界，以及可重复构建的本地静态资源 pipeline。Python 运行时限定为 3.13.x，后端依赖由 `uv` 锁定，前端依赖由 npm 锁定。Django 已能加载六个项目 App，并从主机 `uv` 环境连接容器中的 PostgreSQL 18.6。
 
-当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 另含无报名能力的静态日程及由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 只公开三个正式页面，始终排除 Draft、认证、Account、Admin、错误页面和后续 Phase 路由。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 与 MapLibre 仍只完成本地资产准备。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
+当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 另含无报名能力的静态日程及由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 公开 Home、About、Beginners & Safety 和 Members 列表，始终排除个人 Member detail、Draft、认证、Account、Admin、错误页面和后续 Phase 路由。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 与 MapLibre 仍只完成本地资产准备。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
 
 Phase 2 现有统一 Playwright accessibility 门禁覆盖全部正式公开页、Draft 及真实错误页，并在 desktop、mobile、200% 内容放大、键盘、无 JavaScript 和 reduced-motion 场景检查语义、Focus、触控目标、重排、对比度、替代文本、错误及网络边界。
 
 Phase 2 已建立跨阶段共享项目门禁和全新临时 uv environment 端到端验收入口。初次完整验收通过 234 个测试并达到 94% branch coverage；阶段人工走查后的公开页面文案、CTA 与布局修订又通过 24 个 Django 页面测试、4 个相关 Playwright 场景及静态与 Ruff 检查。项目负责人已确认最终人工验收，Phase 2 状态为 `Complete`。
+
+Phase 3 已建立仅限本人使用的 Profile 编辑入口。有效会员通过 Account 进入 `/profile/edit/`，服务端只按当前 authenticated User 查询一对一 MemberProfile；邮箱未验证、停用、Anonymous、目标对象伪造和受保护字段伪造均不能越过边界。普通保存只更新七个会员可写资料字段，不改变发布或管理员状态。Step 29 已通过 46 个专项回归及 245 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 的 Avatar 生命周期现已落地。编辑流程保留原文件字节，验证扩展名、MIME、真实格式和 5 MB 边界；替换、主动删除与保存失败通过集中 service 协调数据库和 storage，使旧文件只在新状态成功保存后删除，并回收失败写入。Development 在 `DEBUG=True` 时提供本地 media serving，Production URLConf 不注册开发 helper。Step 30 已通过 45 个专项回归及 256 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 的本人 Preview 与发布状态转换现已落地。有效会员可以在未发布状态查看未来公开字段，通过独立 confirmation 和 CSRF POST 幂等 Publish 或 Unpublish；事务 service 使用 row lock 更新本人 Profile，固定 redirect 不接受外部目标。管理员隐藏状态不会被会员发布操作修改，并继续优先于 `is_published` 决定公开 queryset 结果。Step 31 已通过 41 个专项回归及 276 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 的公开 Members 目录现已落地。`/members/` 只消费 `MemberProfile.objects.public()`，按 Display name 或 Username 回退后的公开名称执行不区分大小写且具有确定次序的排序；摘要卡片只输出 Avatar/fallback、公开名称及已填写的 Experience level 与 Preferred arm。Header 已向所有访问者公开 `Members` 导航，empty state 和无 JavaScript 路径可用。Step 32 已通过 70 个专项回归及 285 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 的公开 Member detail 与搜索边界现已落地。`/members/<username>/` 对保存的 Username 执行精确匹配并只消费公开 queryset；所有不可见状态和不存在路径统一进入同一 404 正文。详情复用 Preview 字段组件，只输出获准公开字段，外部链接使用安全属性，个人页面保持普通公开 robots 规则。Members 列表进入 sitemap，个人详情继续不被枚举。Step 33 已通过 43 个专项回归及 290 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 的 Admin Hide/Unhide 现已落地。MemberProfile 后台继续使用 Django 标准 `change_memberprofile` 权限和 `LogEntry`；change form 只允许维护隐藏状态与 Executive role，会员自述、User、发布状态和时间戳保持只读，新增与删除入口关闭。隐藏不会改写资料、发布偏好或账户状态，但会立即使 Profile 离开统一公开 queryset；会员仍可登录、编辑和 Unpublish。Step 34 已通过 9 个专项测试及 299 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 的统一响应式、Accessibility 与隐私门禁现已落地。单一 Playwright 场景覆盖 Profile Edit、Avatar、Preview、Publish/Unpublish、Members 列表与 detail、empty state 和隐藏提示，并在 desktop、mobile、200% content zoom、禁用 JavaScript 与 reduced-motion 环境验证语义、Focus、24px 触控目标、长内容重排、媒体加载、普通 POST、page error 和同源网络边界。公开响应另由 Django 安全测试扫描私有身份与未发布资料，并固定首期不收集年龄、出生日期、监护人或紧急联系人。门禁发现并修复长 Username 溢出、20px 触控目标及持久化 Avatar 重复校验读取关闭文件的问题。Step 35 已通过 20 个专项测试及 304 个完整测试，且没有 schema 或 migration 变更。
+
+Phase 3 已建立跨阶段共享门禁之上的全新环境验收入口，并完成最终人工验收。验收从临时 uv environment 执行锁定安装、PostgreSQL migration、静态资源、Ruff、Django、完整 branch coverage、Production deploy check、collectstatic 及 Phase 2/3 Development smoke；最终通过 `313` 个测试并达到 `95%` branch coverage。人工收尾将 Members cards 调整为左侧紧凑 Avatar 与右侧摘要，将 Account 收敛为三个主卡片并在 Account details 内提供 Profile 摘要、状态和操作，同时保留保存、Preview 与发布确认的独立安全边界。Phase 3 状态为 `Complete`，没有新增 migration、年龄逻辑、目录筛选、专用隐藏权限、排行榜或 Production media provider。
 
 ## 二、已实施的依赖架构
 
@@ -93,7 +109,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | --- | --- | --- |
 | `core` | Home、About、Beginners & Safety、全局页面壳、通用组件和 403/404/500 error pages | 后续 Phase 的业务页面 |
 | `accounts` | Custom User、标准与专用审核权限、Email/USU ID 规范化、USYD 声明、状态转换、受控审核服务、signup、Magic Code request 与 Account identity forms、完整认证流程、`/account/` 本人身份信息管理，以及 `/admin/` 最小权限 USU ID 审核 | 统一认证页面表现及其他业务 App 的后台管理 |
-| `members` | MemberProfile schema、字段验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、会员字段白名单和 Admin 模型配置 | 资料编辑页面、预览、发布操作、公开列表和详情页 |
+| `members` | MemberProfile schema、字段与 Avatar 验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、本人资料编辑、Avatar 文件生命周期、本人 Preview、Publish/Unpublish、公开 Members 列表与详情、会员字段白名单、使用标准 change 权限的 Admin hide/unhide 与 Executive role 维护，以及 Phase 3 响应式、Accessibility、隐私与全新环境验收 | Phase 4 及后续阶段功能 |
 | `events` | 活动与报名功能的归属位置 | Event、EventRegistration、报名和取消逻辑 |
 | `locations` | 地点与地图数据功能的归属位置 | Location、地点页面和地图输出 |
 | `safety` | 环境隔离的静态 Draft Risk Notice 页面 | RiskNoticeVersion、正式 Risk Notice 和当前版本服务 |
@@ -128,7 +144,7 @@ ASGI / WSGI ───────────→ config.settings.production
 - Bio 在 model validation 中拒绝 HTML，依赖 Django template 默认 escaping 保持后续输出为纯文本。Instagram 只保存清理后的 Username；其他社交链接在应用层限制 HTTPS，并由数据库约束防止直接写入非 HTTPS 值。
 - `MemberProfile.objects.public()` 使用 allauth `EmailAddress` 的 `Exists` 子查询表达已验证邮箱条件，并同时过滤未发布、管理员隐藏及停用账户；公开页面建立前即可复用同一隐私边界。
 - `MemberProfileForm` 使用显式字段白名单，只包含未来会员可管理的资料字段；`is_hidden_by_admin`、`executive_role`、`created_at` 和 `updated_at` 不进入会员输入面。
-- `MemberProfileAdmin` 提供列表、筛选、搜索及只读时间戳。Django Admin App 与 `/admin/` URL 已启用；MemberProfile 的更细粒度 Admin 权限和 hide/unhide 工作流仍属于 Phase 3。
+- `MemberProfileAdmin` 提供列表、筛选和搜索，并使用标准 `change_memberprofile` 权限管理现有 Profile。User、会员自述、发布状态与时间戳只读，只有 `is_hidden_by_admin` 和 `executive_role` 可编辑；新增与删除入口关闭，修改由 Django Admin `LogEntry` 记录。
 - `allauth.account` 的 EmailAddress schema 继续作为公开查询的已验证邮箱来源；完整认证基础配置见下一节，流程级行为仍按后续步骤逐项实施。
 
 ### 3.7 django-allauth 认证基础设施
@@ -335,16 +351,95 @@ ASGI / WSGI ───────────→ config.settings.production
 - `phase2-development-smoke.mjs` 在 desktop/mobile 下覆盖正式公开页、Draft 分支、错误页与认证入口，验证 CSS、响应式布局、页面错误及同源网络边界，不向 Development database 写入合成会员数据。
 - `tests/test_phase2_acceptance.py` 锁定命令失败传播、运行中 server 清理及 README 验收说明；`tests/test_quality_gate.py` 直接验证共享门禁，防止兼容 wrapper 掩盖真实入口。
 - 初次全新环境验收通过 234 个测试、94% branch coverage、Production 检查与 browser smoke。人工走查后的 Home、About 和 Beginners & Safety 内容与 CTA 收尾通过专项 Django/Playwright、静态与 Ruff 验证，项目负责人确认最终验收。
-- 该架构只完成 Phase 2 已定义页面与验收边界。Risk Notice 最终文本、University Branding、地点、Production Provider、数据保留和中文版本仍由后续批准或阶段处理；Phase 3 尚未实施。
+- 本节记录 Step 28 完成时的 Phase 2 验收边界；Phase 3 后续已按 3.27–3.34 实施并完成。Risk Notice 最终文本、University Branding、地点、Production Provider、数据保留和中文版本仍由后续批准或阶段处理。
+
+### 3.27 本人 Profile 编辑与所有权边界
+
+- `apps.members.urls` 提供命名路由 `members:profile_edit`，当前路径为 `/profile/edit/`；根 URLConf 只接入该 App URLConf，不建立尚未实施的公开 Members 路由。
+- 编辑 view 先使用 Django 登录保护，再要求当前 User 启用且至少具有一条 verified EmailAddress；不满足资格的请求不能进入表单处理。
+- Profile 查询固定使用 `request.user` 的一对一关系，不读取客户端提供的 User 或 Profile ID。有效会员缺少 Profile 时返回 404，不隐式建立可能掩盖数据异常的新记录。
+- `MemberProfileForm` 使用七个字段的显式白名单并移除 `is_published`。Display name 冲突在表单层按不区分大小写检查并关联字段错误，数据库唯一约束继续防止并发或直接写入绕过。
+- Instagram Username 在表单清理阶段去除一个开头 `@`，使 ModelForm 在执行 model field validator 前得到规范值；HTTPS social URL、Bio 纯文本及 Avatar 基础验证继续复用既有 model 边界。
+- 成功 POST 保存同一 Profile、发送 Django message 并 redirect 回编辑页。伪造 `user`、`is_published`、`is_hidden_by_admin`、`executive_role` 或时间戳不会进入 cleaned data，原状态保持不变。
+- 页面复用全局壳和认证表单 include，使用 CSRF、multipart 和普通 POST；JavaScript 不参与对象选择、权限或服务端验证。
+- Step 29 本身没有实现 Avatar 文件替换/删除清理、Preview、Publish/Unpublish、公开目录、公开详情或 Admin hide/unhide；Avatar 职责随后由 Step 30 完成，其余职责继续由 Step 31–34 分别实施。
+
+### 3.28 Avatar 原文件与 Storage 生命周期
+
+- `MemberProfileForm` 使用普通 File input，并增加非 Model 字段 `remove_avatar`；同一提交同时上传和删除会形成字段错误，发布及管理员字段继续不进入会员输入面。
+- Avatar validator 在既有 5 MB、允许格式、声明 MIME 与 Pillow 解码基础上，要求文件扩展名与真实格式对应。已保存 `FieldFile` 在每次校验前重新打开并在校验后关闭，既支持 ModelForm 与 model save 的重复校验，也避免 Windows 文件锁；尚未保存的上传对象保持打开。
+- `save_member_profile_form` 在提交前从数据库读取旧 Avatar 名称。有效提交在数据库事务内保存 Profile；成功后才删除不同的旧文件，主动删除使用同一路径。
+- 如果数据库保存在新文件写入后失败，service 根据 `FieldFile._committed` 识别并删除失败的新文件，旧数据库值及旧文件保持不变。表单验证失败不会调用 storage 写入。
+- 原始上传字节直接进入 storage，不执行 EXIF 转向、metadata 清理、缩放或格式转换。页面只通过方形容器和 CSS `object-fit: cover` 控制呈现，并在上传字段旁显示 metadata 风险提示。
+- Development 的 `MEDIA_URL` 为 `/media/`；根 URLConf 只在 `DEBUG=True` 时附加 Django local media patterns。Production 与 Test 默认 `DEBUG=False`，不会注册开发文件服务。
+- 仓库忽略根 `media/`。Django 测试使用 pytest 临时目录；浏览器测试使用独立临时目录及测试专用 URLConf，不将 Development helper 扩展到 Production。
+
+### 3.29 本人 Preview 与发布状态转换
+
+- `apps.members.urls` 在既有编辑入口之外提供 `profile_preview`、`profile_publish` 和 `profile_unpublish` 三个命名路由；当前仍未建立公开 Members 列表或 detail 路由。
+- 三个 view 复用同一所有权与资格边界：必须登录、账户启用、至少具有一条 verified EmailAddress，并且只通过 `request.user` 查询本人 Profile。
+- Preview 使用共享公开字段 include 呈现未来 detail 的字段顺序。`Not specified` 值不输出，Bio 继续由 Django escaping 保护，外部社交链接使用新窗口安全属性；Email、USYD、USU ID、审核状态和 Executive role 不进入页面 context 输出。
+- Publish 与 Unpublish 各有独立 confirmation。GET 不修改状态，POST 依赖 Django CSRF middleware；成功后固定 redirect 到本人 Preview，不读取客户端 `next`。
+- `set_profile_publication` 在数据库事务中通过 `select_for_update()` 锁定当前会员 Profile，只在目标状态不同的时候保存，重复 POST 保持幂等。
+- 发布操作只修改 `is_published`。`is_hidden_by_admin` 不进入会员写入路径，隐藏资料即使已发布也继续被 `MemberProfile.objects.public()` 排除。
+- 隐藏状态在本人页面使用中性提示表达，不公开管理员身份、后台操作或隐藏原因；会员仍可编辑、Preview 和 Unpublish。
+- Publish confirmation 显式告知 Username detail path、Display name 回退规则、全部公开字段及 Avatar metadata 风险；该 path 在 Step 31 只作为说明文字，并在 Step 33 开放公开 detail 路由。
+
+### 3.30 Members 公开目录与摘要字段边界
+
+- `members:list` 在 `/members/` 提供不要求认证的公开目录；view 只从 `MemberProfile.objects.public()` 构造 queryset，因此未发布、管理员隐藏、停用和邮箱未验证 Profile 不会进入 template。
+- Queryset 使用 `select_related("user")` 避免逐卡读取 Username，并以 `Lower(Coalesce(display_name, user.username))` 形成公开名称排序键；Lower Username、原始 Username 和主键提供稳定的同名次序。
+- 目录 template 不复用包含 Bio 和社交链接的 detail/Preview 组件，而是维护更窄的卡片字段白名单：Avatar 或非敏感首字母 fallback、Display name 或 Username，以及非 `Not specified` 的 Experience level 与 Preferred arm。
+- Header 对登录与未登录访问者都输出普通 `Members` 链接，并依据 `members:list` view name 设置当前页状态；移动 disclosure 和禁用 JavaScript 的导航路径保持既有行为。
+- 目录使用响应式 CSS Grid、方形 Avatar/fallback、长名称换行和明确 empty state。Step 32 建立时卡片没有详情链接；Step 33 后公开名称链接至 `/members/<username>/`。目录仍没有搜索、HTMX 或分页。
+- Django 测试扫描响应中的账户、USYD/USU、Admin、Bio 和社交字段；Playwright 另覆盖 desktop、mobile、键盘、无 JavaScript、横向溢出、page error 和同源网络限制。
+
+### 3.31 Member detail、统一 404 与搜索边界
+
+- `members:detail` 在 `/members/<username>/` 提供公开 GET 页面；view 只从 `MemberProfile.objects.public().select_related("user")` 查询，并按保存的 Username 精确匹配。
+- 未发布、管理员隐藏、停用、邮箱未验证、大小写不匹配和不存在的 Username 都无法离开公开 queryset，并统一进入项目 404 handler；可见错误正文不披露资料是否存在或不可见原因。
+- Detail 与本人 Preview 复用 `profile_public_fields.html` 的字段顺序。Detail 将公开名称呈现为唯一 H1；Preview 继续以 H2 嵌入本人流程页面，不产生重复 H1。
+- 详情字段白名单为公开名称、Username、Avatar/fallback、非默认 Experience level、非默认 Preferred arm、Bio、Instagram Username 和一个 HTTPS social URL。账户身份、USU 审核、Admin、Executive role 与时间戳不输出。
+- Django 默认 escaping 继续保护公开文本；Bio 使用 `linebreaksbr` 保留纯文本换行。外部链接使用新窗口及 `noopener noreferrer`，其他社交链接继续受 HTTPS model 与数据库约束保护。
+- Detail 使用全局默认 `index, follow`，不增加特殊 robots directive。显式 sitemap allowlist 只增加 `members:list`，不枚举任何 `members:detail` URL。
+- Members card 以公开名称链接详情；Header 在列表与详情页都将 Members 标记为当前项。Playwright 覆盖卡片导航、直接 URL、desktop/mobile、无 JavaScript、robots、布局和同源网络边界。
+
+### 3.32 MemberProfile Admin Hide/Unhide 与字段所有权
+
+- MemberProfile Admin 依赖 Django 自动生成的标准 `members.change_memberprofile` 权限；普通会员和无该权限的 Staff 不能访问，拥有该权限的启用 Staff 与 Superuser 可以维护现有 Profile。
+- change form 将 User、Display name、Avatar、Bio、Experience level、Preferred arm、Instagram Username、其他社交链接、`is_published`、创建时间和更新时间设为只读；仅 `is_hidden_by_admin` 与 `executive_role` 可编辑。
+- Admin 不提供 MemberProfile 新增或删除入口，也不定义专用 permission 或自定义 action。Hide/Unhide 与 Executive role 修改沿用 Django change form，并由标准 `LogEntry` 留下修改记录。
+- 隐藏操作只改变 `is_hidden_by_admin`。会员自述、Profile 所属 User、`is_published` 和账户启用状态保持原值；公开列表和 detail 继续通过同一 `MemberProfile.objects.public()` 边界排除隐藏资料。
+- 被隐藏会员仍可登录、编辑本人 Profile、查看中性隐藏提示并执行 Unpublish。会员 Publish 或编辑流程不能清除管理员隐藏状态。
+- 本边界没有增加原因字段、历史表、migration 或前台 Executive role 展示；统一 Phase 3 browser/accessibility 门禁已由 Step 35 完成。
+
+### 3.33 Phase 3 统一响应式、Accessibility 与隐私门禁
+
+- `phase3-accessibility.mjs` 以一个完整场景统一遍历本人 Profile Edit、Preview、Publish/Unpublish、公开 Members 列表与 detail；独立 empty 场景验证没有公开资料时的 desktop、mobile 和禁用 JavaScript 表现。
+- Django wrapper 只建立合成已验证账户和临时 Avatar，并通过 authenticated Session 驱动真实浏览器。测试结束时清理临时 media 目录，Production 与 Development media 边界不因此改变。
+- Desktop、mobile 与 200% content zoom 场景验证 landmarks、唯一 H1、可见 Label、表单错误关联、键盘 Focus、至少 24px 的交互目标、图片 alt/解码、长 Username、长 Bio、公开链接安全属性和无横向溢出。
+- JavaScript disabled 场景实际保存 Profile、Unpublish 和 Publish，证明核心流程依赖普通 HTTP POST、CSRF 和服务端状态转换；管理员隐藏提示在整个流程中保持中性且可见。
+- Reduced-motion 检查解析浏览器返回的全部 transition duration，并要求每项不超过项目 CSS 定义的 0.01ms；任何 page error 或非 live-server origin 请求都会使场景失败。
+- `test_quality_security.py` 对 Members 列表与 detail 扫描 Email、USYD/USU ID、审核状态、Executive role、未发布资料和私有 sentinel；另固定 User、MemberProfile 与会员表单没有年龄、出生日期、监护人或紧急联系人字段。
+- 门禁推动的生产修补限定为长动态标识断行、Profile checkbox/radio 和社交链接 24px 触控目标，以及已提交 Avatar 重复校验前重新打开文件；没有改变公开字段、权限、发布规则、schema 或 migration。
+
+### 3.34 Phase 3 全新环境验收与人工收尾
+
+- `scripts/accept_phase_3.py` 复用共享 `verify_project.py`，在 OS 临时目录创建独立 uv environment，等待 Docker PostgreSQL、执行 Development migration 和完整门禁，再启动可可靠清理的真实 Development server。
+- Development server 依次运行 Phase 2 与 Phase 3 desktop/mobile smoke；Phase 3 smoke 固定 Members、Anonymous Profile redirect、统一不可见 404、Development media 和同源网络边界。验收脚本与测试传播所有非零结果，并在异常时输出 server log。
+- Account view 查询当前 User 的 MemberProfile，只向本人页面 context 提供 Profile 摘要；模板保持 Account、USYD/USU 与 Security 三个主卡片，并在 Account details 内展示公开说明、字段摘要、状态及 Edit、Preview、Publish/Unpublish 操作。
+- Profile 编辑保存继续只写会员字段且不改变发布状态，成功后返回 Account；Preview 继续复用公开字段组件并增加返回 Account 的普通链接。统一 Publish/Unpublish service、CSRF POST、幂等状态转换和管理员隐藏优先级没有改变。
+- Members cards 使用响应式两列结构：Avatar/fallback 保持左侧固定紧凑尺寸，右侧显示允许的摘要字段；原始上传文件仍按既有规则保存，显示尺寸不改变 storage 或 Production media 决策。
+- 人工走查补充了连续无空格 Bio、Profile 定义列表间距、Account 按钮层级与 Avatar cache/storage 核查。最终临时环境通过 `313` 个测试、`95%` branch coverage、Production deploy check、collectstatic 及两组 Development smoke，项目负责人确认全部视觉和交互符合预期。
 
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
 | --- | --- |
-| `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example` 与 `uv.lock`。 |
+| `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、本地 `media/` 上传目录、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example` 与 `uv.lock`。 |
 | `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值，供开发者复制为未跟踪的 `.env`。 |
 | `AGENTS.md` | 定义仓库级开发约束，包括编码前必读文档、架构变更审批、计划目录、测试原则、命名规范和敏感数据限制。 |
-| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1/2 自动验收、人工核心流程、安全数据边界和目录职责；明确中性 NULDL Branding。 |
+| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、安全数据边界和目录职责；明确中性 NULDL Branding。 |
 | `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
 | `package.json` | 定义锁定的浏览器 library、字体与前端开发工具，并提供 vendor copy/check、Home 图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
@@ -357,7 +452,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
 | `scripts/accept_phase_1.py` | 提供 Step 20 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与完整 Phase 1 门禁、启动并可靠清理本机 Django server，再运行 desktop/mobile Playwright smoke。 |
 | `scripts/accept_phase_2.py` | 提供 Step 28 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与共享项目门禁、启动并可靠清理真实 Development server，再运行 Phase 2 desktop/mobile Playwright smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面 section/card/list/CTA/status/safety panel、Home Hero/Logo/日程组件、响应式导航、focus 和 reduced-motion。 |
+| `scripts/accept_phase_3.py` | 提供 Step 36 全新环境端到端验收：建立临时 uv environment、执行 migration 与共享门禁、启动并可靠清理 Development server，再依次运行 Phase 2/3 desktop/mobile smoke。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面、Home、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/Logo_without_USYD.png` | 保存获准 Home Logo 的未改动 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -383,17 +479,17 @@ ASGI / WSGI ───────────→ config.settings.production
 | `config/__init__.py` | 将 `config` 标记为 Python package。 |
 | `config/settings/__init__.py` | 将 `config.settings` 标记为环境配置 package，不隐式选择具体环境。 |
 | `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware、默认关闭的 Draft 开关与 Safety context processor，以及严格的环境变量与 PostgreSQL URL 解析函数。 |
-| `config/settings/development.py` | 定义本地 Debug、Console Email、local media、环境变量驱动的 PostgreSQL 配置，并明确开启 Draft Risk Notice。 |
+| `config/settings/development.py` | 定义本地 Debug、Console Email、`/media/` local media、环境变量驱动的 PostgreSQL 配置，并明确开启 Draft Risk Notice。 |
 | `config/settings/test.py` | 定义关闭 Debug 的自动化测试环境、独立 PostgreSQL test database、in-memory Email、快速 Password hasher 及默认关闭的 Draft Risk Notice。 |
 | `config/settings/preview.py` | 继承 Production 安全配置并要求显式的 Draft Risk Notice Boolean 开关；缺少变量时拒绝加载。 |
 | `config/settings/production.py` | 定义环境变量驱动的 Production Secret、hosts、PostgreSQL、SMTP、HTTPS 安全设置及 `ManifestStaticFilesStorage`，并强制关闭 Draft Risk Notice；缺少必填值时拒绝加载。 |
-| `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入 core、safety 和 accounts URLConf，将 `/accounts/` 委托给 `allauth.urls`，并注册 403、404 与 500 handlers。 |
+| `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入 core、safety、accounts 和 members URLConf，将 `/accounts/` 委托给 `allauth.urls`，注册 403、404 与 500 handlers，并只在 Debug 环境附加 local media patterns。 |
 | `config/asgi.py` | 暴露 ASGI application 入口，默认加载 Production settings。 |
 | `config/wsgi.py` | 暴露 WSGI application 入口，默认加载 Production settings。 |
 | `apps/__init__.py` | 将 `apps` 标记为承载领域 App 的 Python package。 |
 | `apps/core/__init__.py` | 将 `core` 标记为 Python package。 |
 | `apps/core/apps.py` | 定义 `CoreConfig`，将 `apps.core` 注册为 Django App。 |
-| `apps/core/views.py` | 提供 Home、About 与 Beginners & Safety 的无数据库公开页面 views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view，以及不向模板传递异常详情的 403、404 与 500 handlers。 |
+| `apps/core/views.py` | 提供 Home、About 与 Beginners & Safety 的无数据库公开页面 views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view（含 Members 列表、不含个人 detail），以及不向模板传递异常详情的 403、404 与 500 handlers。 |
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格和无报名能力的静态日程。 |
@@ -403,7 +499,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/templates/core/errors/404.html` | 使用共享页面壳呈现中性 Page Not Found 状态和 Return Home 操作，保持 HTTP 404。 |
 | `apps/core/templates/core/errors/500.html` | 使用共享页面壳呈现中性 Something Went Wrong 状态和 Return Home 操作，保持 HTTP 500。 |
 | `apps/core/templates/core/sitemap.xml` | 输出符合 sitemap XML namespace 的公开 URL 列表；内容只来自 view 的显式 Production 公开页面 allowlist。 |
-| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，根据认证状态提供 Home、About、Beginners & Safety、Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；以 URL name 标记当前页，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航。 |
+| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，为所有访问者提供 Home、About、Beginners & Safety 和 Members，根据认证状态提供 Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；Members 列表与 detail 共用当前页标识，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航。 |
 | `apps/core/templates/core/includes/messages.html` | 将 Django messages 输出到 polite live region，并为错误和非错误反馈提供相应 ARIA role。 |
 | `apps/core/templates/core/includes/footer.html` | 提供完整 `NULDL Armwrestling Club` 名称、动态年份和已批准的 Instagram HTTPS 链接；不公开联系邮箱或未经授权的大学品牌资产。 |
 | `apps/core/migrations/__init__.py` | 将 `core.migrations` 标记为 migration package；当前没有 migration。 |
@@ -412,9 +508,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/accounts/models.py` | 定义 Custom User、专用 USU 审核权限、Email/USU ID 规范化、数字 validator、USU 状态转换、审核字段写入保护及三项数据库约束。 |
 | `apps/accounts/admin.py` | 注册 Custom UserAdmin，提供 USU 审核列表、筛选、搜索、只读角色视图及 Verify/Reject actions，并隔离无权限 Staff。 |
 | `apps/accounts/forms.py` | 定义 Account 身份更新、allauth signup、Magic Code request 及两类 code confirmation forms；通过字段白名单与既有 service 隔离只读/审核字段，并为 USYD 渐进增强和不回显数字 code 提供 widget attributes。 |
-| `apps/accounts/views.py` | 提供登录保护的 Account GET/POST view，固定使用当前 User，查询本人 Email verification status，并在成功更新后执行 redirect-after-POST。 |
+| `apps/accounts/views.py` | 提供登录保护的 Account GET/POST view，固定使用当前 User，查询本人 Email verification status 与 MemberProfile 摘要，并在成功更新后执行 redirect-after-POST。 |
 | `apps/accounts/urls.py` | 将项目 Account view 暴露为命名路由 `account`，路径为 `/account/`。 |
-| `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，显示只读账户及审核状态、身份更新 form、Password change 入口和 POST logout；使用 Alpine 条件显示 USU ID，同时保留无 JavaScript 的可见字段和普通 POST。 |
+| `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，使用三个主卡片显示只读账户、Profile 摘要与发布操作、USYD/USU form、Password change 和 POST logout；使用 Alpine 条件显示 USU ID并保留无 JavaScript 普通 POST。 |
 | `templates/account/includes/form_errors.html` | 输出 form 非字段错误的可聚焦 alert summary，供所有项目认证模板复用。 |
 | `templates/account/includes/field.html` | 通过 Django `as_field_group` 输出单个字段及其 label、help text、error 与 ARIA 关联。 |
 | `templates/account/includes/form_fields.html` | 组合 form-level error 与全部 visible/hidden fields，减少认证模板间的字段呈现差异。 |
@@ -439,11 +535,21 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/accounts/migrations/0003_alter_user_options.py` | 在 User model options 中声明 `review_usu_id` 专用权限，不改变业务字段或约束。 |
 | `apps/members/__init__.py` | 将 `members` 标记为 Python package。 |
 | `apps/members/apps.py` | 定义 `MembersConfig`，将 `apps.members` 注册为 Django App，并在 `ready()` 中加载 Email 确认 signal receiver。 |
-| `apps/members/models.py` | 定义 MemberProfile、字段 choices、规范化与验证、Avatar 内容检查、PostgreSQL 约束，以及只返回可公开 Profile 的 queryset。 |
-| `apps/members/services.py` | 提供幂等的 MemberProfile 创建入口，由 Email 确认 signal receiver 调用。 |
+| `apps/members/models.py` | 定义 MemberProfile、字段 choices、规范化与验证、Avatar 大小/扩展名/MIME/真实格式检查、已提交 Avatar 重复校验时的安全 reopen/close、PostgreSQL 约束，以及只返回可公开 Profile 的 queryset。 |
+| `apps/members/services.py` | 提供 Email 确认使用的幂等 Profile 创建入口、协调 Avatar storage 生命周期的 Profile 保存入口，以及使用 row lock 幂等更新本人发布状态的 service。 |
 | `apps/members/signals.py` | 接收 allauth 官方 `email_confirmed` signal，并在 Email 验证成功后通过 service 确保 MemberProfile 存在。 |
-| `apps/members/forms.py` | 定义会员可写资料字段白名单，隔离管理员字段和系统时间戳；当前尚未连接页面。 |
-| `apps/members/admin.py` | 注册 MemberProfile 后台模型，提供列表、筛选、搜索和只读时间戳配置。 |
+| `apps/members/forms.py` | 定义七个会员可写资料字段、非 Model Avatar 删除控制、上传/删除冲突检查、Display name 重复检查和 Instagram Username 清理；隔离发布、管理员字段、User 及系统时间戳。 |
+| `apps/members/views.py` | 提供只消费公开 queryset 的 Members 目录与 Username detail，以及登录保护且要求启用账户与 verified Email 的本人 Profile 编辑、Preview、Publish confirmation 和 Unpublish confirmation；本人流程固定按当前 User 查询对象。 |
+| `apps/members/urls.py` | 暴露公开 `members:list`、`members:detail` 及本人 Profile edit、preview、publish 和 unpublish 命名路由。 |
+| `apps/members/templates/members/member_list.html` | 呈现公开 Members cards、Avatar/fallback、公开名称详情链接、非默认经验与惯用手，以及没有公开 Profile 时的 empty state；不输出 detail-only 或敏感字段。 |
+| `apps/members/templates/members/member_detail.html` | 使用普通公开 metadata/robots 与共享字段组件呈现单个公开 Profile，并提供返回 Members 的普通链接。 |
+| `apps/members/templates/members/profile_edit.html` | 使用全局页面壳呈现资料字段、当前方形 Avatar、删除控制、metadata 风险提示、CSRF、multipart、普通 POST 和 Preview 入口，并明确保存不会改变发布状态。 |
+| `apps/members/templates/members/profile_preview.html` | 呈现仅本人可见的公开效果 Preview、当前隐藏提示及 Edit、Publish 或 Unpublish 操作入口。 |
+| `apps/members/templates/members/profile_publish_confirm.html` | 列出全部公开字段、Username detail path、名称回退和 Avatar metadata 风险，并通过 CSRF POST 确认 Publish。 |
+| `apps/members/templates/members/profile_unpublish_confirm.html` | 说明 Unpublish 影响并通过 CSRF POST 确认取消发布，不删除已保存资料。 |
+| `apps/members/templates/members/includes/profile_public_fields.html` | 集中公开字段顺序和展示边界，供本人 Preview 与公开 detail 复用，并按页面语义分别输出 H2 或唯一 H1。 |
+| `apps/members/templates/members/includes/profile_hidden_notice.html` | 在本人资料流程中输出不泄露管理员或后台信息的中性隐藏提示。 |
+| `apps/members/admin.py` | 注册 MemberProfile 后台模型，依赖标准 change 权限提供列表、筛选和搜索；change form 只允许维护隐藏状态与 Executive role，会员自述、User、发布状态和时间戳只读，并关闭新增与删除入口。 |
 | `apps/members/migrations/__init__.py` | 将 `members.migrations` 标记为 migration package。 |
 | `apps/members/migrations/0001_initial.py` | 创建 MemberProfile 全部字段、One-to-one User 关系，以及显示名规范化、忽略大小写唯一和 HTTPS 社交链接数据库约束。 |
 | `apps/events/__init__.py` | 将 `events` 标记为 Python package。 |
@@ -467,12 +573,21 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_user_model.py` | 验证 Custom User 创建、标准权限字段、身份与审核默认值、Email 必填与唯一，以及审核人 Self ForeignKey 的 `SET_NULL` 行为。 |
 | `tests/test_user_identity_rules.py` | 验证 Email 和数字型 USU ID 规范化、全部 USU 状态转换、专用审核权限、前导零保留及数据库对直接写入的约束。 |
 | `tests/test_member_profile.py` | 验证 MemberProfile schema、默认值、幂等创建、字段规范化、上传安全、公开查询、会员字段边界和 Admin 配置。 |
+| `tests/test_member_profile_admin.py` | 验证 MemberProfile Admin 的四类角色权限、标准 change permission、只读字段、防伪造、Hide/Unhide、Executive role、Django LogEntry，以及隐藏后的公开与本人流程边界。 |
+| `tests/test_profile_edit.py` | 验证 Profile 编辑访问资格、本人对象所有权、允许字段、Display name/Bio/Instagram/HTTPS 验证、伪造字段隔离、状态保持、保存后返回 Account 和普通 POST。 |
+| `tests/test_profile_publication.py` | 验证本人 Preview、访问资格、所有权、GET 无副作用、Publish/Unpublish 幂等 POST、CSRF、固定 redirect、管理员隐藏优先级、公开说明和敏感字段隔离。 |
+| `tests/test_member_directory.py` | 验证公开目录 URL、公开 queryset、稳定排序、名称与 Avatar fallback、卡片详情链接、字段白名单、默认值隐藏、empty state、导航状态及敏感字段隔离。 |
+| `tests/test_member_detail.py` | 验证 Username 精确 URL、普通 robots、公开字段、安全外链、HTML escaping、默认值隐藏、敏感字段隔离及所有不可见状态的统一 404 正文。 |
+| `tests/test_member_directory_browser.py` | 以真实测试站点调用 Members 目录与详情 Playwright 场景，并建立包含公开 Bio 和社交链接的合成已发布资料；固定横向卡片 Avatar 与摘要布局。 |
+| `tests/test_avatar_lifecycle.py` | 使用隔离临时 media 验证 Avatar 原始字节、格式与大小边界、替换、主动删除、保留现有 Avatar 的重复校验、失败保护、孤立文件清理、页面提示和 Development/Production media URL 边界。 |
+| `tests/test_avatar_browser.py` | 以真实测试站点和临时 media 调用 Avatar Playwright 场景，并通过 authenticated Session 验证本人编辑页。 |
+| `tests/profile_media_urls.py` | 只为 Avatar 浏览器测试附加临时 media 文件服务；不进入 Production URLConf。 |
 | `tests/test_authentication_configuration.py` | 验证 allauth Apps、backend、认证 settings、邮箱验证码与 Magic Code 生命周期配置、默认 rate limits、redirects、必需 URL 和排除功能的路由边界。 |
 | `tests/test_signup_form.py` | 验证 signup 字段顺序与必填性、Email/Username 冲突、enumeration prevention、USYD/USU ID 服务端规则、数字规范化及无 JavaScript 的普通 POST 与 verification redirect。 |
 | `tests/test_email_verification.py` | 验证待确认状态、正确、错误、过期与重复验证码、重发与即时限流、幂等 Profile 创建，以及日志不泄露完整 Email 或验证码。 |
 | `tests/test_password_authentication.py` | 验证密码登录、通用凭据错误、未验证与停用账户、站内及外部 redirect、Password reset 枚举保护与密码更新，以及 GET/POST logout 边界。 |
 | `tests/test_magic_code_authentication.py` | 验证 Magic Code 的有效、错误、过期、单次使用、重发、请求限制、账户资格、enumeration prevention、密码登录独立性及敏感日志边界。 |
-| `tests/test_account_page.py` | 验证 Account 访问控制、本人数据隔离、Email verification 显示、form 初始化、USYD/USU ID 状态转换、只读与审核字段防伪造、Password change 和 POST logout 页面边界。 |
+| `tests/test_account_page.py` | 验证 Account 访问控制、本人数据隔离、Email verification、Profile 摘要与状态操作、三卡片结构、USYD/USU ID 状态转换、只读字段防伪造、Password change 和 POST logout。 |
 | `tests/test_user_admin.py` | 验证 UserAdmin 配置、四类角色权限差异、Verify/Reject、直接编辑防护、重新提交、审核人停用及前台敏感信息边界。 |
 | `tests/test_global_templates.py` | 验证全局页面壳、metadata/head blocks、完整品牌、Anonymous/Member Header、当前导航、已实施公开页面链接、无失效链接、skip link、landmarks、唯一 H1/title、消息播报、本地 Alpine 和普通导航/form 基线。 |
 | `tests/test_public_foundation_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 21 公开页面 Playwright scenario。 |
@@ -487,26 +602,32 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_error_pages.py` | 在 `DEBUG=False` 下验证真实 403、404、500 handlers 的状态码、模板、title、唯一 H1、Home link、CSS 和敏感内容隔离。 |
 | `tests/test_error_pages_browser.py` | 以隔离错误 URLConf 启动真实测试站点并调用 Step 25 Playwright scenario。 |
 | `tests/test_phase2_accessibility_browser.py` | 在 `DEBUG=False` 下开启 Draft 并复用隔离错误 URLConf，以真实静态 live server 调用 Step 27 统一 accessibility Playwright scenario。 |
-| `tests/test_public_metadata_sitemap_footer.py` | 验证三个正式公开页面的准确 Metadata/Open Graph、环境派生 URL、无硬编码 canonical host、sitemap XML 精确 allowlist、Draft 永久排除，以及 Footer 的获准 Instagram 与禁止内容边界。 |
+| `tests/test_public_metadata_sitemap_footer.py` | 验证三个正式宣传页的准确 Metadata/Open Graph、环境派生 URL、无硬编码 canonical host、含 Members 列表且排除个人 detail 与 Draft 的 sitemap XML 精确 allowlist，以及 Footer 的获准 Instagram 与禁止内容边界。 |
 | `tests/test_authentication_templates.py` | 验证项目认证模板覆盖、共享页面壳、Alpine/no-JavaScript 边界、ARIA error 关联、数字 code attributes 及 Password/code 不回显。 |
 | `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 精确版本与 SHA-256、无第三方 CDN、design tokens、focus/reduced-motion 和关键颜色 contrast。 |
 | `tests/test_authentication_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Node Playwright；显式按 UTF-8 捕获输出，失败时保留真实浏览器诊断。 |
 | `tests/test_phase1_browser_flows.py` | 编排 Phase 1 Signup/verification、Password login/Account update、Magic Code 和 Admin USU review 浏览器流程，并从隔离的 Playwright storage state 读取服务端 Session code 以继续真实流程。 |
 | `tests/test_phase1_acceptance.py` | 验证 Step 20 验收命令失败传播、运行中 Development server 清理，以及 README 对锁定安装、自动验收和人工 Phase 1 流程的覆盖。 |
 | `tests/test_phase2_acceptance.py` | 验证 Step 28 全新环境验收的命令顺序、失败传播、Development server 清理，以及 README 对共享门禁、自动验收和人工 Phase 2 流程的覆盖。 |
-| `tests/test_quality_security.py` | 验证敏感文件及高置信凭据扫描、测试外部网络阻断、认证与身份日志隐私、Anonymous 页面私有字段隔离和 HttpOnly Session cookie。 |
+| `tests/test_phase3_acceptance.py` | 验证 Step 36 全新环境验收的锁定安装、migration、共享门禁、两组 smoke、失败传播、Development server 清理及 README Phase 3 流程。 |
+| `tests/test_phase3_accessibility_browser.py` | 以真实静态 live server、合成已验证账户和隔离临时 media 调用 Phase 3 统一 Playwright 场景，并分别验证完整资料流程、公开 empty state 和临时目录清理。 |
+| `tests/test_quality_security.py` | 验证敏感文件及高置信凭据扫描、测试外部网络阻断、认证与身份日志隐私、Anonymous 页面和 Members 公开响应的私有字段隔离、Phase 3 不收集年龄/监护人资料，以及 HttpOnly Session cookie。 |
 | `tests/test_quality_gate.py` | 验证统一门禁不会吞掉子命令失败，非零退出会作为验收失败传播。 |
 | `tests/browser/browser-support.mjs` | 为 Playwright scenarios 提供必填环境变量读取、只允许当前 live-server origin 的 browser context，以及外部请求断言。 |
 | `tests/browser/authentication-ui.mjs` | 在 Chromium 中执行小屏、键盘、Alpine、整串 code 输入、无 JavaScript fallback 和服务端错误焦点的端到端断言，并复用同源网络隔离。 |
 | `tests/browser/phase1-core-flows.mjs` | 在 Chromium 中执行 Phase 1 注册验证、两种登录、账户更新、登出和 Admin USU review 操作，所有场景均使用同源网络限制。 |
 | `tests/browser/development-server-smoke.mjs` | 对真实 Development server 执行 desktop/mobile Home、Signup、Login、Account redirect、CSS、布局、page error、同源请求和 Branding smoke checks。 |
 | `tests/browser/phase2-development-smoke.mjs` | 对真实 Development server 执行 Phase 2 desktop/mobile 正式页面、Draft 分支、错误页、认证入口、CSS、布局、page error 和同源请求 smoke checks。 |
+| `tests/browser/phase3-development-smoke.mjs` | 对真实 Development server 执行 Phase 3 desktop/mobile Members、Anonymous Profile redirect、不可见详情、Development media、CSS、布局、page error 和同源请求 smoke checks。 |
 | `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
 | `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、文字可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/draft-risk-notice.mjs` | 在 Chromium 中验证 Step 24 Draft Risk Notice 的条件入口、banner、robots、desktop/mobile、键盘、无 JavaScript、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/error-pages.mjs` | 在 Chromium 中验证 Step 25 三个错误状态的正确响应、desktop/mobile、项目 CSS、键盘 Focus、无 JavaScript、无水平溢出和同源网络边界。 |
-| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界。 |
+| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口。 |
+| `tests/browser/avatar-edit.mjs` | 在 Chromium desktop/mobile 中验证当前 Avatar 加载、方形裁切、metadata 提示、删除控件、键盘 Focus、上传错误保持及同源网络边界。 |
+| `tests/browser/member-directory.mjs` | 在 Chromium desktop/mobile/no-JavaScript 场景验证公开 Members cards、左侧紧凑 Avatar、右侧摘要、稳定顺序、详情导航、robots、安全外链、Focus、无溢出、page error 和同源网络边界。 |
+| `tests/browser/phase3-accessibility.mjs` | 在 Chromium 中统一验证 Account/Profile/Members 全流程的 desktop/mobile、200% content zoom、键盘 Focus、24px 触控目标、表单错误关联、连续长内容重排、禁用 JavaScript 提交与返回 Account、reduced motion、page error 和同源网络边界。 |
 | `memory-bank/design_document.md` | 产品与体验设计的权威来源，定义用户、页面、流程、权限、业务规则、隐私、Accessibility、内容和 Branding 边界。 |
 | `memory-bank/tech_stack.md` | 技术决策的权威来源，定义框架、版本策略、单体架构、环境、安全、部署和运维边界。 |
 | `memory-bank/implementation.md` | 代码实施顺序的权威来源，将当前 Phase 拆分为一次只执行一个的可验证步骤，并规定模型、配置、测试和 migration 要求。 |

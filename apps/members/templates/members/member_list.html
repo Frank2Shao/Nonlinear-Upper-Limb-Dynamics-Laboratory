@@ -1,0 +1,65 @@
+{% extends "core/base.html" %}
+
+{% block title %}Members | NULDL Armwrestling Club{% endblock %}
+{% block meta_description %}Meet members who have chosen to publish their NULDL Armwrestling Club profiles.{% endblock %}
+{% block open_graph_title %}Members | NULDL Armwrestling Club{% endblock %}
+{% block open_graph_description %}Meet members who have chosen to publish their NULDL Armwrestling Club profiles.{% endblock %}
+
+{% block content %}
+  <section class="public-page" aria-labelledby="members-title">
+    <header class="section-heading">
+      <p class="eyebrow">Club community</p>
+      <h1 id="members-title">Members</h1>
+      <p>Meet club members who have chosen to make their profiles public.</p>
+    </header>
+
+    {% if profiles %}
+      <div class="member-directory" aria-label="Public member profiles">
+        {% for profile in profiles %}
+          <article class="member-card" aria-labelledby="member-name-{{ profile.pk }}">
+            {% if profile.avatar %}
+              <img
+                class="member-card__avatar"
+                src="{{ profile.avatar.url }}"
+                alt="Avatar for {{ profile.resolved_display_name }}"
+                width="480"
+                height="480"
+              >
+            {% else %}
+              <div class="member-card__avatar-fallback" aria-hidden="true">
+                {{ profile.resolved_display_name|first|upper }}
+              </div>
+            {% endif %}
+
+            <div class="member-card__content">
+              <h2 id="member-name-{{ profile.pk }}">
+                <a class="member-card__name-link" href="{% url 'members:detail' username=profile.user.username %}">{{ profile.resolved_display_name }}</a>
+              </h2>
+              {% if profile.experience_level != "not_spec" or profile.preferred_arm != "not_spec" %}
+                <dl class="member-card__details">
+                  {% if profile.experience_level != "not_spec" %}
+                    <div>
+                      <dt>Experience level</dt>
+                      <dd>{{ profile.get_experience_level_display }}</dd>
+                    </div>
+                  {% endif %}
+                  {% if profile.preferred_arm != "not_spec" %}
+                    <div>
+                      <dt>Preferred arm</dt>
+                      <dd>{{ profile.get_preferred_arm_display }}</dd>
+                    </div>
+                  {% endif %}
+                </dl>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <section class="empty-state" aria-labelledby="members-empty-title">
+        <h2 id="members-empty-title">No public member profiles yet</h2>
+        <p>Members can choose to publish their profiles after previewing them.</p>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

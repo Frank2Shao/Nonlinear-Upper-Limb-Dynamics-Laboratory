@@ -1,0 +1,34 @@
+{% extends "core/base.html" %}
+
+{% block title %}Publish Profile | NULDL Armwrestling Club{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="profile-publish-title">
+    <p class="eyebrow">Publication confirmation</p>
+    <h1 id="profile-publish-title">Publish Profile</h1>
+    <p>Publishing makes the following profile fields public when the Members pages are available:</p>
+
+    {% include "members/includes/profile_hidden_notice.html" with profile=profile %}
+
+    <div class="panel stack">
+      <ul>
+        <li>Display name, or your Username when Display name is empty</li>
+        <li>Avatar</li>
+        <li>Experience level</li>
+        <li>Preferred arm</li>
+        <li>Bio</li>
+        <li>Instagram Username</li>
+        <li>Other HTTPS social URL</li>
+      </ul>
+      <p>Your Username will be part of your public profile URL: <code>{{ public_profile_path }}</code></p>
+      <p>Your public name will be <strong>{{ profile.resolved_display_name }}</strong>{% if not profile.display_name %}, using your Username because no Display name is set{% endif %}.</p>
+      <p class="status-banner">Avatar files are published as provided and may contain location, device or other metadata.</p>
+    </div>
+
+    <form class="button-row" method="post">
+      {% csrf_token %}
+      <button class="button" type="submit">Publish profile</button>
+      <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Return to preview</a>
+    </form>
+  </section>
+{% endblock %}

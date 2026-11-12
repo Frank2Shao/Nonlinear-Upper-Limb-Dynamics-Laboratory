@@ -1,9 +1,9 @@
 # NULDL 开发进度
 
-**最后更新：** 2026 年 10 月 29 日
-**当前阶段：** Phase 2 已完成；Phase 3 尚未开始
-**当前步骤：** Step 28 — 完成 Phase 2 质量门禁与阶段验收
-**状态：** Step 21–28 及 Phase 2 退出门槛已通过项目负责人验收
+**最后更新：** 2026 年 11 月 12 日
+**当前阶段：** Phase 3 — 会员资料管理
+**当前步骤：** Step 36 — Phase 3 质量门禁与阶段验收
+**状态：** Step 36 已通过项目负责人最终验收；Phase 3 `Complete`，Phase 4 尚未开始
 
 ## Step 1 — 建立执行基线
 
@@ -1010,3 +1010,296 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 - Phase 2 的页面内容、响应式、Accessibility、错误处理、Metadata、Sitemap、Footer、共享门禁、全新环境验收及人工走查均已完成，阶段状态更新为 `Complete`。
 - Risk Notice 最终文本、University Branding 批准、地点详情、Production 域名与 Provider、数据保留规则及中文版本仍属于已记录的外部依赖或后续阶段事项，不影响本阶段已定义退出门槛。
 - Phase 3 尚未开始；本步未实施或展开 Phase 3 功能。
+
+## Step 29 — 建立本人 Profile 编辑入口与所有权边界
+
+### 已完成
+
+- 在 `apps.members` 新增 `/profile/edit/` 命名路由、登录保护的编辑 view 和独立 Profile 编辑模板，并从项目根 URLConf 接入。
+- 编辑 view 只通过 `request.user` 读取当前会员的一对一 MemberProfile，不接受 URL、POST 或表单中的目标 User/Profile 标识；Profile 不存在时返回 404。
+- Anonymous 访问会进入既有登录流程；已认证但邮箱未验证的账户返回 403；停用账户不能进入编辑页面。
+- `MemberProfileForm` 只包含 Display name、Avatar、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL；移除 `is_published`，并继续排除 User、管理员隐藏状态、Executive role 和时间戳。
+- 保存成功采用 redirect-after-POST 并显示英文成功消息；普通编辑不会改变 `is_published`、`is_hidden_by_admin` 或 `executive_role`，也不依赖 JavaScript。
+- 增加 Display name 忽略大小写的表单级重复检查，使错误与字段关联，同时保留现有 PostgreSQL 唯一约束作为最终保护；Instagram 输入允许并清理开头的 `@`。
+- Account 页面新增 `Edit profile` 入口；编辑模板使用现有全局页面壳、表单字段组件、CSRF 和 multipart form，为 Step 30 的 Avatar 生命周期工作保留同一入口。
+- 新增 `tests/test_profile_edit.py`，并更新既有 MemberProfile form 测试，覆盖访问资格、本人对象绑定、允许字段、验证错误、伪造字段、状态保持、Account 入口和无 JavaScript POST。
+
+### 验证结果
+
+- 项目负责人运行 Step 29、MemberProfile 与 Account 专项回归共 46 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件共 245 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 对 `manage.py`、`config`、`apps`、`tests` 和 `scripts` 全部通过；Ruff format check 报告 96 个文件均已格式化。
+- 开发者侧 `git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次专项运行因 Docker Desktop 未启动而无法连接；启动后确认 Windows 将 `5432` 纳入动态保留端口范围。仅在验证环境中将主机映射临时改为 `15432`，容器内端口和 named volume 未改变；项目文件及 `.env` 未被自动改写。
+- 数据库连接恢复后的首次运行为 35 个通过、11 个失败：10 个新增测试遗漏 `django_db` 标记，另 1 个失败来自 Instagram 清理函数未处理空值。补充测试标记并将空值安全规范化后，剩余 2 个行为差异继续检查。
+- 第二次运行为 44 个通过、2 个失败：Display name 冲突由数据库约束生成通用错误，HTTPS URL 已正确拒绝但错误文案由 Django validator 决定。为 Display name 增加表单级字段错误，并将 URL 测试保持为行为断言；最终 46 个专项与 245 个完整测试全部通过。
+
+### 当前边界与下一步门槛
+
+- Step 29 只建立本人 Profile 编辑和所有权边界。Avatar 替换/删除后的文件清理、metadata 提示、方形展示及 Development media serving 仍属于 Step 30。
+- Preview、Publish、Unpublish、公开 Members 列表、Member detail 和 Admin hide/unhide 尚未实施；编辑保存不会直接改变公开状态。
+- Step 29 已通过项目负责人验证。不得开始 Step 30，直至项目负责人明确授权。
+
+## Step 30 — 完成 Avatar 上传、删除与文件清理
+
+### 已完成
+
+- 在既有 MemberProfile 编辑流程中增加明确的 `Remove current avatar` 控制；上传新文件与主动删除不能在同一次提交中同时选择。
+- 保留 JPG、PNG、WebP、5 MB、声明 MIME 和 Pillow 真实内容验证，并补充扩展名必须与实际图片格式匹配的检查。
+- 上传验证成功后直接保存原始字节，不执行 EXIF 转向、metadata 删除、缩放或格式转换。
+- 新增受控保存 service：替换或主动删除成功后才删除旧 Avatar；数据库保存失败时回收已经写入的新文件并保留当前有效 Avatar。
+- 对已保存 Avatar 执行验证后显式关闭 Django `FieldFile`，保证 Windows 可以立即替换或删除文件；新上传对象在保存前保持可读。
+- Profile 编辑页展示当前 Avatar、方形 `object-fit: cover` 图片、删除控件，以及已确认的 metadata 隐私提示；页面继续使用普通 multipart POST。
+- Development 使用 `/media/` 和 Django local media helper 提供本地文件；`DEBUG=False` 时不注册该 helper，Production persistent media storage 仍留待 Phase 6 决定。
+- 将仓库根 `media/` 加入 `.gitignore`；全部 Avatar 测试使用隔离临时目录，不提交上传文件。
+- 新增 Avatar 生命周期 Django 测试、测试专用 media URLConf 和 Playwright desktop/mobile 场景，覆盖原始字节、大小边界、伪装扩展名、错误 MIME、损坏图片、替换、删除、失败保护、文件清理、隐私提示及方形展示。
+
+### 验证结果
+
+- 项目负责人运行 Step 30、Profile 编辑与 MemberProfile 专项回归共 45 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件共 256 个测试，全部通过，其中包含 Avatar Playwright 浏览器场景。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 全部通过，Ruff format check 报告 99 个文件均已格式化。
+- `npm.cmd run static:check` 完成 vendor、Home images 和 Tailwind production build 检查。
+- 开发者侧 `git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次真实专项回归为 44 个通过、1 个失败：表单把已存在的 Avatar 当作本次新上传，错误阻止单独删除。冲突判断改为只检查 `request.FILES` 对应的实际新文件后，删除流程进入保存阶段。
+- 第二次回归暴露 Windows 对已打开文件的删除限制。Pillow 图片对象关闭后，持久化 Django `FieldFile` 仍保持打开；validator 现只对 `_committed` 的已保存文件在验证后关闭 `FieldFile`，同时保持新上传文件可供后续保存。修补后 45 个专项及 256 个完整测试全部通过。
+- 初次开发者测试在沙箱内因 Docker API 与本机 PostgreSQL 端口访问受限而未进入测试主体；在获准的本地数据库权限下重跑后得到上述有效测试结果。
+
+### 当前边界与下一步门槛
+
+- Step 30 只完成 Avatar 验证、原文件保存、替换/删除清理、编辑页展示及 Development media serving；没有选择或实现 Production media provider。
+- Preview、Publish、Unpublish、公开 Members 列表、Member detail 和 Admin hide/unhide 仍未实施。
+- Step 30 已通过项目负责人验证。Step 31 尚未开始，必须等待项目负责人明确授权。
+
+## Step 31 — 建立 Preview、Publish 与 Unpublish 流程
+
+### 已完成
+
+- 新增仅限当前有效会员访问的 `/profile/preview/`，继续按 authenticated User 查询一对一 MemberProfile，不接受客户端提供的 User 或 Profile 标识。
+- Preview 对未发布资料同样可用且不会改变状态；页面使用可复用公开字段组件，按未来 Member detail 的字段顺序展示公开名称、Username、Avatar、Experience level、Preferred arm、Bio 和社交链接。
+- 新增独立 `/profile/publish/` 与 `/profile/unpublish/` confirmation 页面；GET 只展示确认信息，状态转换仅由带 CSRF 的 POST 执行。
+- 新增事务化 `set_profile_publication` service，通过 row lock 更新当前会员的 `is_published`，重复 Publish 或 Unpublish 保持幂等，并使用固定站内 redirect 忽略外部 `next`。
+- Publish confirmation 明确列出将公开的字段、未来 `/members/<username>/` URL、Display name 为空时的 Username 回退，以及原始 Avatar metadata 可能公开的风险。
+- 管理员隐藏状态始终优先：会员 Publish 不会修改 `is_hidden_by_admin`，隐藏资料仍不进入公开 queryset；本人页面只显示不泄露管理员身份或后台记录的中性提示。
+- Profile 编辑页新增 `Preview profile` 入口；普通编辑保存继续不改变发布或管理员状态。
+- 新增 `tests/test_profile_publication.py`，覆盖 Anonymous、未验证及停用账户、本人所有权、未发布 Preview、GET 无副作用、Publish/Unpublish、重复 POST、CSRF、开放 redirect、管理员隐藏、敏感字段隔离和编辑入口。
+- 本步没有新增 Model、migration、公开 Members 列表、公开 Member detail 或 Header Members 导航。
+
+### 验证结果
+
+- 项目负责人运行 Step 31、Profile 编辑与 Avatar 生命周期专项回归共 41 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件共 276 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`。
+- Django system check 通过，无问题。
+- Ruff lint 全部通过，Ruff format check 报告 100 个文件均已格式化。
+- `npm.cmd run static:check` 完成 vendor、Home images 和 Tailwind production build 检查。
+- 开发者侧同样通过 41 个专项、276 个完整测试及全部质量检查；`git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 当前边界与下一步门槛
+
+- Preview 使用可复用展示组件，但本步没有建立公开 `/members/` 或 `/members/<username>/` 路由；confirmation 中的 Username URL 仅用于发布前告知。
+- 公开 Members 目录、Header Members 导航、empty state 和卡片字段边界属于 Step 32，尚未开始。
+- Member detail、Admin hide/unhide、Phase 3 统一 accessibility 与质量验收仍属于后续步骤。
+- Step 31 已通过项目负责人验证。Step 32 尚未开始，必须等待项目负责人明确授权。
+
+## Step 32 — 建立 Members 公开目录
+
+### 已完成
+
+- 新增公开 `/members/` 目录和命名路由 `members:list`；页面不要求登录，Anonymous 与 authenticated member 使用同一公开数据边界。
+- 列表数据只从 `MemberProfile.objects.public()` 获取，并通过 `select_related("user")` 读取公开名称回退所需的 User；未发布、管理员隐藏、停用及邮箱未验证账户均被统一排除。
+- 排序使用 Display name 或 Username 回退后的公开名称执行不区分大小写排序，并以不区分大小写的 Username、原始 Username 和主键作为稳定次序。
+- Member 卡片只展示 Avatar 或非敏感首字母 fallback、Display name 或 Username、已填写的 Experience level 与 Preferred arm；`Not specified` 不输出。
+- 页面提供明确 empty state；没有加入搜索、HTMX 筛选、分页、Member detail 链接或 sitemap 变更。
+- Header 对 Anonymous 与 authenticated member 均加入 `Members` 导航，并在目录页面使用 `aria-current="page"` 标记当前项；普通链接在无 JavaScript 场景继续可用。
+- 新增目录响应式 cards、方形 Avatar/fallback 和 empty-state 样式，并由 Tailwind CLI 重新生成提交的 minified CSS。
+- 新增 `tests/test_member_directory.py`、`tests/test_member_directory_browser.py` 与 `tests/browser/member-directory.mjs`，覆盖公开 queryset、稳定排序、名称回退、字段白名单、empty state、导航、desktop/mobile、键盘、无 JavaScript、无横向溢出、浏览器错误及同源网络边界。
+
+### 验证结果
+
+- 项目负责人运行 Step 32 与相关 MemberProfile、发布、全局模板和公开页面回归共 70 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件共 285 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 Model、schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 全部通过，Ruff format check 报告 102 个文件均已格式化。
+- `npm.cmd run static:check` 完成 vendor、Home images 和 Tailwind production build 检查。
+- 开发者侧同样通过 70 个专项、285 个完整测试及全部质量检查；`git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次完整回归在既有 Phase 2 accessibility 浏览器门禁失败：Header 新增 `Members` 后，固定键盘 Tab 顺序仍预期直接聚焦 `Draft Risk Notice`，实际正确聚焦新增的 `Members`。
+- 只在既有 accessibility 场景的预期导航顺序中加入 `Members`，没有放宽 Focus、可见性、触控目标或网络断言；随后 accessibility 与目录浏览器测试 2 个全部通过，完整 285 个测试全部通过。
+
+### 当前边界与下一步门槛
+
+- Step 32 只建立公开目录和摘要卡片，不提供 `/members/<username>/` 详情 URL；卡片当前不包含尚未存在的 detail link。
+- Members 列表仍未加入 sitemap；按实施顺序，该列表与个人详情的搜索边界在 Step 33 统一处理。
+- Member detail、Admin hide/unhide、Phase 3 统一 accessibility 与阶段质量验收仍属于后续步骤。
+- Step 32 已通过项目负责人验证。Step 33 尚未开始，必须等待项目负责人明确授权。
+
+## Step 33 — 建立 Member detail 与搜索边界
+
+### 已完成
+
+- 新增公开 `/members/<username>/` 详情路由和命名路由 `members:detail`；URL 使用保存的 Username，并执行区分大小写的精确匹配。
+- 详情 view 只从 `MemberProfile.objects.public()` 查询，并通过 `select_related("user")` 取得公开 Username；未发布、管理员隐藏、账户停用、邮箱未验证、大小写不匹配及不存在的 Username 均进入相同 404 handler。
+- 新增 Member detail template，并复用 Preview 的公开字段组件；详情页使用公开名称作为唯一 H1，展示 Username、Avatar/fallback、Bio、已填写的 Experience level 与 Preferred arm、Instagram Username 和一个 HTTPS social URL。
+- `Not specified`、Email、USYD 声明、USU ID、审核信息、Executive role、时间戳和后台状态不进入公开详情输出；Bio 继续通过 Django 默认 escaping 与 `linebreaksbr` 作为纯文本呈现。
+- Instagram 与其他社交链接使用 `target="_blank"` 和 `rel="noopener noreferrer"`；其他 social URL 继续受既有 HTTPS model/database 边界保护。
+- Members 卡片的公开名称现在链接到稳定 Username detail URL；详情页提供返回 Members 的普通链接，Header 在目录和详情页均将 `Members` 标记为当前导航。
+- 详情页沿用全局普通公开 `index, follow` robots 规则。显式 sitemap allowlist 新增 Members 列表，继续不枚举个人详情 URL。
+- 新增 `tests/test_member_detail.py`，并扩展目录、sitemap 及 Playwright 测试，覆盖 URL 大小写、字段白名单、HTML escaping、安全外链、统一 404、卡片导航、直接 URL、mobile、无 JavaScript 和搜索边界。
+
+### 验证结果
+
+- 项目负责人运行 Step 33、目录、发布、sitemap 及浏览器专项回归共 43 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件共 290 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 Model、schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 全部通过，Ruff format check 报告 103 个文件均已格式化。
+- `npm.cmd run static:check` 完成 vendor、Home images 和 Tailwind production build 检查。
+- 开发者侧同样通过 43 个专项、290 个完整测试及全部质量检查；`git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 统一 404 测试最初按完整 HTML 字节比较响应；全局 Open Graph URL 会正常反映访问者已经请求的路径，因此不同 URL 的 `<head>` 不相同。断言收窄为比较 HTTP 404 与实际 `<main>` 正文，继续保证不同不可见原因不会通过状态码或正文泄露。
+- 浏览器夹具最初生成包含连字符的 Instagram Username，违反既有 Username validator；测试数据改为合法下划线形式，生产验证规则未放宽。
+- Member 卡片标题增加链接后，Playwright 的原始文本包含模板缩进空白；排序断言只对读取结果执行 `trim()`，仍严格验证两张卡片的显示顺序和名称。
+
+### 当前边界与下一步门槛
+
+- Step 33 只完成公开 Member detail 与 sitemap/search 边界，没有修改 Profile schema、发布规则或管理员权限。
+- Admin hide/unhide、Phase 3 统一 accessibility 与阶段质量验收仍属于 Step 34–36。
+- Step 33 已通过项目负责人验证。Step 34 尚未开始，必须等待项目负责人明确授权。
+
+## Step 34 — 完成 Django Admin Hide/Unhide
+
+### 已完成
+
+- 收紧 `MemberProfileAdmin` change form：User、会员自述字段、`is_published`、创建时间和更新时间均为只读，只允许维护 `is_hidden_by_admin` 与 `executive_role`。
+- 继续使用 Django 自动生成的标准 `members.change_memberprofile` 权限；没有增加专用 permission、自定义 action、隐藏原因字段、历史 model 或 migration。
+- 禁用 MemberProfile Admin 的新增和删除入口，使后台职责限定为维护现有 Profile 的隐藏状态与 Executive role。
+- Hide/Unhide 继续通过标准 Admin change form 保存，并由 Django `LogEntry` 记录字段修改。
+- 隐藏操作不修改 `is_published`、会员自述内容、Profile 所属 User 或账户启用状态；公开 queryset 使隐藏资料从 Members 列表和 detail 同时消失。
+- 被隐藏会员仍可登录、进入本人 Profile 编辑流程并执行 Unpublish；本人页面继续使用既有中性隐藏提示。
+- 新增 `tests/test_member_profile_admin.py`，覆盖普通会员、无 change 权限 Staff、有标准 change 权限 Staff、Superuser、字段防伪造、Hide/Unhide、Executive role、Admin 日志和前后台状态边界。
+- 更新既有 MemberProfile Admin 配置测试，使其固定仅有两个可编辑字段。
+
+### 验证结果
+
+- 项目负责人运行 Step 34 专项测试，共 9 个测试，全部通过。
+- 项目负责人运行完整 pytest 套件，共 299 个测试，全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 Model、schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 全部通过；Ruff format check 报告 104 个文件均已格式化。
+- 开发者侧相关 Admin、Profile 编辑、发布、目录与详情回归共 76 个测试全部通过；`git diff --check` 未发现格式错误，仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 初次专项回归为 73 个通过、3 个失败，均来自测试断言与 Django 标准表现不一致，生产权限和隐藏行为已生效。
+- 无自定义 Model permission 在 Django metadata 中表现为空列表，测试由固定 tuple 类型比较改为验证其为空。
+- Django Admin `LogEntry.get_change_message()` 返回可读字段名 `Is hidden by admin`，日志断言调整为验证实际标准消息，没有修改日志实现。
+- Admin 保存成功消息会在同一 Staff session 的下一次页面响应中显示 Profile 名称；公开隐藏断言改用独立 Anonymous client，并同时直接验证公开 queryset，避免把后台 flash message 误判为公开目录数据泄露。
+
+### 当前边界与下一步门槛
+
+- Step 34 只完成 Django Admin Hide/Unhide、Executive role 维护、标准权限和日志边界，没有增加 schema、专用权限、action 或隐藏原因记录。
+- Executive role 仍不在公开页面展示；Production media provider、年龄逻辑、筛选和排行榜均未进入本步。
+- Step 34 已通过项目负责人验证。Step 35 尚未开始，必须等待项目负责人明确授权。
+
+## Step 35 — 完成 Phase 3 响应式、Accessibility 与隐私门禁
+
+### 已完成
+
+- 新增 `tests/browser/phase3-accessibility.mjs`，统一覆盖 Profile Edit、Avatar、Preview、Publish、Unpublish、Members 列表、Member detail、empty state 和管理员隐藏提示。
+- 新增 `tests/test_phase3_accessibility_browser.py`，使用 `StaticLiveServerTestCase`、合成已验证账户和隔离临时 media 运行完整与 empty-state 场景，并在结束后确认临时目录已清理。
+- 浏览器门禁覆盖 desktop、mobile、200% content zoom、禁用 JavaScript 和 `prefers-reduced-motion`；验证 landmarks、唯一 H1、Label、错误关联、键盘 Focus、24px 触控目标、图片 alt/解码、长 Username、长 Bio、安全社交链接、横向溢出、page error 和同源网络边界。
+- 禁用 JavaScript 场景实际提交 Profile 编辑、Unpublish 和 Publish，确认普通 POST、状态转换及管理员隐藏提示继续可用。
+- 扩展 `tests/test_quality_security.py`，扫描 Members 列表和 detail，确认 Email、USYD/USU ID、审核状态、Executive role、未发布 Profile 及其他私有值不进入公开响应；同时固定 User、MemberProfile 和会员表单不收集年龄、出生日期、监护人或紧急联系人。
+- 为动态公开名称、Username path 和长标题增加安全断行；将 Profile 表单 checkbox/radio 及公开社交链接触控目标提升至至少 24px，并重新生成 minified CSS。
+- 修复保留现有 Avatar 保存 Profile 时的重复验证：已提交 `FieldFile` 在每次内容校验前重新打开，校验后继续关闭，避免表单校验关闭文件后 model `save()` 二次校验产生 500；新增生命周期回归测试确认原文件和字节保持不变。
+
+### 验证结果
+
+- 项目负责人运行 Step 35、Avatar 生命周期和安全专项测试，共 20 个测试全部通过。
+- 项目负责人运行完整 pytest 套件，共 304 个测试全部通过。
+- `npm.cmd run static:check` 完成 vendor、Home images 和 Tailwind production build 检查。
+- `makemigrations --check --dry-run` 报告 `No changes detected`，本步没有 Model、schema 或 migration 变更。
+- Django system check 通过，无问题。
+- Ruff lint 全部通过；Ruff format check 报告 105 个文件均已格式化。
+- 开发者侧 Phase 3 功能与浏览器回归共 66 个测试全部通过；`node --check` 和 `git diff --check` 通过，后者仅报告既有 LF/CRLF 转换提示。
+
+### 测试期间的针对性修补
+
+- 首次统一场景发现超长 Username 在 Profile Preview 和移动端 Publish confirmation 产生横向溢出；只对 Profile 动态标题、`code` 与强调名称增加 `overflow-wrap: anywhere`，没有缩短或改写用户数据。
+- 移动场景发现 Avatar 删除 checkbox 和公开社交链接高度为 20px；将对应控件最小尺寸提升至 24px，没有扩大其他页面组件范围。
+- 无 JavaScript 编辑提交发现持久化 Avatar 在 ModelForm 校验后已关闭，随后 `MemberProfile.save()` 的重复 `full_clean()` 读取关闭文件并返回 500；validator 现重新打开已提交文件，并由新增回归测试固定该行为。
+- URL 错误检查最初写死自定义 validator 文案，但 Django URL validator 可以先返回自身错误；断言改为验证 `aria-invalid`、`aria-describedby` 和实际关联的非空错误说明，未放宽 HTTPS 规则。
+- Chromium 可以把多个 reduced-motion transition duration 返回为逗号分隔或科学计数格式；测试改为解析全部时长并逐项验证不超过 0.01ms，生产 reduced-motion 规则未改变。
+
+### 当前边界与下一步门槛
+
+- Step 35 只完成 Phase 3 已实施页面的统一响应式、Accessibility、隐私、媒体和 no-JavaScript 门禁，没有增加年龄逻辑、筛选、排行榜、Production media provider 或新 migration。
+- Phase 3 全新环境质量门禁、README/验收入口和最终人工阶段验收属于 Step 36，尚未开始。
+- Step 35 已通过项目负责人验证。Step 36 尚未开始，必须等待项目负责人明确授权。
+
+## Step 36 — Phase 3 质量门禁与阶段验收
+
+### 已完成
+
+- 新增 `scripts/accept_phase_3.py`，通过 OS 临时目录建立独立 uv environment，启动并等待 PostgreSQL、应用 Development migrations、执行共享项目门禁，并在动态 loopback port 启动真实 Development server。
+- Phase 3 验收入口在共享门禁完成后依次运行既有 Phase 2 Development smoke 和新增 Phase 3 Development smoke；异常路径输出 server log，并始终终止 server 和清理临时环境。
+- 新增 `tests/browser/phase3-development-smoke.mjs`，在 desktop/mobile 下验证 Members、Anonymous Profile 登录重定向、不可见 Member 的 404、Development media serving、CSS、横向布局、page error 和同源网络边界。
+- 新增 `tests/test_phase3_acceptance.py`，固定命令失败传播、server 清理、锁定安装、migration、共享门禁、两组 Development smoke 及 README 验收说明。
+- 共享 `scripts/verify_project.py` 的 Production deploy-check 合成 Secret 名称改为跨阶段中性名称，不改变 Production Secret 来源或安全设置。
+- 更新 README，将 Phase 3 全新环境验收设为当前入口，并记录合成账户、临时 media、Profile 编辑、Avatar、Preview、Publish/Unpublish、Members、Admin hide/unhide 和隐私人工走查流程；保留 Phase 1/2 历史兼容命令。
+
+### 首次全新环境验收
+
+- 项目负责人运行 `python -m uv run --env-file .env python scripts\accept_phase_3.py`，临时 uv environment 从锁文件成功安装 Python 3.13.17 与 17 个依赖，npm clean install 完成且报告 `0 vulnerabilities`。
+- Development migrations 成功执行且没有待应用 migration；共享门禁完成 static build/check/watch、Ruff、format、migration drift、Django checks、完整 coverage pytest、Production deploy check 和 manifest collectstatic。
+- 完整测试共 `308 passed`，branch coverage 报告总计 `95%`；`makemigrations --check --dry-run` 报告 `No changes detected`，Production `check --deploy --fail-level WARNING` 无问题。
+- Phase 2 与 Phase 3 Development desktop/mobile smoke 均通过，验收入口最终报告 `Phase 3 end-to-end acceptance passed.`。
+
+### 人工走查发现及针对性修补
+
+- 人工 Preview 发现连续无空格的长 Bio 会撑宽页面；为公开 Profile Bio 增加 `overflow-wrap: anywhere`，并将测试资料改为包含连续字符，统一门禁现同时固定本人 Preview 和公开 detail 的无溢出行为。
+- Profile 的 Experience level 与 Preferred arm 在宽卡片中因比例列产生过大间距；Profile 专属定义列表改为按标签实际宽度排列，并在窄屏继续堆叠。
+- Members 目录的 Avatar 原先占满卡片宽度，较大原图形成过度突出的纵向卡片；目录卡片改为 desktop/mobile 均使用左侧固定紧凑 Avatar、右侧会员摘要，并由浏览器测试检查两列相对位置和最大显示宽度。原文件保存策略、5 MB 上限和 Production media 边界没有改变。
+- Account 原先使用独立 Member profile 卡片且只提供 Edit 入口。页面现保留 Account details、USYD and USU details、Security 三个主卡片，并在 Account details 内展示 Public member profile 摘要、当前公开状态和 Edit、Preview、Publish/Unpublish 操作。
+- Account 的公开说明明确：Username 始终属于公开 Profile URL；其他资料只在提供时显示；不希望公开的可选文本应留空，choice 选择 `Not specified`，Avatar 使用删除操作。没有引入逐字段 Publish checkbox、字段或 migration。
+- Account 的 Profile 操作按钮增加上方间距，Public member profile 标题调整为清晰的次级层级；Profile 保存成功后返回 Account，Preview 增加 `Back to Account` 入口。
+- 人工 Avatar 替换、无效文件保护、删除及 Admin hide/unhide 其余路径均正常。本地只读核对确认 `media/member_avatars/` 只存在数据库当前引用的一个文件；人工仍能看到旧 URL 的现象判断为浏览器缓存，没有发现 storage 中的旧文件残留。
+
+### 修补后验证结果
+
+- 长 Bio 与公开字段布局修补通过 Profile browser、publication 和 detail 专项回归，共 `27 passed`；static check 与 `git diff --check` 通过。
+- Members 横向卡片与 Account 三卡片整合通过 Account、目录、发布、全局模板及 Phase 3 browser 回归，共 `54 passed`。
+- 上述整合后的完整 pytest 共 `312 passed`；static check、migration drift、Django check、Ruff lint/format 和 `git diff --check` 均通过，没有新增 migration。
+- 最后一组 Account 按钮间距、标题层级、保存 redirect 和 Preview 返回入口通过相关 Django 与 Phase 3 browser 回归，共 `50 passed`；static check 与 `git diff --check` 通过。
+
+### 当前边界与下一步门槛
+
+### 最终全新环境与人工验收
+
+- 项目负责人在全部人工修补完成后重新运行 `python -m uv run --env-file .env python scripts\accept_phase_3.py`；临时 uv environment、锁定依赖安装、PostgreSQL、migrations、npm clean install、static build/check/watch、Ruff lint/format、migration drift、Django check、Production deploy check 和 collectstatic 全部通过。
+- 最终完整测试共 `313 passed`，branch coverage 为 `95%`；npm audit 报告 `0 vulnerabilities`，没有新增 migration。
+- Phase 2 与 Phase 3 Development desktop/mobile smoke 均通过，最终入口报告 `Phase 3 end-to-end acceptance passed.`。
+- 项目负责人确认 Members 横向卡片、Account 三卡片与 Profile 摘要、按钮间距、标题层级、Profile 保存返回 Account、Preview 返回入口、Avatar 生命周期及 Admin hide/unhide 全部符合预期。
+- Phase 3 Roadmap 退出门槛全部满足，项目负责人批准更新产品、实施、进度与架构文档，并将 Phase 3 标记为 `Complete`。
+
+### 当前边界与下一步门槛
+
+- Phase 3 已完成；Phase 4 尚未开始，不得在未重新阅读当前文档与获得明确授权前实施。
+- Production persistent media storage 仍由 Phase 6 决定；Risk Notice 最终文本仍是 Phase 4 正式报名启用前的外部依赖。
+- Phase 3 没有新增年龄逻辑、目录筛选、专用隐藏权限、排行榜或 Production media provider。

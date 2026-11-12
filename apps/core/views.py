@@ -2,7 +2,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-PUBLIC_SITEMAP_URL_NAMES = ("home", "about", "beginners_safety")
+PUBLIC_SITEMAP_URL_NAMES = ("home", "about", "beginners_safety", "members:list")
 
 
 def home(request: HttpRequest) -> HttpResponse:

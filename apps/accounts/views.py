@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 
+from apps.members.models import MemberProfile
+
 from .forms import AccountIdentityForm
 
 
@@ -23,11 +25,13 @@ def account(request: HttpRequest) -> HttpResponse:
         email__iexact=request.user.email,
         verified=True,
     ).exists()
+    member_profile = MemberProfile.objects.filter(user=request.user).first()
     return render(
         request,
         "accounts/account.html",
         {
             "form": form,
             "email_is_verified": email_is_verified,
+            "member_profile": member_profile,
         },
     )

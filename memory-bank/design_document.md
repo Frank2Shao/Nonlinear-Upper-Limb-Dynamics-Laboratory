@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 10 月 25 日
+**最后更新：** 2026 年 11 月 12 日
 
 ## 一、文档边界
 
@@ -126,7 +126,8 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 - 首期不收集出生日期；
 - 首期不要求监护人同意；
 - 首期不收集监护人联系方式或紧急联系人；
-- 该规则需要在 Risk Notice 与 USU 沟通时再次核对，但在获得新决定前不得自行增加相关字段。
+- 注册、Profile 编辑与公开发布流程不进行年龄判断或年龄分支；
+- 后续如出现强制性外部要求，必须先更新产品规则，不得由开发者自行增加年龄字段或限制。
 
 ### 4.3 USYD 学生声明与 USU ID
 
@@ -143,11 +144,23 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 
 - 每个有效会员都可以建立资料；
 - 资料默认隐藏；
-- 会员主动开启公开后才出现在 Members 页面；
+- 会员保存资料后先进行本人 Preview，再通过独立确认操作主动 Publish；
+- Publish 与 Unpublish 只接受本人已认证的 POST 操作，不由普通编辑表单直接切换；
+- 会员主动 Publish 后才出现在 Members 页面；
+- 公开详情 URL 使用 `/members/<username>/`；Username 是公开 URL 的一部分，Display name 为空时也作为公开回退名称；
+- Members 卡片公开 Avatar、Display name 或 Username、Experience level 和 Preferred arm；值为 `Not specified` 时不显示对应项目；
+- Member detail 在卡片字段之外公开 Bio、Instagram Username 和一个 HTTPS social URL；
+- `created_at`、`updated_at`、Email、USYD 声明、USU ID 和审核信息不公开；
 - `executive_role` 由管理员维护；
 - 首期不在公开页面展示 Executive 角色；
-- 管理员可以隐藏资料，但不能借此修改会员自述内容；
+- 管理员通过 Django Admin 的现有 `is_hidden_by_admin` checkbox 隐藏或恢复资料；使用标准 `change_memberprofile` 权限和 Django Admin 日志，不增加专用权限、action、原因字段或历史表；
+- Admin 中会员自述字段保持只读，管理员只能维护隐藏状态、Executive role 及必要的只读识别信息；
+- 被隐藏的会员可以继续编辑和 Unpublish，并看到中性提示，但不能通过本人操作恢复公开可见性；
+- 管理员隐藏不能修改会员自述内容；
 - 隐藏资料不影响会员登录或活动报名。
+- Members 列表不提供筛选，按 Display name 或 Username 排序，并在没有公开资料时显示明确 empty state；
+- Member detail 使用普通公开页面的搜索引擎规则，不增加 `noindex`；sitemap 只列出 Members 列表，不逐个列出个人详情 URL。
+- 所有已验证会员使用同一 Profile 发布流程，不收集或判断年龄。
 
 ### 4.5 活动报名
 
@@ -207,6 +220,7 @@ Log in / Account
 | Log in by code | Visitor | Email Magic Code 登录 | Phase 1 |
 | Account | Member | 管理邮箱状态、USYD 声明和 USU ID | Phase 1 |
 | Edit profile | Member | 编辑并控制个人资料是否公开 | Phase 3 |
+| Preview profile | Member | 查看本人资料的公开效果，不改变发布状态 | Phase 3 |
 | Members | Public | 浏览已公开会员资料 | Phase 3 |
 | Member detail | Public | 查看单个已公开资料 | Phase 3 |
 | Events | Public | 浏览公开活动 | Phase 4 |
@@ -292,14 +306,28 @@ Verified 或 Rejected
 ```text
 Member 编辑资料
         ↓
+Save changes，不改变发布状态
+        ↓
 预览公开效果
         ↓
-主动开启 Publish
+确认公开字段与 Username URL
+        ↓
+POST Publish
         ↓
 资料出现在 Members 页面
 ```
 
-会员关闭 Publish 或管理员隐藏后，公开 URL 不再返回资料内容。
+会员通过独立 POST 操作 Unpublish，或管理员隐藏资料后，公开 URL 统一返回 404，不泄露资料是否曾存在。管理员隐藏优先于会员发布状态；会员不能通过重新 Publish 绕过隐藏。
+
+### 6.5.1 Avatar 上传与删除
+
+- 接受 JPG、PNG 和 WebP，最大 5 MB；
+- 保留扩展名、声明 MIME 和真实图片内容三层验证；
+- 验证成功后直接保存原文件，不处理 EXIF 方向、不移除 metadata、不缩放、不转换格式；
+- 页面使用方形容器与 CSS 裁切展示，不修改保存文件；
+- 替换或主动删除 Avatar 后清理旧文件；失败的更新不得提前删除当前有效文件；
+- 上传字段显示：`Uploaded images are stored as provided and may contain location, device or other metadata. Remove sensitive metadata before uploading.`
+- Development 与 Test 使用本地 media；Production persistent media storage 继续由 Phase 6 决定。
 
 ### 6.6 活动报名
 
@@ -360,7 +388,7 @@ Registered Member 选择 Cancel registration
 
 ### 7.3 HTMX 交互
 
-- HTMX 用于增强报名、取消和筛选；
+- HTMX 用于增强活动报名、取消和活动列表筛选；Members 列表不使用筛选；
 - 核心操作必须保留普通 HTTP POST 回退路径；
 - 返回片段需要更新状态消息和焦点；
 - 网络失败时显示可恢复提示；
@@ -525,6 +553,23 @@ Registered Member 选择 Cancel registration
 - Social link target：`https://www.instagram.com/nuldl_armwrestlingclub/`
 - Phase 2 不公开联系邮箱。
 
+### 7.8 Phase 3 会员资料页面
+
+- Account 页面保留 Account details、USYD and USU details 与 Security 三个主卡片；Account details 内展示本人 Profile 摘要、公开状态和 Edit、Preview、Publish/Unpublish 入口；
+- Account 的 Profile 摘要说明 Username 始终属于公开 URL；其他可选资料只在提供时公开，不希望展示时应留空、选择 `Not specified` 或删除 Avatar；
+- 会员资料编辑、Preview、Publish 和 Unpublish 使用独立命名 URL；编辑保存成功后返回 Account，Preview 提供返回 Account 的普通链接；
+- 编辑表单包含 Display name、Avatar、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL，不包含管理员字段或直接发布 checkbox；
+- Preview 只允许当前 Profile 所有者访问，并使用与公开 detail 相同的字段顺序和视觉组件；
+- Publish confirmation 明确列出将公开的字段，并说明 Username 会出现在公开 URL，Display name 为空时也会作为公开名称；
+- 已发布会员可以 Unpublish；管理员隐藏时显示简单中性提示，不公开管理员身份或后台操作记录；
+- Members 列表提供 cards、字母顺序和 empty state，不提供搜索或 HTMX 筛选；
+- Members card 以左侧紧凑 Avatar 或非敏感 fallback、右侧公开名称及已填写的 Experience level 与 Preferred arm 构成；desktop/mobile 均不得因原图尺寸形成超大 Avatar；
+- Member detail 显示公开名称、Avatar、Bio、已填写的 Experience level、Preferred arm、Instagram 和其他 HTTPS social link；
+- Instagram 与其他 social link 使用安全外部链接属性；
+- 未发布、管理员隐藏、账户停用或邮箱未验证的详情页统一返回 404；
+- Header 在 Members 页面可用后增加 `Members` 公开导航；
+- Members 列表进入 sitemap；个人 detail 不进入 sitemap，但不设置特殊 robots directive。
+
 ## 八、状态与异常处理
 
 | 场景 | 用户结果 |
@@ -599,7 +644,7 @@ Registered Member 选择 Cancel registration
 - 肌肉、骨骼、关节轴线和受力轨迹等复杂插画在基础框架与功能稳定后统一设计；
 - 不直接复制网上的知名选手、比赛或媒体照片；
 - 第三方图片必须具有适用于网站宣传用途的明确许可，并保存授权记录；
-- 社团自行拍摄的成员照片应在公开使用前取得适当同意；涉及未成年人时必须重新确认额外同意要求；
+- 社团自行拍摄的成员照片应在公开使用前取得适当同意；
 - 后续活动照片应逐步补充，且不得成为活动信息可用性的前置条件。
 
 ### 9.7 内容原则
@@ -633,7 +678,9 @@ Registered Member 选择 Cancel registration
 - 网站标题和公开内容；
 - 公开活动信息；
 - 已确认的地点信息；
-- 会员主动发布的资料字段。
+- 会员主动发布的 Avatar、公开名称、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL；
+- Published Profile 的 Username detail URL，以及 Display name 为空时的 Username 回退名称；
+- 已发布 Avatar 原文件中保留的 metadata；上传界面必须提前提示其中可能包含位置、设备或其他信息。
 
 ### 11.2 仅本人和获授权管理员可见
 
@@ -657,7 +704,7 @@ Registered Member 选择 Cancel registration
 - 在线支付；
 - 自动同步 USU 平台；
 - 活动容量、候补名单和报名截止时间；
-- 排名、Elo 或比赛管理；
+- 排名、Elo 或比赛管理不进入首期上线范围；训练动作排行榜计划在上线后的 Phase 7 单独设计；
 - SMS 通知；
 - Executive 角色公开展示；
 - 资料发布前的管理员审批；
@@ -667,11 +714,11 @@ Registered Member 选择 Cancel registration
 ## 十三、待确认事项
 
 1. Risk Notice 最终文本及 USU 确认结果；
-2. 未来是否需要为未成年人增加额外措施；
-3. University Branding 的书面批准范围；
-4. 复杂人体结构、受力轨迹插画的最终范围和制作时间；
-5. 训练地点的准确地址、坐标和可以公开使用的地点名称；
-6. 会员退出、账户删除和数据保留规则；
-7. 中文版本的时间和范围。
+2. University Branding 的书面批准范围；
+3. 复杂人体结构、受力轨迹插画的最终范围和制作时间；
+4. 训练地点的准确地址、坐标和可以公开使用的地点名称；
+5. 会员退出、账户删除和数据保留规则；
+6. 中文版本的时间和范围；
+7. Phase 7 排行榜的训练动作、成绩单位、左右手区分、审核方式、并列规则和公开范围。
 
 待确认事项不得由开发者自行补全。任何决定都应先更新本文档，再进入技术和实施文件。

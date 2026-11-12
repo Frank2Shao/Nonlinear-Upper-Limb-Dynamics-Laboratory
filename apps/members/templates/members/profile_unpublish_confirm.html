@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+
+{% block title %}Unpublish Profile | NULDL Armwrestling Club{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="profile-unpublish-title">
+    <p class="eyebrow">Publication confirmation</p>
+    <h1 id="profile-unpublish-title">Unpublish Profile</h1>
+    <p>Unpublishing removes your profile from public member pages. Your saved profile information remains available for you to edit and preview.</p>
+
+    {% include "members/includes/profile_hidden_notice.html" with profile=profile %}
+
+    <form class="button-row panel" method="post">
+      {% csrf_token %}
+      <button class="button" type="submit">Unpublish profile</button>
+      <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Keep profile published</a>
+    </form>
+  </section>
+{% endblock %}

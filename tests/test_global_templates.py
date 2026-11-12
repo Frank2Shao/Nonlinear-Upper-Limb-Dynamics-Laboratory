@@ -77,6 +77,7 @@ def test_anonymous_header_shows_authentication_links(client):
     content = response.content.decode()
     assert f'href="{reverse("account_login")}"' in content
     assert f'href="{reverse("account_signup")}"' in content
+    assert f'href="{reverse("members:list")}"' in content
     assert "Log in" in content
     assert "Join the Club" in content
     assert f'href="{reverse("account")}"' not in content
@@ -143,5 +144,6 @@ def test_primary_navigation_works_without_javascript(client):
     assert f'href="{reverse("home")}"' in content
     assert f'href="{reverse("account_login")}"' in content
     assert f'href="{reverse("account_signup")}"' in content
-    for unavailable_path in ("/events/", "/members/", "/locations/"):
+    assert f'href="{reverse("members:list")}"' in content
+    for unavailable_path in ("/events/", "/locations/"):
         assert f'href="{unavailable_path}"' not in content

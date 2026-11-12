@@ -1,6 +1,6 @@
 # Nonlinear Upper Limb Dynamics Laboratory website
 
-This repository contains the NULDL website and member account system. Phase 1 provides registration, mandatory email verification, password and Magic Code login, account identity management, USU ID review in Django Admin, and a responsive local-asset interface. Phase 2 adds the English Home, About, Beginners & Safety, environment-gated Draft Risk Notice, project error pages, metadata, sitemap, approved Instagram footer, and public-page accessibility checks.
+This repository contains the NULDL website and member account system. Phase 1 provides registration, mandatory email verification, password and Magic Code login, account identity management, and USU ID review. Phase 2 adds the English public website. Phase 3 adds member-owned profile editing, original-file Avatar management, Preview, Publish and Unpublish controls, the public Members directory and details, and Admin hide/unhide.
 
 NULDL uses neutral project branding. This repository does not claim to be an official University of Sydney website and does not include University logos, crests, or other unapproved brand assets.
 
@@ -62,10 +62,10 @@ python -m uv run --env-file .env python manage.py migrate
 
 ## Automated acceptance
 
-The Phase 2 acceptance command creates a temporary clean uv environment, installs the locked Python and npm dependencies, starts PostgreSQL, applies migrations, runs the complete project quality gate, starts the Development server, and runs desktop and mobile Playwright smoke tests for the public website:
+The Phase 3 acceptance command creates a temporary clean uv environment, installs the locked Python and npm dependencies, starts PostgreSQL, applies migrations, runs the complete shared quality gate, starts the Development server, and runs the Phase 2 and Phase 3 desktop/mobile Playwright smoke tests:
 
 ```powershell
-python -m uv run --env-file .env python scripts\accept_phase_2.py
+python -m uv run --env-file .env python scripts\accept_phase_3.py
 ```
 
 The shared quality and security gate can be run separately:
@@ -74,7 +74,15 @@ The shared quality and security gate can be run separately:
 python -m uv run --env-file .env python scripts\verify_project.py
 ```
 
-Both commands return a non-zero exit status if any required check fails. The Phase 1 commands remain available for historical verification.
+Both commands return a non-zero exit status if any required check fails. Earlier phase commands remain available for historical verification.
+
+### Phase 2 compatibility
+
+The Step 28 acceptance command remains available for the public website baseline:
+
+```powershell
+python -m uv run --env-file .env python scripts\accept_phase_2.py
+```
 
 ### Phase 1 compatibility
 
@@ -122,12 +130,27 @@ Use desktop and mobile-width browsers and review the following without entering 
 6. Confirm metadata and `/sitemap.xml` include only the approved public pages and exclude authentication, Admin, error, Draft Risk Notice, and future-phase routes.
 7. Confirm there are no external fonts or CDN requests, no real member details, and no University logo, crest, or affiliation claim. University branding remains excluded until written approval is recorded.
 
+## Manual Phase 3 review
+
+Use synthetic accounts and temporary media only. Remove the synthetic records and uploaded files after the walkthrough.
+
+1. Register and verify a synthetic member, open **Account**, then follow **Edit profile**.
+2. Save each allowed profile field and a synthetic JPG, PNG, or WebP Avatar. Confirm the page warns that original metadata may remain and that saving does not publish the profile.
+3. Open **Preview profile** and confirm the public field order, Username URL, Avatar, long Bio wrapping, and safe external social links.
+4. Use **Publish profile**, confirm the member appears in **Members**, open the public detail page, then use **Unpublish** and confirm both public routes stop exposing the profile.
+5. Replace and remove the Avatar. Confirm old files are removed only after a successful save and failed submissions preserve the current file. Keep all walkthrough uploads in temporary media.
+6. In Django Admin, grant a synthetic Staff account the standard MemberProfile change permission. Perform **Admin hide/unhide**, confirm the Admin log entry, and verify that hiding removes the profile from public pages without changing its content, publication preference, or account access.
+7. Repeat the main profile and Members paths at desktop and mobile widths using keyboard navigation. Confirm visible focus, associated errors, no horizontal scrolling, and working forms with JavaScript disabled.
+8. Confirm public responses contain no Email, USYD declaration, USU ID, review metadata, Executive role, unpublished content, or age/guardian information.
+
+Production media storage remains unresolved and will be selected during Phase 6. Development uses local media; tests and acceptance use isolated temporary media.
+
 ## Security and data boundaries
 
 - Never commit `.env`, credentials, verification or login codes, database dumps, real member data, or user uploads.
 - Tests and examples use synthetic identities. Phase 1 tests block external network access after dependency and browser installation.
 - Email, USU ID, review metadata, unpublished profiles, passwords, codes, and session tokens are private data.
-- Production requires independent secrets, hosted PostgreSQL, SMTP, persistent media storage, HTTPS, monitoring, and the remaining provider decisions documented in `memory-bank/`.
+- Production requires independent secrets, hosted PostgreSQL, SMTP, persistent media storage, HTTPS, monitoring, and the remaining provider decisions documented in `memory-bank/`. Production media storage remains unresolved.
 - University branding remains excluded until written approval is recorded.
 
 ## Project structure
@@ -141,4 +164,4 @@ Use desktop and mobile-width browsers and review the following without entering 
 - `scripts/`: asset, quality-gate, and acceptance tooling
 - `memory-bank/`: product, architecture, implementation, roadmap, and progress records
 
-Phase 2 implementation is ready for Step 28 acceptance. Current scope and unresolved external decisions are recorded in `memory-bank/progress.md` and `memory-bank/项目开发_Roadmap.md`.
+Phase 3 implementation is undergoing Step 36 acceptance. Current scope and unresolved external decisions are recorded in `memory-bank/progress.md` and `memory-bank/项目开发_Roadmap.md`.

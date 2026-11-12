@@ -19,6 +19,9 @@
           <li>
             <a class="nav-link" href="{% url 'beginners_safety' %}"{% if request.resolver_match.url_name == "beginners_safety" %} aria-current="page"{% endif %}>Beginners &amp; Safety</a>
           </li>
+          <li>
+            <a class="nav-link" href="{% url 'members:list' %}"{% if request.resolver_match.view_name == "members:list" or request.resolver_match.view_name == "members:detail" %} aria-current="page"{% endif %}>Members</a>
+          </li>
           {% if draft_risk_notice_visible %}
             <li>
               <a class="nav-link" href="{% url 'safety:risk_notice' %}"{% if request.resolver_match.view_name == "safety:risk_notice" %} aria-current="page"{% endif %}>Draft Risk Notice</a>

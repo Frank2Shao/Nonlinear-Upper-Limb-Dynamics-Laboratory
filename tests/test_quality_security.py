@@ -7,11 +7,14 @@ import pytest
 from allauth.account.internal.flows.email_verification_by_code import (
     EMAIL_VERIFICATION_CODE_SESSION_KEY,
 )
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from apps.accounts.services import update_usu_identity
+from apps.members.forms import MemberProfileForm
+from apps.members.models import MemberProfile
 
 User = get_user_model()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -138,6 +141,85 @@ def test_public_pages_do_not_expose_private_identity_fields(client):
         content = response.content.decode()
         for private_value in private_values:
             assert private_value not in content
+
+
+@pytest.mark.django_db
+def test_public_member_pages_exclude_private_identity_and_unpublished_profile_data(
+    client,
+):
+    user = User.objects.create_user(
+        username="phase3_public_privacy",
+        email="phase3-private-email@example.net",
+        password=PASSWORD,
+    )
+    update_usu_identity(user=user, is_usyd_student=True, usu_id="00135791")
+    user.refresh_from_db()
+    EmailAddress.objects.create(
+        user=user,
+        email=user.email,
+        primary=True,
+        verified=True,
+    )
+    profile = MemberProfile.objects.create(
+        user=user,
+        display_name="Public Privacy Profile",
+        bio="Allowed public biography",
+        executive_role="PRIVATE EXECUTIVE ROLE SENTINEL",
+        is_published=True,
+    )
+
+    private_user = User.objects.create_user(
+        username="phase3_unpublished_privacy",
+        email="unpublished-private@example.net",
+        password=PASSWORD,
+    )
+    EmailAddress.objects.create(
+        user=private_user,
+        email=private_user.email,
+        primary=True,
+        verified=True,
+    )
+    MemberProfile.objects.create(
+        user=private_user,
+        display_name="UNPUBLISHED PROFILE SENTINEL",
+        bio="UNPUBLISHED BIO SENTINEL",
+        is_published=False,
+    )
+
+    for path in (
+        reverse("members:list"),
+        reverse("members:detail", args=(user.username,)),
+    ):
+        response = client.get(path)
+        assert response.status_code == 200
+        content = response.content.decode()
+        for private_value in (
+            user.email,
+            user.usu_id,
+            user.get_usu_review_status_display(),
+            profile.executive_role,
+            private_user.email,
+            "UNPUBLISHED PROFILE SENTINEL",
+            "UNPUBLISHED BIO SENTINEL",
+        ):
+            assert private_value not in content
+
+
+def test_phase_three_models_and_member_form_do_not_collect_age_or_guardian_data():
+    excluded_fields = {
+        "age",
+        "birth_date",
+        "date_of_birth",
+        "emergency_contact",
+        "guardian",
+        "guardian_contact",
+    }
+    user_fields = {field.name for field in User._meta.get_fields()}
+    profile_fields = {field.name for field in MemberProfile._meta.get_fields()}
+
+    assert excluded_fields.isdisjoint(user_fields)
+    assert excluded_fields.isdisjoint(profile_fields)
+    assert excluded_fields.isdisjoint(MemberProfileForm.base_fields)
 
 
 def test_security_settings_keep_session_cookie_http_only():

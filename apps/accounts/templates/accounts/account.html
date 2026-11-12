@@ -19,6 +19,62 @@
         <dt>USU review status</dt>
         <dd>{{ user.get_usu_review_status_display }}</dd>
       </dl>
+
+      {% if member_profile %}
+        <section class="account-profile-summary" aria-labelledby="account-profile-title">
+          <h3 id="account-profile-title">Public member profile</h3>
+          <p>Your username is always part of your public profile URL. Other profile information is shown on the Members page only when provided. Leave optional text fields blank, choose “Not specified”, or remove your avatar if you do not want those details displayed.</p>
+
+          <dl class="definition-list">
+            <dt>Publication status</dt>
+            <dd>
+              {% if member_profile.is_hidden_by_admin %}
+                Unavailable on public pages
+              {% elif member_profile.is_published %}
+                Published
+              {% else %}
+                Not published
+              {% endif %}
+            </dd>
+            <dt>Display name</dt>
+            <dd>{{ member_profile.display_name|default:"Not provided" }}</dd>
+            <dt>Avatar</dt>
+            <dd>
+              {% if member_profile.avatar %}
+                <img
+                  class="account-profile-summary__avatar"
+                  src="{{ member_profile.avatar.url }}"
+                  alt="Current avatar for {{ member_profile.resolved_display_name }}"
+                  width="96"
+                  height="96"
+                >
+              {% else %}
+                Not provided
+              {% endif %}
+            </dd>
+            <dt>Bio</dt>
+            <dd>{{ member_profile.bio|default:"Not provided"|linebreaksbr }}</dd>
+            <dt>Experience level</dt>
+            <dd>{{ member_profile.get_experience_level_display }}</dd>
+            <dt>Preferred arm</dt>
+            <dd>{{ member_profile.get_preferred_arm_display }}</dd>
+            <dt>Instagram Username</dt>
+            <dd>{{ member_profile.instagram_handle|default:"Not provided" }}</dd>
+            <dt>Other social URL</dt>
+            <dd>{{ member_profile.other_social_url|default:"Not provided" }}</dd>
+          </dl>
+
+          <div class="button-row">
+            <a class="button button--secondary" href="{% url 'members:profile_edit' %}">Edit profile</a>
+            <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Preview profile</a>
+            {% if member_profile.is_published %}
+              <a class="button button--quiet" href="{% url 'members:profile_unpublish' %}">Unpublish profile</a>
+            {% else %}
+              <a class="button" href="{% url 'members:profile_publish' %}">Publish profile</a>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
     </div>
 
     <div class="panel">

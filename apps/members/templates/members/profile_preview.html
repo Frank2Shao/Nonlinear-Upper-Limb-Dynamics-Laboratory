@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+
+{% block title %}Profile Preview | NULDL Armwrestling Club{% endblock %}
+
+{% block content %}
+  <section class="profile-flow" aria-labelledby="profile-preview-title">
+    <p class="eyebrow">Private preview</p>
+    <h1 id="profile-preview-title">Profile Preview</h1>
+    <p class="page-introduction">Review how your profile information will appear publicly. Previewing does not change its publication status.</p>
+
+    {% include "members/includes/profile_hidden_notice.html" with profile=profile %}
+    {% include "members/includes/profile_public_fields.html" with profile=profile %}
+
+    <div class="button-row">
+      <a class="button button--secondary" href="{% url 'account' %}">Back to Account</a>
+      <a class="button button--secondary" href="{% url 'members:profile_edit' %}">Edit profile</a>
+      {% if profile.is_published %}
+        <a class="button button--quiet" href="{% url 'members:profile_unpublish' %}">Unpublish profile</a>
+      {% else %}
+        <a class="button" href="{% url 'members:profile_publish' %}">Publish profile</a>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

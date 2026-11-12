@@ -3,8 +3,8 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **候选域名：** `nuldl.com`  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1 与 Phase 2 已完成；Phase 3 尚未开始
-**最后更新：** 2026 年 10 月 29 日
+**当前阶段：** Phase 1、Phase 2 与 Phase 3 已完成；Phase 4 尚未开始
+**最后更新：** 2026 年 11 月 12 日
 
 ## 一、文档体系
 
@@ -30,7 +30,8 @@
 3. 增加可选的公开会员资料；
 4. 增加会员活动报名和 Risk Notice 确认；
 5. 增加地点信息和地图；
-6. 完成正式环境、安全、运维及外部审批。
+6. 完成正式环境、安全、运维及外部审批；
+7. 正式上线后再扩展训练成绩与排行榜。
 
 首期结束时，NULDL Armwrestling Club 网站应具备公开信息展示、会员注册、USU ID 人工审核、公开资料、活动报名、报名取消、Risk Notice 版本追溯和地点地图功能。
 
@@ -52,10 +53,11 @@
 | --- | --- | --- | --- |
 | 1 | 项目基础、账户与 USU ID 审核 | 已确认的 Design 与 Tech Stack | `Complete` |
 | 2 | 英文宣传网站 | Phase 1 页面框架 | `Complete` |
-| 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Not started` |
+| 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Complete` |
 | 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Not started` |
 | 5 | 地点与地图 | 已确认地点；Phase 2 页面系统 | `Not started` |
 | 6 | 正式环境准备与上线 | Phase 1-5；Provider 与外部审批 | `Not started` |
+| 7 | Training Records & Leaderboards | Phase 6 已上线；动作与成绩规则已确认 | `Not started` |
 
 ## 五、Phase 1：项目基础、账户与 USU ID 审核
 
@@ -148,32 +150,44 @@
 ### 主要交付物
 
 - Profile edit 和 preview；
-- Avatar 上传；
-- Publish 和 unpublish；
+- 原文件 Avatar 上传、删除、替换和旧文件清理；
+- 独立 Publish confirmation 和 unpublish；
 - Members 列表；
-- Member detail；
-- 管理员 hide 和 unhide；
-- 可选的 HTMX 筛选。
+- `/members/<username>/` Member detail；
+- 管理员在 Django Admin 使用标准 change 权限 hide 和 unhide；
+- Profile 页面响应式、Accessibility、隐私与媒体测试。
 
 ### 依赖
 
 - Phase 1 User、MemberProfile 和权限体系；
-- Avatar 的开发环境存储；
+- Phase 2 公开页面、导航和共享质量门禁；
+- Avatar 的 Development/Test 本地存储；
 - 视觉方向可以继续使用基础 Design Tokens，不阻塞功能开发。
 
 ### 退出门槛
 
 - 资料默认隐藏；
 - 会员只能修改本人资料；
+- 保存资料不改变发布状态，Preview、Publish 与 Unpublish 相互分离；
 - 管理员可以隐藏资料而不影响账户；
 - 公开 queryset 只返回主动公开且未被管理员隐藏的有效会员；
+- Members 列表无筛选并具有稳定排序与 empty state；
+- Member detail 使用 Username URL、普通公开 robots 规则，且不进入 sitemap；
 - Email、USU ID、审核状态和未公开字段不出现在公共响应；
-- Avatar 验证、权限测试和公开边界测试通过；
+- Avatar 保留原文件并通过扩展名、MIME、真实内容和 5 MB 验证；替换或删除后旧文件得到清理；
+- 上传界面明确提示原文件 metadata 可能公开；
+- 所有已验证会员使用相同流程，不增加年龄字段或判断；
+- Admin 只允许维护隐藏状态和 Executive role，不修改会员自述；
+- Avatar、对象所有权、权限、公开边界、Accessibility 和浏览器测试通过；
 - 首期不展示 Executive 角色。
 
 ### 阶段状态
 
-`Not started`
+`Complete`
+
+Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后的 Phase 7。
+
+验收结果：Step 29–36 已完成并通过项目负责人验证；本人 Profile 编辑、Avatar 原文件验证与生命周期、Preview、独立 Publish/Unpublish、公开 Members 目录与 Username detail、统一 404、Admin hide/unhide、Account Profile 摘要与状态操作、响应式与 Accessibility、公开隐私扫描、共享项目门禁及全新环境端到端验收均已落地。最终全新环境执行 `313` 个测试并达到 `95%` branch coverage，Production deploy check、collectstatic、desktop/mobile smoke 与人工走查全部通过。Phase 3 没有新增 migration、年龄逻辑、目录筛选、专用隐藏权限、排行榜或 Production media provider。
 
 ## 八、Phase 4：活动、报名与 Risk Notice
 
@@ -295,7 +309,37 @@
 
 `Not started`
 
-## 十一、跨阶段质量门槛
+## 十一、Phase 7：Training Records & Leaderboards
+
+### 定位
+
+首期正式上线后的增强阶段。该功能依赖 Phase 3 的会员公开身份，并在 Phase 6 完成后单独规划，不影响当前首期交付。
+
+### 计划范围
+
+- 训练动作定义；
+- 会员训练成绩记录；
+- 不同动作的公开排行榜；
+- 成绩提交、审核与修订；
+- 并列、排序和历史记录；
+- 公开隐私与 Member Profile 关联。
+
+### 开始前必须确认
+
+- 具体训练动作；
+- 每个动作的成绩单位与有效精度；
+- 是否区分左手和右手；
+- 成绩由会员自报、现场录入或管理员审核；
+- 是否需要证明材料；
+- 并列规则、无效成绩和修改历史；
+- 是否存在体重、性别或其他分类；
+- 未公开 MemberProfile 在排行榜中的显示方式。
+
+### 阶段状态
+
+`Not started`
+
+## 十二、跨阶段质量门槛
 
 每个 Phase 在进入 `Ready for review` 前必须满足：
 
@@ -309,19 +353,18 @@
 - 未将后续 Phase 或排除项混入当前范围；
 - 新产生的外部依赖已记录。
 
-## 十二、当前外部确认事项
+## 十三、当前外部确认事项
 
 | 事项 | 最晚需要时间 | 当前影响 |
 | --- | --- | --- |
 | Risk Notice 最终文本 | Phase 4 正式启用报名前 | Phase 2 仅允许非正式环境展示 draft；Production 禁用正文；限制正式报名 |
-| 未成年人未来附加措施 | Risk Notice 确认时 | 当前按已确认首期规则实施 |
 | University Branding 批准 | 任何相关内容公开前 | 使用中性 `NULDL Armwrestling Club` Branding，不公开 USYD affiliation |
 | 地点地址和坐标 | Phase 5 开始前 | Phase 2 日程显示 `Venue details to be confirmed`；不阻塞其他公开内容 |
 | Hosting 与相关 Provider | Phase 6 开始前 | 不阻塞本地开发 |
 | 会员退出和数据保留规则 | 对外提供删除流程前 | 首期不实现退出工作流 |
 | 中文版本 | 首期完成后再决定 | 不进入首期范围 |
 
-## 十三、项目状态更新规则
+## 十四、项目状态更新规则
 
 每次阶段状态变化时更新：
 
@@ -333,7 +376,7 @@
 
 Roadmap 不记录逐个代码文件的完成情况。具体开发任务、测试和实现顺序维护在 `implementation.md` 或项目任务系统中。
 
-## 十四、变更控制
+## 十五、变更控制
 
 - 新的用户行为或业务规则先修改 `design_document.md`；
 - 新的框架、服务或基础设施选择先修改 `tech_stack.md`；
@@ -342,7 +385,7 @@ Roadmap 不记录逐个代码文件的完成情况。具体开发任务、测试
 - 涉及范围扩大的决定需要先确认，再更新文件；
 - 修改一份文件时检查其他项目文档是否需要同步引用，但不复制完整内容。
 
-## 十五、项目资料
+## 十六、项目资料
 
 本 Roadmap 的需求来源仅包括：
 

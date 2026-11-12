@@ -1,3 +1,4 @@
+from pathlib import PurePath
 from typing import ClassVar
 
 from allauth.account.models import EmailAddress
@@ -20,6 +21,11 @@ ALLOWED_AVATAR_FORMATS = {
     "PNG": "image/png",
     "WEBP": "image/webp",
 }
+ALLOWED_AVATAR_EXTENSIONS = {
+    "JPEG": {".jpg", ".jpeg"},
+    "PNG": {".png"},
+    "WEBP": {".webp"},
+}
 instagram_handle_validator = RegexValidator(
     regex=r"^[A-Za-z0-9._]+$",
     message="Enter an Instagram username, not a URL.",
@@ -30,20 +36,29 @@ def validate_avatar(uploaded_file) -> None:
     if uploaded_file.size > MAX_AVATAR_SIZE:
         raise ValidationError("Avatar files must be 5 MB or smaller.")
 
+    close_after_validation = getattr(uploaded_file, "_committed", False)
+    if close_after_validation:
+        uploaded_file.open("rb")
     original_position = uploaded_file.tell()
     try:
         uploaded_file.seek(0)
-        image = Image.open(uploaded_file)
-        detected_format = image.format
-        image.verify()
+        with Image.open(uploaded_file) as image:
+            detected_format = image.format
+            image.verify()
     except (OSError, UnidentifiedImageError, ValueError) as exc:
         raise ValidationError("Upload a valid JPG, PNG, or WebP image.") from exc
     finally:
         uploaded_file.seek(original_position)
+        if close_after_validation:
+            uploaded_file.close()
 
     expected_mime = ALLOWED_AVATAR_FORMATS.get(detected_format)
     if expected_mime is None:
         raise ValidationError("Upload a valid JPG, PNG, or WebP image.")
+
+    uploaded_extension = PurePath(uploaded_file.name).suffix.lower()
+    if uploaded_extension not in ALLOWED_AVATAR_EXTENSIONS[detected_format]:
+        raise ValidationError("The avatar filename does not match its image content.")
 
     declared_mime = getattr(uploaded_file, "content_type", None)
     if declared_mime is None:

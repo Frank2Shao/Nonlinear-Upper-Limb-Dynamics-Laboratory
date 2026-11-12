@@ -68,6 +68,7 @@ def test_sitemap_contains_only_production_public_pages(client):
         "http://testserver/",
         "http://testserver/about/",
         "http://testserver/beginners-safety/",
+        "http://testserver/members/",
     ]
     sitemap_content = response.content.decode()
     for excluded_path in (
@@ -76,7 +77,7 @@ def test_sitemap_contains_only_production_public_pages(client):
         "/admin/",
         "/risk-notice/",
         "/events/",
-        "/members/",
+        "/members/example-member/",
         "/locations/",
         "/test-error/",
     ):
@@ -92,6 +93,7 @@ def test_sitemap_never_includes_draft_risk_notice(client):
         "http://testserver/",
         "http://testserver/about/",
         "http://testserver/beginners-safety/",
+        "http://testserver/members/",
     ]
 
 

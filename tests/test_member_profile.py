@@ -309,10 +309,11 @@ def test_member_form_excludes_admin_managed_and_timestamp_fields():
         "preferred_arm",
         "instagram_handle",
         "other_social_url",
-        "is_published",
+        "remove_avatar",
     }
 
     assert set(MemberProfileForm.base_fields) == expected_fields
+    assert "is_published" not in MemberProfileForm.base_fields
     assert "is_hidden_by_admin" not in MemberProfileForm.base_fields
     assert "executive_role" not in MemberProfileForm.base_fields
     assert "created_at" not in MemberProfileForm.base_fields
@@ -340,13 +341,17 @@ def test_member_form_cannot_modify_admin_managed_fields():
     assert form.is_valid(), form.errors
     saved = form.save()
     assert saved.display_name == "Updated Member"
+    assert saved.is_published is False
     assert saved.is_hidden_by_admin is True
     assert saved.executive_role == "President"
 
 
-def test_profile_admin_exposes_management_fields_with_read_only_timestamps():
+def test_profile_admin_exposes_only_admin_management_fields_for_editing():
     profile_admin = MemberProfileAdmin(MemberProfile, AdminSite())
 
     assert "is_hidden_by_admin" in profile_admin.list_display
     assert "is_published" in profile_admin.list_filter
-    assert profile_admin.readonly_fields == ("created_at", "updated_at")
+    assert set(profile_admin.fields) - set(profile_admin.readonly_fields) == {
+        "is_hidden_by_admin",
+        "executive_role",
+    }

@@ -57,7 +57,7 @@ def main() -> None:
     production_environment = os.environ.copy()
     production_environment["DJANGO_SETTINGS_MODULE"] = "config.settings.production"
     production_environment["DJANGO_SECRET_KEY"] = (
-        "phase-2-deploy-check-only-7vQ2!kP9#xM4@cR8$zT6&wN3"
+        "project-deploy-check-only-7vQ2!kP9#xM4@cR8$zT6&wN3"
     )
     run(
         [

@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission
 from django.urls import reverse
 
 from apps.accounts.services import review_usu_id
+from apps.members.models import MemberProfile
 
 User = get_user_model()
 PASSWORD = "A-valid-password-2026"
@@ -259,3 +260,78 @@ def test_account_page_links_password_change_and_uses_post_logout(client):
     assert reverse("account_change_password") in content
     assert f'action="{reverse("account_logout")}"' in content
     assert '<form method="post"' in content
+
+
+def test_account_details_include_profile_summary_and_publication_guidance(client):
+    member = create_user(username="account_profile_summary")
+    profile = MemberProfile.objects.create(
+        user=member,
+        display_name="Account Profile Member",
+        bio="A synthetic account profile biography.",
+        experience_level=MemberProfile.ExperienceLevel.ONE_TO_THREE_YEARS,
+        preferred_arm=MemberProfile.PreferredArm.BOTH,
+        instagram_handle="account.profile",
+        other_social_url="https://example.com/account-profile",
+    )
+    client.force_login(member)
+
+    response = client.get(reverse("account"))
+
+    content = response.content.decode()
+    assert response.context["member_profile"] == profile
+    assert content.count('class="panel"') == 3
+    assert "<h2>Member profile</h2>" not in content
+    assert '<h3 id="account-profile-title">Public member profile</h3>' in content
+    assert "Your username is always part of your public profile URL." in content
+    assert "Leave optional text fields blank" in content
+    for value in (
+        "Account Profile Member",
+        "A synthetic account profile biography.",
+        "1–3 years",
+        "Both",
+        "account.profile",
+        "https://example.com/account-profile",
+        "Not published",
+        "Not provided",
+    ):
+        assert value in content
+
+
+@pytest.mark.parametrize(
+    ("is_published", "is_hidden_by_admin", "status", "action_name", "route_name"),
+    (
+        (False, False, "Not published", "Publish profile", "members:profile_publish"),
+        (True, False, "Published", "Unpublish profile", "members:profile_unpublish"),
+        (
+            True,
+            True,
+            "Unavailable on public pages",
+            "Unpublish profile",
+            "members:profile_unpublish",
+        ),
+    ),
+)
+def test_account_profile_actions_follow_publication_state(
+    client,
+    is_published,
+    is_hidden_by_admin,
+    status,
+    action_name,
+    route_name,
+):
+    member = create_user(username=f"account_profile_{status.replace(' ', '_')}")
+    MemberProfile.objects.create(
+        user=member,
+        is_published=is_published,
+        is_hidden_by_admin=is_hidden_by_admin,
+    )
+    client.force_login(member)
+
+    response = client.get(reverse("account"))
+
+    content = response.content.decode()
+    assert status in content
+    assert action_name in content
+    assert reverse(route_name) in content
+    assert reverse("members:profile_edit") in content
+    assert reverse("members:profile_preview") in content

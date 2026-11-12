@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+
+{% block title %}Edit Profile | NULDL Armwrestling Club{% endblock %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="profile-edit-title">
+    <p class="eyebrow">Member profile</p>
+    <h1 id="profile-edit-title">Edit Profile</h1>
+    <p class="page-introduction">Update the information saved in your member profile. Saving changes does not publish or unpublish your profile.</p>
+
+    <div class="panel">
+      <form class="stack" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include "account/includes/form_errors.html" with form=form %}
+        {% include "account/includes/field.html" with field=form.display_name %}
+        <div class="avatar-editor">
+          {% if profile.avatar %}
+            <figure class="avatar-editor__current">
+              <img
+                class="avatar-preview"
+                src="{{ profile.avatar.url }}"
+                alt="Current avatar for {{ profile.resolved_display_name }}"
+                width="320"
+                height="320"
+              >
+              <figcaption>Current avatar</figcaption>
+            </figure>
+          {% endif %}
+          {% include "account/includes/field.html" with field=form.avatar %}
+          <p class="helptext" id="avatar-privacy-help">Uploaded images are stored as provided and may contain location, device or other metadata. Remove sensitive metadata before uploading.</p>
+          {% if profile.avatar %}
+            {% include "account/includes/field.html" with field=form.remove_avatar %}
+          {% endif %}
+        </div>
+        {% include "account/includes/field.html" with field=form.bio %}
+        {% include "account/includes/field.html" with field=form.experience_level %}
+        {% include "account/includes/field.html" with field=form.preferred_arm %}
+        {% include "account/includes/field.html" with field=form.instagram_handle %}
+        {% include "account/includes/field.html" with field=form.other_social_url %}
+        <div class="button-row">
+          <button class="button" type="submit">Save changes</button>
+          <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Preview profile</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

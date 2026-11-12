@@ -1,0 +1,63 @@
+<article class="profile-public-card" aria-labelledby="profile-public-name">
+  <header class="profile-public-card__header">
+    <p class="eyebrow">Member profile</p>
+    {% if public_profile_detail %}
+      <h1 id="profile-public-name">{{ profile.resolved_display_name }}</h1>
+    {% else %}
+      <h2 id="profile-public-name">{{ profile.resolved_display_name }}</h2>
+    {% endif %}
+    <p class="profile-public-card__username">@{{ profile.user.username }}</p>
+  </header>
+
+  {% if profile.avatar %}
+    <img
+      class="profile-public-card__avatar"
+      src="{{ profile.avatar.url }}"
+      alt="Avatar for {{ profile.resolved_display_name }}"
+      width="480"
+      height="480"
+    >
+  {% else %}
+    <div class="profile-public-card__avatar-fallback" aria-label="No avatar provided">
+      {{ profile.resolved_display_name|first|upper }}
+    </div>
+  {% endif %}
+
+  {% if profile.experience_level != "not_spec" or profile.preferred_arm != "not_spec" %}
+    <dl class="definition-list">
+      {% if profile.experience_level != "not_spec" %}
+        <dt>Experience level</dt>
+        <dd>{{ profile.get_experience_level_display }}</dd>
+      {% endif %}
+      {% if profile.preferred_arm != "not_spec" %}
+        <dt>Preferred arm</dt>
+        <dd>{{ profile.get_preferred_arm_display }}</dd>
+      {% endif %}
+    </dl>
+  {% endif %}
+
+  {% if profile.bio %}
+    <section aria-labelledby="profile-bio-title">
+      <h3 id="profile-bio-title">Bio</h3>
+      <p class="profile-public-card__bio">{{ profile.bio|linebreaksbr }}</p>
+    </section>
+  {% endif %}
+
+  {% if profile.instagram_handle or profile.other_social_url %}
+    <section aria-labelledby="profile-links-title">
+      <h3 id="profile-links-title">Links</h3>
+      <ul class="profile-public-card__links">
+        {% if profile.instagram_handle %}
+          <li>
+            <a href="https://www.instagram.com/{{ profile.instagram_handle|urlencode }}/" target="_blank" rel="noopener noreferrer">Instagram: @{{ profile.instagram_handle }}</a>
+          </li>
+        {% endif %}
+        {% if profile.other_social_url %}
+          <li>
+            <a href="{{ profile.other_social_url }}" target="_blank" rel="noopener noreferrer">Other social profile</a>
+          </li>
+        {% endif %}
+      </ul>
+    </section>
+  {% endif %}
+</article>

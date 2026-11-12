@@ -4,7 +4,7 @@
 **文档职责：** 为 AI 开发者提供可验证、可逐步执行的开发指令  
 **实施根目录：** `../`  
 **文档状态：** Progressive  
-**最后更新：** 2026 年 10 月 25 日
+**最后更新：** 2026 年 11 月 12 日
 
 ## 一、输入与优先级
 
@@ -392,15 +392,95 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **完成条件：** Roadmap 的 Phase 2 退出门槛全部满足；记录遗留内容与外部依赖；将阶段标记为 `Ready for review`；向项目负责人申请更新 `architecture.md`，获得批准并完成阶段验收后才能标记 `Complete` 和展开 Phase 3。
 
-## 七、Phase 3 概要：会员资料
+## 七、Phase 3：会员资料
 
-**展开条件：** Phase 2 已验收，公开页面结构和 media 策略可用。
+**展开条件：** Phase 2 已验收；公开页面、响应式导航、共享质量门禁和本地 media 基础可用；Phase 3 产品规则已经记录在 `design_document.md`。
 
-**范围：** 基于 Phase 1 已建立的完整字段实现 Profile edit、preview、publish、unpublish、Members list、Member detail 和 Admin hide/unhide；根据届时确定的 media 策略补充上传处理。
+**范围边界：** 本阶段复用 Phase 1 已建立的 MemberProfile schema，预计不新增 model 字段或 migration。实现 Profile edit、Avatar 生命周期、Preview、Publish、Unpublish、Members list、Member detail 和 Django Admin hide/unhide。不增加年龄判断、筛选、专用隐藏权限、隐藏原因、独立审核表或 Production media provider。
 
-**关键约束：** 资料默认隐藏；公开必须由会员主动开启；管理员隐藏不修改会员自述；Executive role 首期不公开；上传需要验证类型、大小和真实图像内容，并移除不必要 metadata。
+### Step 29 — 建立本人 Profile 编辑入口与所有权边界
 
-**阶段验证：** 公开 queryset、对象所有权、管理员权限、未发布与隐藏资料、停用账户、直接 URL、上传伪装文件及公开字段泄露测试全部通过。
+**目标：** 让已验证会员安全编辑本人资料，同时保持保存与发布状态分离。
+
+**指令：** 在 `members` 建立命名 URL、views 和 templates；Account 页面加入 `Edit profile` 入口；编辑页只读取和更新当前登录用户的一对一 Profile；表单包含 Display name、Avatar、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL，移除 `is_published`，继续排除 `is_hidden_by_admin`、`executive_role` 和时间戳；保存成功只更新资料，不改变发布状态；未验证、停用或 Anonymous 用户不得进入编辑流程。
+
+**验证：** 测试 Anonymous、未验证账户、有效会员及对象所有权；测试正常保存、验证错误、重复 Display name、Bio HTML、Instagram 与 HTTPS social URL；伪造 User、发布状态和管理员字段必须被忽略或拒绝；验证 Account 入口、成功消息、错误保持和无 JavaScript 普通 POST；运行现有账户与 MemberProfile 回归测试。
+
+**完成条件：** 会员只能编辑本人允许字段，保存不会意外 Publish、Unpublish 或改变管理员状态。
+
+### Step 30 — 完成 Avatar 上传、删除与文件清理
+
+**目标：** 按已确认的简化策略安全保存原始 Avatar，并避免替换后的旧文件残留。
+
+**指令：** 继续支持 JPG、PNG、WebP 和 5 MB 上限，复用扩展名、声明 MIME 与 Pillow 真实内容验证；验证通过后直接保存原文件，不执行 EXIF 转向、metadata 删除、缩放或格式转换；编辑页提供明确删除操作和已确认的 metadata 隐私提示；页面通过方形容器与 CSS `object-fit` 展示；只有新资料保存成功后才清理被替换的旧文件，主动删除成功后清理对应文件；失败更新必须保留当前有效 Avatar；在 Development 中接入本地 media URL serving，Production 不启用开发用 media helper；测试使用隔离的临时 media，不提交上传文件。
+
+**验证：** 测试允许格式、大小边界、伪装扩展名、错误 MIME、损坏图片、原文件字节保持、替换、主动删除、失败更新不删旧文件及无孤立旧文件；检查 Development media URL 可访问且 Production URLConf 不提供开发 helper；检查 Git ignore 与安全扫描不会跟踪 media；使用 Playwright 验证上传错误、当前 Avatar、方形展示、删除控制和隐私提示。
+
+**完成条件：** Avatar 验证保持 Phase 1 安全边界，原文件按决定保存，替换和删除不会留下旧文件或破坏有效文件。
+
+### Step 31 — 建立 Preview、Publish 与 Unpublish 流程
+
+**目标：** 让会员在公开前查看效果，并通过独立确认控制资料可见性。
+
+**指令：** 建立仅本人可访问的 Profile Preview，并与公开 detail 复用字段顺序和展示组件；建立独立 Publish confirmation，明确列出公开字段、Username detail URL、Display name 为空时的 Username 回退和 Avatar metadata 风险；Publish 与 Unpublish 使用 CSRF 保护的 POST，重复操作保持幂等；管理员隐藏优先于会员发布状态，页面显示中性提示且不泄露管理员信息；会员不能通过 Publish 解除 `is_hidden_by_admin`。
+
+**验证：** 测试 Preview 所有权、未发布 Preview、GET 不得改变状态、Publish/Unpublish 正常路径、重复 POST、CSRF、开放 redirect、管理员隐藏及停用账户；确认普通编辑保存不改变 `is_published`；检查 Preview 和 confirmation 不输出 Email、USYD、USU ID、审核状态或 Executive role。
+
+**完成条件：** 保存、预览、发布和取消发布具有独立清晰的状态转换，管理员隐藏始终具有更高公开优先级。
+
+### Step 32 — 建立 Members 公开目录
+
+**目标：** 公开展示主动发布且符合隐私边界的会员资料。
+
+**指令：** 建立 `/members/` 列表页和 Header `Members` 导航；数据只来自 `MemberProfile.objects.public()`；按 Display name 或 Username 的不区分大小写顺序稳定排序；卡片显示 Avatar 或非敏感 fallback、Display name 或 Username、已填写的 Experience level 与 Preferred arm；隐藏 `Not specified`；不加入搜索、HTMX 筛选或分页复杂度；没有公开资料时显示明确 empty state。
+
+**验证：** 测试公开 queryset、排序、Display name 回退、字段隐藏、empty state、导航和认证状态；覆盖未发布、管理员隐藏、停用和未验证账户；扫描响应，确认没有 Email、USYD、USU ID、审核字段、Executive role、Bio、非卡片 social 字段或后台信息；执行 desktop/mobile、键盘及无 JavaScript browser test。
+
+**完成条件：** Members 目录只展示允许的公开卡片字段，没有筛选扩展或隐私泄露。
+
+### Step 33 — 建立 Member detail 与搜索边界
+
+**目标：** 通过稳定 Username URL 展示单个公开 Profile，并统一不可见状态。
+
+**指令：** 建立 `/members/<username>/` 详情页并使用公开 queryset 查询；展示卡片字段以及 Bio、Instagram Username 和一个 HTTPS social URL；隐藏 `Not specified`、时间戳及全部账户和管理员字段；外部链接使用安全属性；未发布、管理员隐藏、账户停用、邮箱未验证或不存在的 Username 统一返回 404；页面使用普通公开 metadata 和 robots 规则，不增加 `noindex`；sitemap 只加入 Members 列表，不枚举个人详情 URL。
+
+**验证：** 测试 Username URL、大小写与不存在路径、公开字段、HTML escaping、安全外链及统一 404；确认不同不可见原因无法从状态码或正文区分；解析 sitemap 确认只含 Members 列表；检查 detail 没有 `noindex` 且没有 Email、USYD、USU ID、审核字段、Executive role 或未公开值；执行浏览器导航和直接 URL smoke。
+
+**完成条件：** 公开详情可从 Members 卡片访问，隐私状态统一，搜索与 sitemap 行为符合已确认规则。
+
+### Step 34 — 完成 Django Admin Hide/Unhide
+
+**目标：** 使用 Django Admin 标准修改权限管理公开隐藏状态，同时保护会员自述内容。
+
+**指令：** 保留现有 `is_hidden_by_admin` 字段；MemberProfile Admin 使用标准 `change_memberprofile` 权限，不增加专用 permission 或自定义 action；Admin change form 将 User、会员自述字段和时间戳设为只读，只允许维护 `is_hidden_by_admin` 与 `executive_role`；依赖 Django Admin log 记录修改，不增加原因或历史 model；隐藏不修改 `is_published`、资料内容或账户状态；会员页面只显示中性隐藏提示。
+
+**验证：** 测试普通会员、无 change 权限 Staff、有 change 权限 Staff 和 Superuser；确认授权管理员可勾选和取消隐藏、维护 Executive role，但不能通过 Admin 修改会员自述、User 或时间戳；验证 Django Admin log 产生记录；检查隐藏后公开列表和 detail 消失、账户登录和本人编辑继续可用、Unpublish 仍可执行。
+
+**完成条件：** Hide/Unhide 使用标准 Admin 权限完成，会员内容和账户状态不被后台隐藏操作改写。
+
+### Step 35 — 完成 Phase 3 响应式、Accessibility 与隐私门禁
+
+**状态：** 已完成并通过项目负责人验证（2026 年 11 月 12 日）。
+
+**目标：** 对全部 Profile 页面执行统一的浏览器、可访问性和公开数据检查。
+
+**指令：** 扩展现有 Playwright 与 Django 安全测试，覆盖 Edit、Avatar、Preview、Publish confirmation、Unpublish、Members、Member detail、empty state 和管理员隐藏提示；检查语义、Heading、Label、错误关联、键盘、Focus、触控目标、200% 内容放大、reduced motion、图片 alt、长 Bio、长 Username、社交链接、无 JavaScript 提交和媒体加载；所有已验证会员使用同一流程，不加入年龄字段、年龄推断或年龄分支。
+
+**验证：** 在 desktop、mobile、200% 放大、JavaScript disabled 和 reduced-motion 场景运行 Phase 3 browser suite；确认无横向溢出、page error、外部资源请求或不可见 Focus；执行公开响应敏感字段扫描、对象所有权测试、直接 URL 测试和 media 临时目录清理检查；运行完整 pytest、现有 Phase 1–2 browser 回归及静态资源检查。
+
+**完成条件：** Profile 全流程在目标设备和辅助场景可用，公开响应、media 和权限边界没有已知阻塞问题。
+
+### Step 36 — Phase 3 质量门禁与阶段验收
+
+**状态：** 已完成并通过项目负责人验证（2026 年 11 月 12 日）。
+
+**目标：** 在全新环境验证会员资料功能，并形成可交接的阶段结果。
+
+**指令：** 扩展共享项目门禁和 Phase 3 全新环境验收入口，覆盖资料编辑、Avatar、Preview、Publish/Unpublish、目录、详情、Admin hide/unhide、media serving 和隐私边界；使用合成账户与临时 media 完成人工走查；更新 README、`progress.md` 与 Roadmap；不得提交真实会员资料、用户上传文件或 media 目录。
+
+**验证：** 运行锁定依赖安装、PostgreSQL、migrations、Ruff、format check、migration drift、Django checks、完整 pytest、coverage、Production deploy check、collectstatic 和 Playwright desktop/mobile suite；确认 Phase 3 没有新增 migration、年龄逻辑、筛选、专用隐藏权限、排行榜或 Production media provider；从干净环境复现全部检查并人工验证主要状态。
+
+**完成条件：** Roadmap 的 Phase 3 退出门槛全部满足；记录遗留 media 与外部依赖；将阶段标记为 `Ready for review`；向项目负责人申请更新 `architecture.md`，获得批准并完成验收后才能标记 `Complete` 和展开 Phase 4。
 
 ## 八、Phase 4 概要：活动、Risk Notice 与报名
 
@@ -432,7 +512,17 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **阶段验证：** Production deployment check、干净部署、升级与回滚、Email、持久化 media、备份恢复、health check、安全 headers、错误监控和核心用户流程全部通过。
 
-## 十一、Migration 顺序
+## 十一、Phase 7 概要：Training Records & Leaderboards
+
+**阶段定位：** Phase 7 属于首期正式上线后的增强功能，只有 Phase 6 完成后才能展开，不得混入 Phase 3–6。
+
+**范围：** 为不同训练动作建立成绩记录和公开排行榜；具体 Exercise、Result、单位、左右手、证明材料、审核、并列、分类和隐私规则必须在该阶段开始前由项目负责人确认。
+
+**关键约束：** 不默认采用 Elo、体重级别、性别分类、自报成绩或管理员审核中的任何一种方案；不得在未定义动作标准和成绩可信度规则时建立排名。
+
+**阶段验证：** 在 Phase 7 展开时单独定义数据约束、权限、审核、并发、排序、并列、历史和公开隐私测试；当前文档不提前生成代码级步骤。
+
+## 十二、Migration 顺序
 
 1. `accounts.0001_initial` 创建 Custom User；
 2. `members.0001_initial` 创建 MemberProfile；
@@ -443,7 +533,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 不得在 Custom User 建立前运行项目首次业务 migration。初始管理员使用明确的管理命令建立，不写入 migration。
 
-## 十二、统一 Definition of Done
+Phase 3 按当前已确认范围不需要新增 migration；若实施时发现 schema 变更需求，必须停止并请求批准。Phase 7 的 migration 顺序在该阶段展开后确定。
+
+## 十三、统一 Definition of Done
 
 一个步骤只有同时满足以下条件才算完成：
 
@@ -458,14 +550,15 @@ AI 开发者一次只执行一个步骤。每一步必须：
 - 相关文档、环境示例和 `progress.md` 已同步；
 - 本步骤列出的验证全部通过。
 
-## 十三、禁止自行决定的事项
+## 十四、禁止自行决定的事项
 
 - Risk Notice 的最终法律或政策文本；
-- 未成年人是否需要额外措施；
+- 新增年龄字段、年龄判断或年龄分支；
 - University Branding 的使用范围；
 - 会员退出、账户删除和数据保留规则；
 - 中文版本范围；
 - 正式 hosting、SMTP、media storage、monitoring 和 tile provider；
-- 新增付款、容量、候补、截止时间、排名或比赛管理功能。
+- 在 Phase 7 之前新增训练成绩、排行榜、Elo 或比赛管理功能；
+- Phase 7 的动作、单位、审核、并列、分类和公开规则。
 
 遇到以上事项或文档冲突时，记录阻塞并请求明确决定，不得通过默认值、占位实现或扩大范围继续。
