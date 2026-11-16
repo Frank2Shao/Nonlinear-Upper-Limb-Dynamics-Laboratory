@@ -18,6 +18,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("", include("apps.safety.urls")),
     path("", include("apps.accounts.urls")),
     path("", include("apps.members.urls")),
+    path("events/", include("apps.events.urls")),
     path("accounts/", include("allauth.urls")),
 ]
 

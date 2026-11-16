@@ -20,11 +20,7 @@ const pages = [
   {
     path: "/",
     heading: "Nonlinear Upper Limb Dynamics Laboratory",
-    requiredText: [
-      "1 December 2026",
-      "3:00–7:00 pm",
-      "Venue details to be confirmed",
-    ],
+    requiredText: ["Upcoming Events", "View all events"],
   },
   {
     path: "/about/",

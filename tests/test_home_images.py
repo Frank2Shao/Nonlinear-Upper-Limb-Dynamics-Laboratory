@@ -6,22 +6,25 @@ from pathlib import Path
 from PIL import Image
 
 PROJECT_ROOT = Path(__file__).parents[1]
-SOURCE = PROJECT_ROOT / "static_src" / "images" / "brand" / "Logo_without_USYD.png"
+SOURCE = (
+    PROJECT_ROOT / "static_src" / "images" / "brand" / "nuldl-club-logo-transparent.png"
+)
 GENERATED_DIRECTORY = PROJECT_ROOT / "static" / "images" / "brand"
 
 
 def test_approved_logo_source_is_preserved_exactly():
     source_bytes = SOURCE.read_bytes()
 
-    assert len(source_bytes) == 1_776_890
+    assert len(source_bytes) == 1_580_788
     assert (
         hashlib.sha256(source_bytes).hexdigest()
-        == "1bc738b3a7af5719a296bc0aecc67f2ea943d1acf7eadb499c3dd28592308944"
+        == "65114bdc25ca376408b3c715a02b100fa979ca1eba182c9f5baf87911eaa89d1"
     )
     with Image.open(SOURCE) as image:
         assert image.format == "PNG"
         assert image.size == (1254, 1254)
-        assert image.mode == "RGB"
+        assert image.mode == "RGBA"
+        assert image.getchannel("A").getextrema() == (0, 255)
 
 
 def test_responsive_logo_variants_are_compressed_square_webp_images():
@@ -31,7 +34,10 @@ def test_responsive_logo_variants_are_compressed_square_webp_images():
         with Image.open(generated) as image:
             assert image.format == "WEBP"
             assert image.size == (width, width)
-            assert image.mode == "RGB"
+            assert image.mode == "RGBA"
+            alpha = image.getchannel("A")
+            assert alpha.getextrema() == (0, 255)
+            assert alpha.getpixel((0, 0)) == 0
 
 
 def test_committed_logo_variants_are_reproducible():

@@ -1,0 +1,25 @@
+{% if registration_error %}<p class="error-summary" role="alert">{{ registration_error }}</p>{% endif %}
+{% if registration_form.errors %}
+  <div class="error-summary" role="alert" tabindex="-1" data-error-summary>
+    <p>Please correct the registration form.</p>
+    {{ registration_form.non_field_errors }}
+    {{ registration_form.risk_notice_id.errors }}
+    {{ registration_form.accepted.errors }}
+  </div>
+{% endif %}
+<div class="risk-notice-copy">
+  <p><strong>Notice version:</strong> {{ current_notice.version }}</p>
+  {{ notice_text|linebreaks }}
+</div>
+<form
+  method="post"
+  action="{% url 'events:register' event.slug %}"
+  {% if htmx_registration %}hx-post="{% url 'events:register' event.slug %}" hx-target="#event-registration" hx-swap="outerHTML"{% endif %}
+>
+  {% csrf_token %}
+  {{ registration_form.risk_notice_id }}
+  <div class="button-row event-registration__actions">
+    <button class="button" type="submit" name="accepted" value="true">Confirm registration</button>
+    {% if registration_dialog %}<button class="button button--secondary" type="button" @click="$refs.registrationDialog.close()">Close</button>{% endif %}
+  </div>
+</form>

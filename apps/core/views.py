@@ -2,11 +2,22 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
+from apps.events.models import Event
+from apps.safety.services import current_risk_notice
+
 PUBLIC_SITEMAP_URL_NAMES = ("home", "about", "beginners_safety", "members:list")
 
 
 def home(request: HttpRequest) -> HttpResponse:
-    return render(request, "core/home.html")
+    events = Event.objects.public().upcoming().order_by("starts_at", "pk")[:3]
+    return render(
+        request,
+        "core/home.html",
+        {
+            "upcoming_events": events,
+            "registration_notice_available": current_risk_notice() is not None,
+        },
+    )
 
 
 def about(request: HttpRequest) -> HttpResponse:

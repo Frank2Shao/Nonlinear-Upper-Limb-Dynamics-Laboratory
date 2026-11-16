@@ -1,5 +1,5 @@
 {% extends "core/base.html" %}
-{% load static %}
+{% load static tz %}
 
 {% block title %}NULDL Armwrestling Club | Training and Community{% endblock %}
 {% block meta_description %}Learn armwrestling technique, practise under supervision and join a welcoming strength-sport community. Beginners are welcome.{% endblock %}
@@ -17,6 +17,7 @@
           {% if not user.is_authenticated %}
             <a class="button" data-home-primary href="{% url 'account_signup' %}">Join the Club</a>
           {% endif %}
+          <a class="button button--secondary" href="https://usu.edu.au/clubs/armwrestling/">Join on USU</a>
           <a class="button button--secondary" href="#new-to-armwrestling">New to Armwrestling?</a>
         </div>
       </div>
@@ -24,7 +25,7 @@
         <source
           type="image/webp"
           srcset="{% static 'images/brand/nuldl-club-logo-480.webp' %} 480w, {% static 'images/brand/nuldl-club-logo-800.webp' %} 800w, {% static 'images/brand/nuldl-club-logo-1200.webp' %} 1200w"
-          sizes="(min-width: 54rem) 32rem, calc(100vw - 2rem)"
+          sizes="(min-width: 78rem) 34rem, (min-width: 54rem) 45vw, (min-width: 36rem) 34rem, calc(100vw - 2rem)"
         >
         <img
           class="home-hero__logo"
@@ -66,30 +67,16 @@
     </section>
 
     <section class="public-section session-card" aria-labelledby="upcoming-session-title">
-      <p class="eyebrow">Next training date</p>
-      <h2 id="upcoming-session-title">Upcoming Session</h2>
-      <dl class="session-details">
-        <div>
-          <dt>Date</dt>
-          <dd><time datetime="2026-12-01">1 December 2026</time></dd>
-        </div>
-        <div>
-          <dt>Time</dt>
-          <dd>3:00–7:00 pm</dd>
-        </div>
-        <div>
-          <dt>Session</dt>
-          <dd>Training Session</dd>
-        </div>
-        <div>
-          <dt>Venue</dt>
-          <dd>Venue details to be confirmed</dd>
-        </div>
-      </dl>
-      <p class="session-note">Further attendance details will be published before the session.</p>
-      {% if not user.is_authenticated %}
-        <a class="button" data-session-join href="{% url 'account_signup' %}">Join</a>
-      {% endif %}
+      <p class="eyebrow">Club activities</p>
+      <h2 id="upcoming-session-title">Upcoming Events</h2>
+      {% timezone "Australia/Sydney" %}
+        {% for event in upcoming_events %}
+          {% include "events/includes/event_card.html" %}
+        {% empty %}
+          <p>No upcoming events are currently available.</p>
+        {% endfor %}
+      {% endtimezone %}
+      <a class="button button--secondary home-events-action" href="{% url 'events:list' %}">View all events</a>
     </section>
   </div>
 {% endblock %}

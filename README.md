@@ -1,6 +1,6 @@
 # Nonlinear Upper Limb Dynamics Laboratory website
 
-This repository contains the NULDL website and member account system. Phase 1 provides registration, mandatory email verification, password and Magic Code login, account identity management, and USU ID review. Phase 2 adds the English public website. Phase 3 adds member-owned profile editing, original-file Avatar management, Preview, Publish and Unpublish controls, the public Members directory and details, and Admin hide/unhide.
+This repository contains the NULDL website and member account system. Phase 1 provides registration, mandatory email verification, password and Magic Code login, account identity management, and USU ID review. Phase 2 adds the English public website. Phase 3 adds member-owned profile editing, original-file Avatar management, Preview, Publish and Unpublish controls, the public Members directory and details, and Admin hide/unhide. Phase 4 adds public Events, member registration and cancellation, versioned Risk Notice confirmation, and a read-only Admin registration list.
 
 NULDL uses neutral project branding. This repository does not claim to be an official University of Sydney website and does not include University logos, crests, or other unapproved brand assets.
 
@@ -62,10 +62,10 @@ python -m uv run --env-file .env python manage.py migrate
 
 ## Automated acceptance
 
-The Phase 3 acceptance command creates a temporary clean uv environment, installs the locked Python and npm dependencies, starts PostgreSQL, applies migrations, runs the complete shared quality gate, starts the Development server, and runs the Phase 2 and Phase 3 desktop/mobile Playwright smoke tests:
+The Phase 4 acceptance command creates a temporary clean uv environment, installs the locked Python and npm dependencies, starts PostgreSQL, applies migrations, runs the complete shared quality gate, starts the Development server, and runs the Phase 2, Phase 3, and Phase 4 desktop/mobile Playwright smoke tests:
 
 ```powershell
-python -m uv run --env-file .env python scripts\accept_phase_3.py
+python -m uv run --env-file .env python scripts\accept_phase_4.py
 ```
 
 The shared quality and security gate can be run separately:
@@ -75,6 +75,14 @@ python -m uv run --env-file .env python scripts\verify_project.py
 ```
 
 Both commands return a non-zero exit status if any required check fails. Earlier phase commands remain available for historical verification.
+
+### Phase 3 compatibility
+
+The Step 36 acceptance command remains available for the member-profile baseline:
+
+```powershell
+python -m uv run --env-file .env python scripts\accept_phase_3.py
+```
 
 ### Phase 2 compatibility
 
@@ -145,6 +153,23 @@ Use synthetic accounts and temporary media only. Remove the synthetic records an
 
 Production media storage remains unresolved and will be selected during Phase 6. Development uses local media; tests and acceptance use isolated temporary media.
 
+## Manual Phase 4 review
+
+Use synthetic accounts, a synthetic Event, a synthetic digits-only USU ID, and a Risk Notice whose first line is `SYNTHETIC TEST ONLY`. Do not enter real member or participant data. Remove the synthetic records after the walkthrough.
+
+1. In Django Admin, create and publish a synthetic Event with future Sydney dates, `registration_open` enabled, venue text, and an optional HTTPS Google Maps URL. Confirm Home shows the Event and **View all events** opens the Upcoming list.
+2. Open Upcoming and Past on desktop and mobile widths. Confirm the Event card, detail page, date, time, venue and optional **View location in map** link are readable, and that no **All** filter appears.
+3. As an anonymous visitor, confirm the public Event remains visible but registration requires login. Register and verify a synthetic member before continuing.
+4. As the verified synthetic member, select **Register**, read the current synthetic Risk Notice, actively confirm it, and verify the page changes to `Registered` without requesting identity details again.
+5. Select **Cancel registration**, confirm the cancellation, and verify **Register** returns. Register again and confirm Django Admin retains the cancelled record and the new active record with their accepted Risk Notice versions.
+6. Change the current synthetic Risk Notice after opening a registration confirmation page. Submit the stale page and confirm the current version must be reviewed before registration succeeds.
+7. Close registration and confirm registration and cancellation controls disappear and direct requests are refused. Move the Event dates into Past and confirm it appears only under Past with no registration controls.
+8. Grant a synthetic Staff account only `events.view_eventregistration`. Confirm the registration list is readable but cannot be added to, changed or deleted, and that an unprivileged Staff account cannot open it.
+9. Repeat the registration and cancellation flow with JavaScript disabled. Confirm the full confirmation pages, keyboard focus, error messages and mobile layout remain usable without horizontal scrolling.
+10. Confirm public Home and Event responses do not expose participant names, Username, Email, USU ID, cancellation history or previous Risk Notice versions.
+
+Production registration remains disabled until the final Risk Notice is approved. Phase 4 Development and test data must remain explicitly synthetic.
+
 ## Security and data boundaries
 
 - Never commit `.env`, credentials, verification or login codes, database dumps, real member data, or user uploads.
@@ -164,4 +189,4 @@ Production media storage remains unresolved and will be selected during Phase 6.
 - `scripts/`: asset, quality-gate, and acceptance tooling
 - `memory-bank/`: product, architecture, implementation, roadmap, and progress records
 
-Phase 3 implementation is undergoing Step 36 acceptance. Current scope and unresolved external decisions are recorded in `memory-bank/progress.md` and `memory-bank/项目开发_Roadmap.md`.
+Phase 4 implementation is undergoing Step 45 acceptance. Current scope and unresolved external decisions are recorded in `memory-bank/progress.md` and `memory-bank/项目开发_Roadmap.md`.

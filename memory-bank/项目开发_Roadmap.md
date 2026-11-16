@@ -3,8 +3,8 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **候选域名：** `nuldl.com`  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1、Phase 2 与 Phase 3 已完成；Phase 4 尚未开始
-**最后更新：** 2026 年 11 月 12 日
+**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Phase 6 尚未开始
+**最后更新：** 2026 年 11 月 14 日
 
 ## 一、文档体系
 
@@ -28,12 +28,12 @@
 1. 建立技术基础、会员注册和账户管理；
 2. 完成英文宣传网站；
 3. 增加可选的公开会员资料；
-4. 增加会员活动报名和 Risk Notice 确认；
-5. 增加地点信息和地图；
+4. 增加会员活动报名、Risk Notice 确认和活动地点外链；
+5. 原定地点与地图阶段已取消，保留阶段编号；
 6. 完成正式环境、安全、运维及外部审批；
 7. 正式上线后再扩展训练成绩与排行榜。
 
-首期结束时，NULDL Armwrestling Club 网站应具备公开信息展示、会员注册、USU ID 人工审核、公开资料、活动报名、报名取消、Risk Notice 版本追溯和地点地图功能。
+首期结束时，NULDL Armwrestling Club 网站应具备公开信息展示、会员注册、USU ID 人工审核、公开资料、活动报名、报名取消、Risk Notice 版本追溯及活动地点展示。活动详情可提供 Google Maps 链接。
 
 ## 三、状态定义
 
@@ -44,8 +44,9 @@
 | `Blocked` | 存在明确外部依赖，无法继续完成当前阶段 |
 | `Ready for review` | 开发和内部验证完成，等待阶段验收 |
 | `Complete` | 退出门槛全部通过并记录验收结果 |
+| `Cancelled` | 经项目负责人确认移出交付范围 |
 
-阶段状态只能依据退出门槛更新，不能仅凭代码已经编写而标记完成。
+阶段完成以退出门槛为准，阶段取消以项目负责人确认的范围调整为准。
 
 ## 四、阶段总览
 
@@ -54,9 +55,9 @@
 | 1 | 项目基础、账户与 USU ID 审核 | 已确认的 Design 与 Tech Stack | `Complete` |
 | 2 | 英文宣传网站 | Phase 1 页面框架 | `Complete` |
 | 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Complete` |
-| 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Not started` |
-| 5 | 地点与地图 | 已确认地点；Phase 2 页面系统 | `Not started` |
-| 6 | 正式环境准备与上线 | Phase 1-5；Provider 与外部审批 | `Not started` |
+| 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Complete` |
+| 5 | 地点与地图 | — | `Cancelled` |
+| 6 | 正式环境准备与上线 | Phase 1–4、Provider 与外部审批 | `Not started` |
 | 7 | Training Records & Leaderboards | Phase 6 已上线；动作与成绩规则已确认 | `Not started` |
 
 ## 五、Phase 1：项目基础、账户与 USU ID 审核
@@ -198,10 +199,9 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 ### 主要交付物
 
 - Event 和 RiskNoticeVersion 后台管理；
-- Events 列表和 Event detail；
+- Events 列表和 Event detail，由 Home 提供入口，活动详情支持管理员填写的 Google Maps 链接；
 - 管理员手动开启或关闭报名；
 - 会员报名和取消；
-- My registrations；
 - Risk Notice 版本和确认时间记录；
 - 管理员报名名单。
 
@@ -209,12 +209,13 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 
 - Phase 1 有效会员和权限；
 - Phase 2 Safety 内容结构；
-- 正式启用报名前完成 Risk Notice 文本确认。
+- 开发和测试使用明确标记的合成 Risk Notice。正式文本获批前，Production 保持关闭报名。
 
 ### 退出门槛
 
 - Visitor 可以查看公开活动，但不能报名；
 - 报名关闭时不能建立有效报名；
+- 活动结束日期过后按悉尼当地时间自动从 Upcoming 归入 Past。Past 页面移除报名和取消操作，服务端拒绝对应请求；
 - 同一会员和活动最多存在一条有效报名；
 - 每次报名必须确认服务器当前 Risk Notice 版本；
 - Risk Notice 更新后，过期页面提交会要求重新确认；
@@ -225,42 +226,13 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 
 ### 阶段状态
 
-`Not started`
+`Complete`
+
+验收结果：Step 37–45 已完成并通过项目负责人验证；合成 Risk Notice 版本、Event 与 EventRegistration 数据结构、公开 Upcoming/Past 页面、Home 活动预览、HTTPS 地图链接、报名与取消、旧版本重新确认、取消后重新报名、只读 Admin 名单、并发与隐私边界、HTMX 渐进增强及无 JavaScript 流程均已落地。最终全新环境执行 `378` 个测试并达到 `94%` branch coverage，Production deploy check、collectstatic、Phase 2–4 Development smoke 与人工走查全部通过。正式 Risk Notice 获批前，Production 继续关闭报名；Phase 4 没有加入容量、候补名单、报名截止时间、付款或交互式地图。
 
 ## 九、Phase 5：地点与地图
 
-### 目标
-
-展示已确认的训练地点，并将地点与活动关联。
-
-### 主要交付物
-
-- Location 后台管理；
-- Locations 页面；
-- 地点文字卡片；
-- MapLibre 地图；
-- Marker、Popup 和活动卡片联动；
-- 无 JavaScript 和地图加载失败时的文本回退。
-
-### 依赖
-
-- 确认后的地点名称、地址、坐标和联系人；
-- 确定 Map tile provider 及 attribution 要求；
-- Phase 2 页面系统；
-- Phase 4 Event 与 Location 关系。
-
-### 退出门槛
-
-- 每个公开 Marker 对应已确认的 Location；
-- 坐标缺失时不生成虚假 Marker；
-- 地点信息在地图不可用时仍可阅读；
-- 桌面、手机触控和键盘操作通过测试；
-- Map provider attribution 正确展示；
-- Location 与 Event 关联测试通过。
-
-### 阶段状态
-
-`Not started`
+`Cancelled`。项目负责人确认，Phase 4 已交付的活动地点文字和可选 Google Maps 链接满足首期需求。独立 Locations 页面、Location 模型与站内交互地图移出交付范围。
 
 ## 十、Phase 6：正式环境准备与上线
 
@@ -288,7 +260,6 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 - SMTP provider；
 - Media storage；
 - Error monitoring provider；
-- Map tile provider；
 - Risk Notice 确认；
 - University Branding 书面批准范围；
 - `nuldl.com` 注册和 DNS 控制权。
@@ -359,7 +330,7 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 | --- | --- | --- |
 | Risk Notice 最终文本 | Phase 4 正式启用报名前 | Phase 2 仅允许非正式环境展示 draft；Production 禁用正文；限制正式报名 |
 | University Branding 批准 | 任何相关内容公开前 | 使用中性 `NULDL Armwrestling Club` Branding，不公开 USYD affiliation |
-| 地点地址和坐标 | Phase 5 开始前 | Phase 2 日程显示 `Venue details to be confirmed`；不阻塞其他公开内容 |
+| 各场活动可公开的地点 | 管理员公布活动地点前 | 地点未确认时显示 `Venue details to be confirmed` |
 | Hosting 与相关 Provider | Phase 6 开始前 | 不阻塞本地开发 |
 | 会员退出和数据保留规则 | 对外提供删除流程前 | 首期不实现退出工作流 |
 | 中文版本 | 首期完成后再决定 | 不进入首期范围 |

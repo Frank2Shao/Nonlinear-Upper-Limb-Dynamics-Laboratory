@@ -1,0 +1,43 @@
+<section
+  id="event-registration"
+  class="event-registration"
+  aria-live="polite"
+  x-data
+  {% if open_dialog %}x-init="$nextTick(() => $refs.registrationDialog.showModal())"{% endif %}
+  {% if open_cancel_dialog %}x-init="$nextTick(() => $refs.cancellationDialog.showModal())"{% endif %}
+>
+  {% if event.is_past %}
+    <p class="event-status">Past event</p>
+  {% elif registration %}
+    <p class="status-banner">Registered</p>
+    {% if can_cancel %}
+      <a
+        class="button button--secondary"
+        href="{% url 'events:cancel' event.slug %}"
+        @click.prevent="$refs.cancellationDialog.showModal()"
+      >Cancel registration</a>
+      <dialog class="event-registration-dialog" x-ref="cancellationDialog" aria-labelledby="cancellation-dialog-title">
+        <div class="event-registration-dialog__content">
+          <h2 id="cancellation-dialog-title">Cancel registration</h2>
+          {% include "events/includes/cancellation_form.html" with htmx_cancellation=True cancellation_dialog=True %}
+        </div>
+      </dialog>
+    {% endif %}
+  {% elif registration_available and can_register %}
+    <a
+      class="button"
+      href="{% url 'events:register' event.slug %}"
+      @click.prevent="$refs.registrationDialog.showModal()"
+    >Register</a>
+    <dialog class="event-registration-dialog" x-ref="registrationDialog" aria-labelledby="registration-dialog-title">
+      <div class="event-registration-dialog__content">
+        <h2 id="registration-dialog-title">Confirm registration</h2>
+        {% include "events/includes/registration_form.html" with htmx_registration=True registration_dialog=True %}
+      </div>
+    </dialog>
+  {% elif registration_available and not request.user.is_authenticated %}
+    <a class="button" href="{% url 'account_login' %}?next={% url 'events:register' event.slug %}">Log in to register</a>
+  {% else %}
+    <p class="event-status">Registration unavailable</p>
+  {% endif %}
+</section>

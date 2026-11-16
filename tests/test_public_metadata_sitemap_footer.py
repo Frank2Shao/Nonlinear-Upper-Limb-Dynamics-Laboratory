@@ -29,6 +29,7 @@ PUBLIC_METADATA = (
 
 
 @pytest.mark.parametrize(("url_name", "title", "description"), PUBLIC_METADATA)
+@pytest.mark.django_db
 def test_public_pages_use_approved_metadata_and_open_graph(
     client, url_name, title, description
 ):
@@ -98,6 +99,7 @@ def test_sitemap_never_includes_draft_risk_notice(client):
 
 
 @pytest.mark.parametrize("url_name", ["home", "about", "beginners_safety"])
+@pytest.mark.django_db
 def test_footer_exposes_only_approved_instagram_contact(client, url_name):
     content = client.get(reverse(url_name)).content.decode()
 

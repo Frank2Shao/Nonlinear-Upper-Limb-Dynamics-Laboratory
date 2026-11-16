@@ -3,6 +3,8 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def verified_member(db):
@@ -46,29 +48,26 @@ def test_home_uses_approved_metadata_and_content(client):
     assert "Open to New Participants" not in content
 
 
-def test_home_exposes_only_the_approved_static_session(client):
+def test_home_displays_empty_upcoming_events(client):
     response = client.get(reverse("home"))
 
     content = response.content.decode()
-    assert "Upcoming Session" in content
-    assert "1 December 2026" in content
-    assert "3:00–7:00 pm" in content
-    assert "Training Session" in content
-    assert "Venue details to be confirmed" in content
-    assert "Further attendance details will be published before the session." in content
-    assert 'href="/events/"' not in content
+    assert "Upcoming Events" in content
+    assert "No upcoming events are currently available." in content
+    assert f'href="{reverse("events:list")}"' in content
     assert "Register for this event" not in content
     assert "registration status" not in content.lower()
 
 
-def test_anonymous_home_ctas_point_to_signup_and_beginner_content(client):
+def test_anonymous_home_ctas_point_to_signup_usu_and_beginner_content(client):
     response = client.get(reverse("home"))
 
     content = response.content.decode()
-    assert content.count(f'href="{reverse("account_signup")}"') >= 3
-    assert 'data-home-primary href="/accounts/signup/">Join the Club</a>' in content
-    assert 'data-session-join href="/accounts/signup/">Join</a>' in content
-    assert 'href="#new-to-armwrestling">New to Armwrestling?</a>' in content
+    assert content.count(f'href="{reverse("account_signup")}"') >= 2
+    signup = 'data-home-primary href="/accounts/signup/">Join the Club</a>'
+    usu = 'href="https://usu.edu.au/clubs/armwrestling/">Join on USU</a>'
+    beginners = 'href="#new-to-armwrestling">New to Armwrestling?</a>'
+    assert content.index(signup) < content.index(usu) < content.index(beginners)
 
 
 def test_member_home_hides_redundant_join_actions(client, verified_member):
@@ -81,6 +80,7 @@ def test_member_home_hides_redundant_join_actions(client, verified_member):
     assert "data-session-join" not in content
     assert f'href="{reverse("account_signup")}"' not in content
     assert "Join the Club" not in content
+    assert 'href="https://usu.edu.au/clubs/armwrestling/">Join on USU</a>' in content
     assert 'href="#new-to-armwrestling">New to Armwrestling?</a>' in content
 
 

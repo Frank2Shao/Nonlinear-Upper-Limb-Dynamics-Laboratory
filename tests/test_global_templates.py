@@ -5,6 +5,8 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def verified_member(db):
@@ -78,6 +80,7 @@ def test_anonymous_header_shows_authentication_links(client):
     assert f'href="{reverse("account_login")}"' in content
     assert f'href="{reverse("account_signup")}"' in content
     assert f'href="{reverse("members:list")}"' in content
+    assert f'href="{reverse("events:list")}"' in content
     assert "Log in" in content
     assert "Join the Club" in content
     assert f'href="{reverse("account")}"' not in content
@@ -87,7 +90,7 @@ def test_anonymous_header_shows_authentication_links(client):
     )
     assert ">NULDL</a>" not in content
     assert 'class="nav-disclosure"' in content
-    assert "window.matchMedia('(max-width: 42rem)')" in content
+    assert "window.matchMedia('(max-width: 60rem)')" in content
     assert '<summary class="nav-toggle">Menu</summary>' in content
 
 
@@ -145,5 +148,6 @@ def test_primary_navigation_works_without_javascript(client):
     assert f'href="{reverse("account_login")}"' in content
     assert f'href="{reverse("account_signup")}"' in content
     assert f'href="{reverse("members:list")}"' in content
-    for unavailable_path in ("/events/", "/locations/"):
+    assert f'href="{reverse("events:list")}"' in content
+    for unavailable_path in ("/locations/",):
         assert f'href="{unavailable_path}"' not in content

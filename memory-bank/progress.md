@@ -1,9 +1,9 @@
 # NULDL 开发进度
 
-**最后更新：** 2026 年 11 月 12 日
-**当前阶段：** Phase 3 — 会员资料管理
-**当前步骤：** Step 36 — Phase 3 质量门禁与阶段验收
-**状态：** Step 36 已通过项目负责人最终验收；Phase 3 `Complete`，Phase 4 尚未开始
+**最后更新：** 2026 年 11 月 14 日
+**当前阶段：** Phase 4 — 活动、Risk Notice 与报名
+**当前步骤：** Step 45 — Phase 4 质量门禁与阶段验收
+**状态：** Phase 4 已通过自动化与人工验收，Phase 5 已取消，Phase 6 尚未开始
 
 ## Step 1 — 建立执行基线
 
@@ -1303,3 +1303,236 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 - Phase 3 已完成；Phase 4 尚未开始，不得在未重新阅读当前文档与获得明确授权前实施。
 - Production persistent media storage 仍由 Phase 6 决定；Risk Notice 最终文本仍是 Phase 4 正式报名启用前的外部依赖。
 - Phase 3 没有新增年龄逻辑、目录筛选、专用隐藏权限、排行榜或 Production media provider。
+
+## Step 37 — Risk Notice 版本管理
+
+### 已完成
+
+- 新增 `RiskNoticeVersion` 和 `safety.0001_initial`。PostgreSQL 条件唯一约束保证最多一个当前版本。
+- 授权管理员可创建明确标记为 `SYNTHETIC TEST ONLY` 的测试版本，并通过独立 Admin 操作切换当前版本。版本标识及正文创建后在 Admin 中只读，删除入口关闭。
+- 激活服务通过事务和行锁切换版本，保留旧版本正文。重复激活当前版本不更新时间。后台切换由 Admin 日志记录。
+- 版本后台及激活服务沿用环境开关，Production 强制关闭。公开 Draft 页面继续读取现有静态模板。
+
+### 验证结果
+
+- 项目负责人验证 PostgreSQL 健康，`migrate` 报告无待应用迁移，migration drift 和 Django 系统检查均通过。
+- Risk Notice 版本及 Draft 专项测试 `14 passed`，完整 pytest `319 passed`。
+- 开发者侧 Ruff lint、格式检查及 `git diff --check` 通过。
+
+### 下一步门槛
+
+- Step 37 已通过验收。Step 38 尚未开始。
+- 正式 Risk Notice 文本仍待批准，正式报名保持关闭。
+
+## Step 38 — Event 模型与后台管理
+
+### 已完成
+
+- 新增 Event 模型与 `events.0001_initial`，包含标题、唯一 slug、说明、起止时间、地点文字、可选 HTTPS 地图链接、公开状态、报名开关及时间戳。公开和报名状态默认关闭，地点默认显示待确认文字。
+- 新增公开活动 queryset，以及按当前 Django 时区的本地日期判断 Upcoming/Past 的方法。数据库约束要求结束时间晚于开始时间，并要求非空地图链接以 HTTPS 开头。
+- 新增 Django Admin 活动管理，使用标准模型权限，支持列表、筛选、搜索和 slug 生成。新增专项测试覆盖模型规则、约束与后台权限。
+
+### 验证结果
+
+- 项目负责人成功应用 `events.0001_initial`。Event 与 Risk Notice 专项测试 `17 passed`，完整 pytest `330 passed`。
+- migration drift、Django check 与 Ruff 检查均通过。开发者侧专项测试及格式检查也通过。
+
+### 测试期间的针对性修补
+
+- 首次开发者专项测试有 3 项失败。将 URL 去空格提前到模型字段校验前，修正 Admin 测试提交的日期字段，并将缺失模型断言改为捕获 Django 的 `LookupError`；重跑后通过。
+- 为 Admin URL 输入明确默认 HTTPS scheme，消除 Django 6.0 默认值变更警告。
+
+### 当前边界与下一步门槛
+
+- Step 38 已通过验收，Step 39 尚未开始。活动模型的报名开关仅保存状态，报名流程仍待后续步骤实施。
+
+## Step 39 — EventRegistration 与事务服务
+
+### 已完成
+
+- 新增 `EventRegistration` 和 `events.0002_eventregistration`，记录活动、会员、报名状态、Risk Notice 版本、报名及确认时间和可空取消时间。数据库条件唯一约束限制同一会员和活动最多一条有效报名；状态与取消时间组合由数据库约束保护。
+- 新增报名事务服务，检查环境开关、有效会员、公开活动、报名开关、本地日期、主动确认及当前合成 Risk Notice；通过行锁协调重复提交与版本切换。有效重复提交返回已有记录。
+- 已取消记录可保留原有版本与时间，后续报名可产生新记录。当前只建立数据结构与报名服务，取消服务、前台流程及 Admin 名单尚未实施。
+- 新增专项测试，覆盖唯一约束、确认信息、历史记录、资格及关闭条件，并在 PostgreSQL 上验证并发重复报名和版本切换。
+
+### 验证结果
+
+- 项目负责人成功应用 `events.0002_eventregistration`；报名、Event 和 Risk Notice 专项测试 `27 passed`，完整 pytest `340 passed`。
+- migration drift、Django system check、Ruff lint 和 format check 均通过。开发者侧针对修改文件的 Ruff 检查及 `git diff --check` 通过。
+- 生成 migration 时开发者侧数据库连接受限；项目负责人已在本机成功应用并验证该 migration。未发现需要针对性修补的测试失败。
+
+### 当前边界与下一步门槛
+
+- Step 39 已通过验收。Production 报名保持关闭，开发和测试只使用明确标记的合成 Risk Notice。
+- Step 40 尚未开始，需等待项目负责人授权。
+
+## Step 40 — 公开活动页面与首页集成
+
+### 已完成
+
+- 新增公开 `/events/` 列表和 `/events/<slug>/` 详情路由，只查询 `is_published=True` 的 Event；未发布或不存在的 slug 统一返回 404。
+- Events 列表仅保留 `Upcoming` 与 `Past` 筛选。未知参数（包括已取消的 `view=all`）回退到 Upcoming，不在公开页面输出 `All` 入口。
+- Upcoming/Past 以 `Australia/Sydney` 当地日历日的零点为分界：活动结束日当天仍属 Upcoming，到下一个当地日历日才进入 Past，不受请求或进程当前时区影响。
+- Home 从同一公开 Upcoming queryset 按时间顺序展示最多 3 条活动，提供详情链接、`View all events` 入口及无数据状态，取代 Phase 2 的静态 Upcoming Session。
+- 列表与详情页共用 Event card，显示 Sydney 日期时间、地点文字和活动状态；详情页输出说明和可选的 HTTPS `View location in map` 外链。
+- Production 报名保持关闭。Upcoming 详情显示 `Registration unavailable`，Past 详情显示 `Past event`；公开页面没有报名、取消或 Risk Notice 确认表单。
+- 调整 Event card 的自然高度、H3 标题字号、筛选器与卡片的间距，以及详情卡片与 `Back to events` 的间距；编译后 CSS 已重新生成。
+- 新增 Django 页面测试、真实 Playwright desktop/mobile/no-JavaScript 场景，并更新 Home 及 Development smoke 的活动预览断言。
+
+### 验证结果
+
+- 项目负责人运行 Event Django 与浏览器专项测试，共 `5 passed`。
+- 完整 pytest 套件共 `345 passed`。
+- `npm.cmd run static:check` 的 vendor assets、Home images 和 Tailwind CSS build 全部通过。
+- Step 40 实施期间的 migration drift、Django system check、Ruff lint 与 format check 均通过；本步没有新增 Model 或 migration。
+- 项目负责人通过 Django Admin 创建并发布已确认的合成测试活动，完成 Home、Upcoming/Past 列表、活动详情、无报名入口和视觉间距人工走查，并确认符合预期。
+
+### 测试与人工走查期间的针对性修补
+
+- 首次真实浏览器测试发现共享 `.content-card { height: 100% }` 使单独 Event card 占据过高空间，从而遮挡首页 `View all events` 链接。仅为 `.event-card` 设置自然高度后，Home 与 Events 浏览器回归通过。
+- 人工走查后按批准范围取消价值较低的 `All` 筛选，并局部增加列表、标题和返回按钮的视觉层级。
+- 取消 `All` 后的首次针对性测试为 `3 passed, 1 failed`。失败源于测试将请求 canonical URL 中保留的 `?view=all` 误当作页面导航入口；断言改为检查实际 `All` 链接不存在后，生产回退逻辑无需放宽，最终 `4 passed`。
+
+### 当前边界与下一步门槛
+
+- Step 40 只建立公开活动浏览和 Home 预览，没有开放 EventRegistration 前台入口、取消报名、名单管理、活动地图组件或 Events sitemap 收录。
+- 地点继续由 Admin 输入文字与可选 HTTPS 地图链接；MapLibre 资产仍未接入业务。
+- Step 40 已通过自动化与人工验收。Step 41 尚未开始，必须等待项目负责人明确授权。
+
+## Step 41 — 会员报名与 Risk Notice 确认
+
+### 已完成
+
+- 在已发布且仍属 Upcoming、报名开放的 Event detail 中，为启用账户且具有已验证 Email 的会员提供 `Register` 入口；Anonymous 显示登录入口，不符合条件或不可报名时不显示报名按钮。
+- 使用 Alpine 原生 `<dialog>` 呈现当前合成 Risk Notice，并由确认按钮通过普通 POST 提交明确同意；HTMX 仅渐进增强报名区域，无 JavaScript 时沿独立确认页面完成同一服务端流程。
+- 报名成功后详情页显示 `Registered`。本步未加入取消入口或取消服务，相关行为保留给 Step 42。
+- 报名继续复用 Step 39 的事务服务和 EventRegistration 外键，不重复存储姓名、Email 或 USU ID；后续名单可由关联 User 读取当前账户资料。
+- 旧 Risk Notice 版本提交会被拒绝，并重新呈现最新版本要求再次确认。报名关闭、Past、未发布及 Production 环境同时由界面可见性和服务端校验保护。
+- Risk Notice 正文取自项目负责人指定的 `Armwrestling_Risk_Notice_EN.docx`：排除签名、版本和 Event 待填字段，将纸质签名表述改为线上报名确认表述，并保留首行 `SYNTHETIC TEST ONLY`。开发数据库已创建并激活 `synthetic-en-v1`；Production 仍不开放报名。
+- 新增 Django 页面测试和真实 Playwright 场景，覆盖普通 POST、HTMX、无 JavaScript、重复提交、旧版本重试、资格及关闭边界。
+
+### 验证结果
+
+- 项目负责人运行 Step 41 服务、页面与浏览器专项测试，共 `20 passed`。
+- 完整 pytest 套件共 `354 passed`。
+- `makemigrations --check --dry-run` 报告 `No changes detected`；Django system check 与 Ruff 均通过。
+- `npm.cmd run static:check` 的 vendor assets、Home images 和 Tailwind CSS build 全部通过。
+- 本步没有新增 Model 或 migration；`git diff --check` 仅报告既有 Windows 行尾提示，没有空白错误。
+
+### 当前边界与下一步门槛
+
+- Step 41 只实现首次报名及当前 Risk Notice 确认。取消报名、取消后重新报名及其界面属于 Step 42，尚未开始。
+- 当前 Risk Notice 和活动数据均为明确合成开发数据；Production 继续由 settings 强制关闭 Draft Risk Notice 与报名能力。
+- Step 41 已通过项目负责人自动化验收。Step 42 必须等待项目负责人明确授权。
+
+## Step 42 — 取消报名与重新报名
+
+### 已完成
+
+- 新增事务化取消服务，在锁定 Event、User 与报名记录后，将当前有效报名改为 `cancelled` 并记录 `cancelled_at`；重复取消返回既有取消记录，保持幂等。
+- 取消不会删除原 EventRegistration，原报名时间、Risk Notice 版本与确认时间继续保留。取消后重新报名会创建新的有效记录，并再次确认服务器当前 Risk Notice。
+- 已报名会员在开放且仍属 Upcoming 的活动详情中看到 `Cancel registration`；JavaScript 模式使用 Alpine 原生确认 dialog，禁用 JavaScript 时进入独立确认页。
+- 取消操作同时支持普通 POST 与 HTMX 局部更新；成功后报名区域恢复 `Register`，会员可重新阅读并确认当前 Risk Notice。
+- 报名关闭、活动进入 Past 或 Production Draft 开关关闭时，页面不提供取消入口，直接请求也由服务端拒绝。
+- 新增取消确认 form、`/events/<slug>/cancel/` 路由、完整确认页及共享 cancellation partial；未新增或修改 Model、字段与 migration。
+- 扩展 Django 与 Playwright 测试，覆盖正常取消、重复取消、历史保留、关闭/Past/Production 拒绝、HTMX、无 JavaScript，以及 Risk Notice 更新后的重新报名。
+
+### 验证结果
+
+- 项目负责人运行 Step 42 报名服务、页面与浏览器专项测试，共 `30 passed`。
+- 完整 pytest 套件共 `364 passed`。
+- `makemigrations --check --dry-run` 报告 `No changes detected`；Django system check 无问题。
+- Ruff lint 报告 `All checks passed!`，format check 报告 `126 files already formatted`。
+- `npm.cmd run static:check` 的 vendor assets、Home images 与 Tailwind CSS build 全部通过。
+- 开发者侧得到相同专项与完整回归结果；`git diff --check` 仅报告既有 Windows 行尾提示。
+
+### 当前边界与下一步门槛
+
+- Step 42 已完成取消、历史保留及重新报名；没有增加容量、候补、截止时间、付款或 My registrations 页面。
+- Admin 报名名单与最小权限属于 Step 43，尚未开始。
+- Step 42 已通过项目负责人自动化验收。Step 43 必须等待项目负责人明确授权。
+
+## Step 43 — Admin 报名名单
+
+### 已完成
+
+- 在 Django Admin 注册只读 `EventRegistration` 名单，使用 Django 自动生成的 `events.view_eventregistration` 权限作为最小访问边界；普通会员、无权限 Staff 及仅有 Event 编辑权限的 Staff 均不能访问。
+- 名单展示 Event、会员姓名或 Username 回退、Username、Email、USU ID、报名状态、Risk Notice 版本、报名时间、确认时间和取消时间，并支持按 Event、状态及 Risk Notice 筛选和按相关识别信息搜索。
+- 报名名单同时保留有效、已取消和重新报名记录；每条历史继续引用当时确认的 Risk Notice 版本。
+- 获授权 Staff 与 Superuser 只能查看名单和单条详情；新增、修改、删除及 Admin actions 均被关闭。
+- 新增专项测试，覆盖角色隔离、只读防伪造、历史与版本可见性，以及公开 Event 页面不泄露名单、Email、USU ID 或历史版本。
+
+### 验证结果
+
+- 项目负责人运行 EventRegistration Admin 与 Event Admin 专项测试，共 `18 passed`。
+- 完整 pytest 套件共 `372 passed`。
+- `makemigrations --check --dry-run` 报告 `No changes detected`；Django system check 无问题。
+- Ruff lint 报告 `All checks passed!`，format check 报告 `127 files already formatted`。
+- 开发者侧得到相同专项与完整回归结果。
+
+### 当前边界与下一步门槛
+
+- Step 43 只建立最小权限只读名单，没有新增报名编辑、名单导出、容量、候补、付款、会员本人报名历史页面或前台名单入口。
+- Step 43 已通过项目负责人自动化验收。Step 44 尚未开始，必须等待项目负责人明确授权。
+
+## Step 44 — Phase 4 并发、隐私与浏览器门禁
+
+### 已完成
+
+- 扩展报名事务测试，以两个并发取消请求验证行锁与幂等行为：两个请求返回同一 EventRegistration，最终只保留一条已取消历史，状态与取消时间保持一致。
+- 扩展前台隐私测试，验证 Home、Events 列表与 Event detail 不向 Anonymous 或其他会员公开报名人的姓名、Username、Email、USU ID、取消历史或旧 Risk Notice 版本。
+- 验证其他会员只看到本人的报名入口与状态，直接尝试取消他人的报名不会修改原报名记录。
+- 扩展 Events Playwright 场景，在 desktop、mobile、200% 内容放大和禁用 JavaScript 环境检查列表、筛选、详情、地图链接、语义 landmarks、唯一 H1、键盘 Focus、24px 触控目标、文本裁切及横向溢出。
+- 扩展报名 Playwright 场景，覆盖报名、取消、重新报名、HTMX dialog、普通确认页、mobile dialog、200% 内容放大、无 JavaScript POST、可见 Focus、触控目标、page error 和同源网络边界。
+- 新增检查全部通过，没有发现需要修改的生产 template、CSS、Model、service 或 migration。
+
+### 验证结果
+
+- 项目负责人运行 Step 44 并发、隐私与浏览器专项测试，共 `33 passed`。
+- 完整 pytest 套件共 `374 passed`。
+- `npm.cmd run static:check` 的 vendor assets、Home images 与 Tailwind CSS build 全部通过。
+- `makemigrations --check --dry-run` 报告 `No changes detected`；Django system check 无问题。
+- Ruff lint 报告 `All checks passed!`，format check 报告 `127 files already formatted`。
+- 开发者侧得到相同专项与完整回归结果；`git diff --check` 仅报告既有 Windows 行尾提示。
+
+### 当前边界与下一步门槛
+
+- Step 44 只加强 Phase 4 已实施功能的并发、隐私、响应式、Accessibility、无 JavaScript 与浏览器回归，没有增加产品功能、生产配置、数据字段或 migration。
+- Step 44 已通过项目负责人自动化验收。Step 45 尚未开始，必须等待项目负责人明确授权。
+
+## Step 45 — Phase 4 质量门禁与阶段验收
+
+### 已完成
+
+- 新增 `scripts/accept_phase_4.py`，在临时全新 uv environment 中执行锁定安装、PostgreSQL migrations、共享项目门禁，并在真实 Development server 上依次运行 Phase 2、Phase 3 与 Phase 4 desktop/mobile smoke。
+- 新增 `tests/test_phase4_acceptance.py` 和 `tests/browser/phase4-development-smoke.mjs`，固定命令失败传播、server 清理、活动页面、导航、报名状态及同源网络边界。
+- 更新 README，将 Phase 4 自动验收和合成数据人工走查作为当前入口；Production 继续不开放报名。
+- Header 增加 Events 导航并调整响应式断点；修正 Home/Events 卡片与按钮间距、活动标题和状态文字层级，报名与取消 dialogs 在视口中居中。
+- 将当前 Risk Notice 查询集中到 `apps.safety.services.current_risk_notice`。Home、Events 列表和详情页共用同一当前版本存在性判断，避免卡片与详情状态不一致。
+- 报名表单直接显示当前 Notice 的完整正文，不再添加重复的固定 banner，也不解析或剥离正文首行。提交时以隐藏的 Notice ID 与事务中锁定的当前版本比较；旧版本提交返回最新版本并要求重新确认。
+- 保留报名关闭、Past 自动归类、跨会员隐私、最小权限只读名单、HTMX 渐进增强及无 JavaScript 完整确认页。
+
+### 自动化验收结果
+
+- 项目负责人运行 `python -m uv run --env-file .env python scripts\accept_phase_4.py`；临时环境锁定安装、PostgreSQL、migrations、npm clean install、静态资源、Ruff、migration drift、Django checks、Production deploy check 和 collectstatic 全部通过。
+- 完整测试共 `378 passed`，branch coverage 为 `94%`；npm audit 报告 `0 vulnerabilities`，没有新增待生成 migration。
+- Phase 2、Phase 3 与 Phase 4 Development desktop/mobile smoke 全部通过。
+- Risk Notice 状态一致性、CRLF 正文、旧版本刷新和完整正文单次显示的最终针对性回归共 `43 passed`，Ruff lint 与 format check 通过。
+
+### 人工验收结果
+
+- 项目负责人确认 Home、Events 列表与详情页的报名状态一致，Events 导航、视觉间距、状态强调和居中 dialogs 符合预期。
+- 旧版本 Notice 提交会拒绝原确认、在同一流程中显示当前版本并允许重新确认；正文中的 `SYNTHETIC TEST ONLY` 只显示一次。
+- 报名关闭后全部入口消失且服务端拒绝请求；活动日期结束后按 Sydney 当地日期自动进入 Past，并移除报名与取消操作。
+- Anonymous 与其他会员无法读取报名人的姓名、Email、USU ID、Notice 版本或报名历史；Admin 名单维持最小权限只读边界。
+- JavaScript 禁用时，报名、确认、取消和重新报名均可通过普通页面与 POST 完成。
+
+### 当前边界与下一步门槛
+
+- Phase 4 Roadmap 退出门槛已全部满足，状态为 `Complete`。
+- 当前 Risk Notice 与活动资料仍属于明确的合成 Development/Test 数据；正式文本获批前，Production 不开放报名。
+
+## Phase 5 范围变更
+
+- 项目负责人确认取消原定的地点与地图阶段，保留编号，状态为 `Cancelled`。活动地点继续由管理员在 Event 中录入，在详情页显示地点文字和可选 Google Maps 链接。
+- Phase 6 衔接已验收的 Phase 4，移除独立地点模型、站内地图、地点坐标和地图瓦片供应商相关的阶段依赖。仓库仍保留既有的 `locations` App 骨架及未加载的 MapLibre 资产。

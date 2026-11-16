@@ -5,7 +5,7 @@
       class="nav-disclosure"
       open
       x-data
-      x-init="if (window.matchMedia('(max-width: 42rem)').matches) $el.removeAttribute('open')"
+      x-init="if (window.matchMedia('(max-width: 60rem)').matches) $el.removeAttribute('open')"
     >
       <summary class="nav-toggle">Menu</summary>
       <div class="nav-menu">
@@ -18,6 +18,9 @@
           </li>
           <li>
             <a class="nav-link" href="{% url 'beginners_safety' %}"{% if request.resolver_match.url_name == "beginners_safety" %} aria-current="page"{% endif %}>Beginners &amp; Safety</a>
+          </li>
+          <li>
+            <a class="nav-link" href="{% url 'events:list' %}"{% if request.resolver_match.namespace == "events" %} aria-current="page"{% endif %}>Events</a>
           </li>
           <li>
             <a class="nav-link" href="{% url 'members:list' %}"{% if request.resolver_match.view_name == "members:list" or request.resolver_match.view_name == "members:detail" %} aria-current="page"{% endif %}>Members</a>

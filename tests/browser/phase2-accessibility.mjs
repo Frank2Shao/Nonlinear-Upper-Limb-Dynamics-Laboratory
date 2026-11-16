@@ -317,6 +317,7 @@ try {
     "Home",
     "About",
     "Beginners & Safety",
+    "Events",
     "Members",
     "Draft Risk Notice",
     "Log in",

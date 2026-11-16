@@ -158,7 +158,7 @@
   }
 
   .site-nav {
-    width: min(72rem, 100% - 2rem);
+    width: min(88rem, 100% - 2rem);
     margin-inline: auto;
     padding-block: 1rem;
     display: flex;
@@ -248,7 +248,7 @@
   .message-region,
   .page-shell,
   .site-footer__inner {
-    width: min(68rem, 100% - 2rem);
+    width: min(88rem, 100% - 2rem);
     margin-inline: auto;
   }
 
@@ -396,6 +396,63 @@
     border: 1px solid #37332c;
     border-radius: var(--radius-card);
     background: var(--color-surface);
+  }
+
+  .event-card {
+    height: auto;
+  }
+
+  .event-card h3 {
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+  }
+
+  .event-status {
+    font-weight: 700;
+  }
+
+  .home-events-action {
+    margin-top: 1.5rem;
+  }
+
+  .event-list,
+  .event-detail-actions {
+    margin-top: 1.5rem;
+  }
+
+  .event-registration {
+    margin-top: 1.5rem;
+  }
+
+  .event-registration-dialog {
+    position: fixed;
+    inset: 0;
+    width: min(44rem, calc(100% - 2rem));
+    max-height: calc(100vh - 2rem);
+    margin: auto;
+    padding: 0;
+    border: 1px solid #706858;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    color: var(--color-cream);
+  }
+
+  .event-registration-dialog::backdrop {
+    background: rgb(0 0 0 / 78%);
+  }
+
+  .event-registration-dialog__content {
+    padding: clamp(1.25rem, 4vw, 2rem);
+  }
+
+  .risk-notice-copy {
+    max-height: min(55vh, 32rem);
+    margin-block: 1rem;
+    padding-right: 0.5rem;
+    overflow-y: auto;
+  }
+
+  .event-registration__actions {
+    margin-top: 1.5rem;
   }
 
   .home-page .content-card h3 {
@@ -880,8 +937,7 @@
 
 }
 
-@media (max-width: 42rem) {
-  .site-nav,
+@media (max-width: 60rem) {
   .nav-disclosure,
   .nav-menu,
   .nav-list,
@@ -904,6 +960,8 @@
 
   .site-nav .nav-disclosure[open] > .nav-menu {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
     gap: 0.75rem;
   }
 
@@ -920,6 +978,15 @@
 
   .button-row {
     display: grid;
+  }
+
+  .home-hero__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    text-align: center;
+  }
+
+  .home-hero__actions > :nth-child(3) {
+    grid-column: 1 / -1;
   }
 
   .definition-list {

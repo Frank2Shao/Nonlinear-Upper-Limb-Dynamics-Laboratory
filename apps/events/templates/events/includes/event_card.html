@@ -1,0 +1,12 @@
+<article class="content-card event-card">
+  <h3><a href="{% url 'events:detail' event.slug %}">{{ event.title }}</a></h3>
+  <p><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"j F Y, g:i a" }}</time> – <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"j F Y, g:i a" }}</time></p>
+  <p>{{ event.venue_text }}</p>
+  {% if event.is_past %}
+    <p class="event-status">Past event</p>
+  {% elif event.registration_open and registration_notice_available %}
+    <p class="event-status">Registration open</p>
+  {% else %}
+    <p class="event-status">Registration unavailable</p>
+  {% endif %}
+</article>

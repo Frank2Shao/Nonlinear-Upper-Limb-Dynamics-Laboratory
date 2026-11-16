@@ -71,7 +71,7 @@ const assertHomeLayout = async (page, label) => {
 
 try {
   for (const [label, viewport] of [
-    ["Desktop", { width: 1440, height: 900 }],
+    ["Desktop", { width: 1920, height: 1080 }],
     ["Mobile", { width: 390, height: 844 }],
   ]) {
     const context = await createLocalContext(
@@ -90,15 +90,36 @@ try {
         name: "Nonlinear Upper Limb Dynamics Laboratory",
       })
       .waitFor();
-    await page.getByRole("heading", { level: 2, name: "Upcoming Session" }).waitFor();
+    await page.getByRole("heading", { level: 2, name: "Upcoming Events" }).waitFor();
     await assertHomeLayout(page, label);
 
     const primaryAction = page.locator("[data-home-primary]");
-    assert.equal(await primaryAction.textContent(), "Join the Club");
+    const actions = page.locator(".home-hero__actions a");
+    assert.deepEqual(await actions.allTextContents(), [
+      "Join the Club",
+      "Join on USU",
+      "New to Armwrestling?",
+    ]);
     assert.equal(
-      await page.locator("[data-session-join]").textContent(),
-      "Join",
+      await actions.nth(1).getAttribute("href"),
+      "https://usu.edu.au/clubs/armwrestling/",
     );
+    const [signup, usu, beginners] = await actions.evaluateAll((links) =>
+      links.map((link) => link.getBoundingClientRect().toJSON()),
+    );
+    assert.equal(signup.top, usu.top);
+    assert.ok(signup.right < usu.left);
+    if (label === "Mobile") {
+      assert.ok(beginners.top > signup.bottom);
+      assert.equal(beginners.left, signup.left);
+    } else {
+      assert.equal(beginners.top, signup.top);
+      for (const selector of [".site-nav", ".page-shell", ".site-footer__inner"]) {
+        const box = await page.locator(selector).boundingBox();
+        assert.equal(box.width, 88 * 16, `${selector} should use the wider layout.`);
+      }
+    }
+    await page.getByRole("link", { name: "View all events" }).waitFor();
     await page.getByText("Join Us !", { exact: true }).waitFor();
     assert.equal(await page.getByText("Open to New Participants").count(), 0);
     await primaryAction.click();
@@ -120,11 +141,8 @@ try {
   for (const text of [
     "New to Armwrestling?",
     "Join Us !",
-    "Upcoming Session",
-    "1 December 2026",
-    "3:00–7:00 pm",
-    "Training Session",
-    "Venue details to be confirmed",
+    "Upcoming Events",
+    "No upcoming events are currently available.",
   ]) {
     await noJsPage.getByText(text, { exact: true }).first().waitFor();
   }

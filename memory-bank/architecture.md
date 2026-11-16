@@ -1,14 +1,14 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 11 月 12 日
-**对应进度：** Phase 3, Step 36
-**当前状态：** Phase 1、Phase 2 与 Phase 3 已完成；Phase 4 尚未开始
+**最后更新：** 2026 年 11 月 14 日
+**对应进度：** Phase 4, Step 45
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Phase 6 尚未开始
 
 ## 一、当前架构结论
 
 仓库当前包含项目治理文档、基础 Git 配置、可重现的 Python 与前端依赖元数据、能够通过 Django system check 的项目骨架、由 Docker Compose 管理的本地 PostgreSQL 环境、Development、Test、Production 分环境 settings、具有受保护身份状态转换的 Custom User、完整的 MemberProfile 数据与公开查询边界，以及可重复构建的本地静态资源 pipeline。Python 运行时限定为 3.13.x，后端依赖由 `uv` 锁定，前端依赖由 npm 锁定。Django 已能加载六个项目 App，并从主机 `uv` 环境连接容器中的 PostgreSQL 18.6。
 
-当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 另含无报名能力的静态日程及由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 公开 Home、About、Beginners & Safety 和 Members 列表，始终排除个人 Member detail、Draft、认证、Account、Admin、错误页面和后续 Phase 路由。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 与 MapLibre 仍只完成本地资产准备。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
+当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 已在 Step 40 从 Phase 2 静态日程过渡为最多三条 Upcoming Event 的动态预览，并继续使用由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 公开 Home、About、Beginners & Safety 和 Members 列表，始终排除个人 Member detail、Draft、Events、认证、Account、Admin 和错误页面。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 现用于报名区域的局部渐进增强，MapLibre 仍只完成本地资产准备。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
 
 Phase 2 现有统一 Playwright accessibility 门禁覆盖全部正式公开页、Draft 及真实错误页，并在 desktop、mobile、200% 内容放大、键盘、无 JavaScript 和 reduced-motion 场景检查语义、Focus、触控目标、重排、对比度、替代文本、错误及网络边界。
 
@@ -30,6 +30,10 @@ Phase 3 的统一响应式、Accessibility 与隐私门禁现已落地。单一 
 
 Phase 3 已建立跨阶段共享门禁之上的全新环境验收入口，并完成最终人工验收。验收从临时 uv environment 执行锁定安装、PostgreSQL migration、静态资源、Ruff、Django、完整 branch coverage、Production deploy check、collectstatic 及 Phase 2/3 Development smoke；最终通过 `313` 个测试并达到 `95%` branch coverage。人工收尾将 Members cards 调整为左侧紧凑 Avatar 与右侧摘要，将 Account 收敛为三个主卡片并在 Account details 内提供 Profile 摘要、状态和操作，同时保留保存、Preview 与发布确认的独立安全边界。Phase 3 状态为 `Complete`，没有新增 migration、年龄逻辑、目录筛选、专用隐藏权限、排行榜或 Production media provider。
 
+Phase 4 已建立 Risk Notice 合成版本、Event 与 EventRegistration 事务基础、公开活动浏览、报名、取消、重新报名及最小权限 Admin 名单。`/events/` 只提供 Upcoming/Past，`/events/<slug>/` 只展示已发布 Event；日期分类固定使用 `Australia/Sydney` 的当地零点，不依赖当前进程时区。Home 从同一 queryset 展示最多三条 Upcoming Event，详情页可输出 Admin 提供的 HTTPS 地图链接。符合资格的会员可在开放活动中通过 Alpine dialog 阅读当前合成 Risk Notice，并以普通 POST 或 HTMX 渐进增强完成确认；无 JavaScript 时使用独立确认页。取消使用同一渐进增强结构，保留原报名历史；重新报名建立新记录并再次确认当前 Risk Notice。Django Admin 通过内置 `view_eventregistration` 权限只向获授权 Staff 和 Superuser 展示会员联系资料、USU ID、报名状态及 Risk Notice 历史，并禁止后台写入。
+
+当前 Notice 的读取集中在 `apps.safety.services.current_risk_notice`：环境开关关闭或数据库没有 `is_current=True` 记录时返回空值，Home、Events 列表和详情页消费同一结果。报名提交携带 Notice 主键；事务服务锁定全部版本后确认该主键仍对应当前版本，从而使过期页面必须重新确认。模板直接呈现数据库中的完整正文，不额外添加固定 banner，也不依赖换行格式解析首行。Phase 4 的并发、跨会员隐私、desktop/mobile/200% reflow、键盘、触控目标、HTMX、无 JavaScript 和浏览器网络边界已由统一回归覆盖。最终全新环境通过 `378` 个测试并达到 `94%` branch coverage，项目负责人完成全部人工走查；Phase 4 状态为 `Complete`，Production 报名仍关闭。
+
 ## 二、已实施的依赖架构
 
 ### 2.1 Python 层
@@ -42,7 +46,7 @@ Phase 3 已建立跨阶段共享门禁之上的全新环境验收入口，并完
 
 ### 2.2 前端工具层
 
-- HTMX、Alpine.js 与 MapLibre GL JS 属于浏览器端运行依赖。
+- HTMX 和 Alpine.js 用于浏览器端交互。MapLibre GL JS 仍由现有构建流程复制到本地静态资产，页面未加载这些地图资产。
 - Tailwind CSS、Tailwind CLI 与 Playwright 属于开发工具依赖。
 - Tailwind CSS 与 Tailwind CLI 使用相同版本 4.3.0，避免构建器与框架补丁版本不一致。
 - MapLibre GL JS 6.15.0 的根入口仅提供 ESM `import` 导出；Node.js 检查和后续资产处理必须使用 ESM 兼容方式。
@@ -107,14 +111,14 @@ ASGI / WSGI ───────────→ config.settings.production
 
 | App | 已建立边界 | 当前未实现 |
 | --- | --- | --- |
-| `core` | Home、About、Beginners & Safety、全局页面壳、通用组件和 403/404/500 error pages | 后续 Phase 的业务页面 |
+| `core` | Home、About、Beginners & Safety、Home Upcoming Events 预览、全局页面壳、通用组件和 403/404/500 error pages | 后续 Phase 的业务页面 |
 | `accounts` | Custom User、标准与专用审核权限、Email/USU ID 规范化、USYD 声明、状态转换、受控审核服务、signup、Magic Code request 与 Account identity forms、完整认证流程、`/account/` 本人身份信息管理，以及 `/admin/` 最小权限 USU ID 审核 | 统一认证页面表现及其他业务 App 的后台管理 |
-| `members` | MemberProfile schema、字段与 Avatar 验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、本人资料编辑、Avatar 文件生命周期、本人 Preview、Publish/Unpublish、公开 Members 列表与详情、会员字段白名单、使用标准 change 权限的 Admin hide/unhide 与 Executive role 维护，以及 Phase 3 响应式、Accessibility、隐私与全新环境验收 | Phase 4 及后续阶段功能 |
-| `events` | 活动与报名功能的归属位置 | Event、EventRegistration、报名和取消逻辑 |
-| `locations` | 地点与地图数据功能的归属位置 | Location、地点页面和地图输出 |
-| `safety` | 环境隔离的静态 Draft Risk Notice 页面 | RiskNoticeVersion、正式 Risk Notice 和当前版本服务 |
+| `members` | MemberProfile schema、字段与 Avatar 验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、本人资料编辑、Avatar 文件生命周期、本人 Preview、Publish/Unpublish、公开 Members 列表与详情、会员字段白名单、使用标准 change 权限的 Admin hide/unhide 与 Executive role 维护，以及 Phase 3 响应式、Accessibility、隐私与全新环境验收 | — |
+| `events` | Event 模型、地点文字与可选 Google Maps 外链、公开查询、Sydney 日期分类、Event Admin、EventRegistration、报名与取消事务服务、Upcoming/Past 列表、已发布活动详情、报名/取消前台，以及最小权限只读 Admin 报名名单 | — |
+| `locations` | 已注册的 App 骨架 | 原 Phase 5 的 Location 模型、地点页面及地图输出已取消 |
+| `safety` | 环境隔离的静态 Draft Risk Notice 页面、测试版本管理、事务化激活及报名确认集成 | 正式 Risk Notice |
 
-`accounts` 已建立 Custom User、领域服务及两条业务 migrations；`members` 已建立完整 Profile 数据边界及首条 migration；其余四个业务 App 仍只具备 package、AppConfig 和空 migration package。
+`accounts` 管理 Custom User 及身份规则，`members` 管理 Profile 数据，`safety` 管理 Risk Notice 测试版本，`events` 已建立 Event 模型。`locations` 仍为骨架。
 
 ### 3.4 Custom User 与 migration 边界
 
@@ -286,15 +290,15 @@ ASGI / WSGI ───────────→ config.settings.production
 - `static_src/css/site.css` 增加 public page、section header、responsive card grid、content card、CTA panel 和 status banner 基础类；这些类只建立 Phase 2 页面复用边界，不代表 Home、About、安全页面或 Risk Notice 内容已经实施。
 - Playwright 通过独立 public foundation scenario 验证 1440px desktop 与 390px mobile、skip link、可见 Focus、菜单键盘开关、无 JavaScript 链接、无水平溢出、page error 和同源网络边界。项目负责人完整回归共运行 186 个测试并全部通过。
 
-### 3.20 Home、响应式 Logo 与静态日程
+### 3.20 Home、响应式 Logo 与活动预览
 
 - Home 继续由 `apps.core` 的既有根路径 view 服务，不新增 Model、migration 或业务 API。模板使用 `design_document.md` 已确认的英文 Hero、新手说明、训练内容、参与资格、Metadata 和 Open Graph 文案。
 - Hero 与 Upcoming Session 的主要操作按认证状态在服务端分支：Anonymous 使用 `Join the Club` 进入 Signup，authenticated member 使用 `Account` 进入本人账户页；`New to Armwrestling?` 是普通页内锚点，全部操作在禁用 JavaScript 时仍可用。
-- Upcoming Session 是模板内的静态信息，只展示已确认的 `1 December 2026`、`3:00–7:00 pm`、`Training Session` 和 `Venue details to be confirmed`，并附已批准的后续信息说明。当前没有 Event model、报名状态、报名操作或 Events 路由。
+- Phase 2 建立的静态 Upcoming Session 已在 Step 40 被动态活动预览取代。Home view 现查询最多三条已发布 Upcoming Event，模板复用 Events card，并提供详情和列表入口；无数据时使用明确 empty state。
 - 已批准的 `Logo_without_USYD.png` 以原始字节保存在 `static_src/images/brand/`，尺寸为 1254 × 1254、大小为 1,776,890 bytes，SHA-256 为 `1bc738b3a7af5719a296bc0aecc67f2ea943d1acf7eadb499c3dd28592308944`。源文件不直接作为页面下载资产，且图形内容未被重新设计。
 - `scripts/build_home_images.py` 使用锁定版 Pillow 从受 hash、格式、尺寸和色彩模式保护的源图确定性生成 480、800、1200px 方形 WebP。生成物分别为 32,364、69,400、125,860 bytes；`package.json` 将生成与漂移检查接入现有 `static:build` 和 `static:check`。
 - Home `<picture>` 通过 width descriptor 与 `sizes` 选择响应式 Logo，`img` 保留明确宽高、方形 aspect ratio、非空替代文本和 `object-fit: contain`。Header 继续只使用文字品牌，没有缩放完整 Logo，也没有加入 University Branding。
-- Django 测试锁定获准内容、Metadata、Anonymous/Member CTA、静态日程、无 Events 链接、源图完整性、生成图格式/尺寸/压缩与可重复性。Playwright 验证 desktop、mobile 和禁用 JavaScript 时的 Logo 加载与比例、无水平溢出、文字/CTA 不被裁切、CTA 目标及内容完整性；项目负责人完整回归共运行 195 个测试并全部通过。
+- Phase 2 建立时的 Home 内容、Metadata、CTA、Logo 完整性与响应式图片构建仍由原测试保护；Step 40 另以 Event 页面和 Home 回归固定动态 Upcoming 预览、最多三条、详情/列表链接及 empty state。Playwright 继续验证 desktop、mobile 和禁用 JavaScript 时的 Logo、布局、Events 导航与同源网络边界。
 
 ### 3.21 About 与 Beginners & Safety 公开信息页
 
@@ -432,6 +436,72 @@ ASGI / WSGI ───────────→ config.settings.production
 - Members cards 使用响应式两列结构：Avatar/fallback 保持左侧固定紧凑尺寸，右侧显示允许的摘要字段；原始上传文件仍按既有规则保存，显示尺寸不改变 storage 或 Production media 决策。
 - 人工走查补充了连续无空格 Bio、Profile 定义列表间距、Account 按钮层级与 Avatar cache/storage 核查。最终临时环境通过 `313` 个测试、`95%` branch coverage、Production deploy check、collectstatic 及两组 Development smoke，项目负责人确认全部视觉和交互符合预期。
 
+### 3.35 Risk Notice 测试版本管理
+
+- `RiskNoticeVersion` 保存唯一版本标识、正文、当前状态、创建时间和最近激活时间。PostgreSQL 条件唯一约束允许尚无当前版本，并保证最多一个当前版本。
+- `activate_risk_notice` 先检查环境开关，再在事务中按主键顺序锁定现有版本并切换状态。重复激活当前版本不更新时间。旧版本继续保留，供后续报名记录引用。
+- Admin 采用 Django 模型权限。创建表单要求正文首行标明 `SYNTHETIC TEST ONLY`。现有正文和版本标识只读，删除入口关闭。拥有修改权限的管理员可通过单选操作激活版本，切换写入 Django Admin 日志。
+- Admin 和激活服务受 `RISK_NOTICE_DRAFT_VISIBLE` 约束。Development 已开启，Preview 要求显式开启，Test 默认关闭，Production 强制关闭。公开 `/risk-notice/` 继续渲染静态 Draft 模板。
+
+### 3.36 Event 模型与 Admin
+
+- Event 保存标题、唯一 slug、说明、起止时间、地点文字、可选地图 URL、公开与报名开关及时间戳。公开和报名开关默认关闭；`objects.public()` 只筛选已公开活动。
+- 模型验证结束时间晚于开始时间及地图 URL 的 HTTPS 格式，PostgreSQL 约束同时保护时间顺序与 HTTPS 前缀。日期判断通过 Django 当前时区将结束时间转换为本地日期，与指定日期或当前本地日期比较；项目默认时区为 `Australia/Sydney`。
+- EventAdmin 使用 Django 标准模型权限，支持活动编辑、列表筛选、搜索及 slug 预填。地图链接表单在未输入 scheme 时使用 HTTPS。
+- Step 38 专项与 Risk Notice 回归通过 17 项，完整测试 330 项通过。EventRegistration 和活动前台页面留待后续步骤。
+
+### 3.37 EventRegistration 与报名事务基础
+
+- `EventRegistration` 关联 Event、User 与 RiskNoticeVersion，并记录 `registered`/`cancelled` 状态、报名时间、确认时间与取消时间。数据库条件唯一约束限制每个会员和活动最多一条有效报名；检查约束要求状态与取消时间一致。
+- Event 和 Risk Notice 外键使用 `PROTECT`，User 外键使用 `CASCADE`。已取消记录在正常状态转换后保留，可供重新报名时与新记录并存；完整账户删除和数据保留规则仍待确认。
+- `register_for_event` 在事务内锁定 Event、User 和按主键排序的现有 Risk Notice 版本，核对有效会员、活动公开与开放状态、当地日期、明确确认和当前版本。重复有效报名返回既有记录；过期版本和非合成正文被拒绝。
+- 服务使用 `RISK_NOTICE_DRAFT_VISIBLE` 及正文首行 `SYNTHETIC TEST ONLY` 限定当前开发范围；Production 配置强制关闭该开关。取消服务、公开活动页面、报名表单和 Admin 名单仍属于后续步骤。
+- Step 39 专项测试 `27 passed`，完整测试 `340 passed`；migration、Django check、Ruff lint 与 format check 均通过。
+
+### 3.38 公开 Events 与 Home 数据流
+
+- `EventQuerySet.upcoming()` 与 `past()` 明确使用 `ZoneInfo("Australia/Sydney")` 计算当地当日零点。`ends_at` 在该零点及之后属于 Upcoming，在该零点之前属于 Past；`Event.is_past` 与 `is_upcoming` 复用同一 Sydney 日历日语义。
+- `events:list` 仅接受 `upcoming` 与 `past` 两种公开筛选；无效参数安全回退到 Upcoming。Upcoming 按开始时间升序，Past 按结束时间倒序，两者都先经过 `objects.public()` 限制。
+- `events:detail` 按唯一 slug 查询已发布 Event，不暴露未发布对象。详情模板以 Sydney 时区显示起止时间，对可选地图 URL 使用 `target="_blank"` 和 `rel="noopener noreferrer"`。
+- Home view 使用同一 `public().upcoming()` queryset 并限制三条，不复制活动日期规则。Home 与 Events 列表共用 `event_card.html`，保持字段、状态文字和链接行为一致。
+- 公开层只提供 GET 浏览。Upcoming 显示报名不可用，Past 显示历史状态；现有 `register_for_event` 事务服务没有连接到任何公开 view 或 form，Production Draft/Risk Notice 开关继续强制关闭。
+- `.event-card` 将共享 content card 恢复为自然高度，避免 Home 链接被拉伸卡片遮挡；`.event-list` 和 `.event-detail-actions` 只负责 Events 列表与详情操作的局部间距，不改变其他 card grid。
+- Django 测试固定可见性、Sydney 零点分类、排序、回退、安全外链和无表单边界；Playwright 在 desktop、mobile 和禁用 JavaScript 场景检查 Home 至 Events 的导航、筛选、详情、无水平溢出、page error 与同源网络边界。
+
+### 3.39 会员报名与 Risk Notice 确认流
+
+- `events:register` 只接受已发布 Event，并要求当前账户启用且至少一条 EmailAddress 已验证。可报名状态同时要求 `registration_open=True`、Event 尚未进入 Past、Development/Test Draft 开关开启，以及存在首行标记 `SYNTHETIC TEST ONLY` 的当前 RiskNoticeVersion。
+- Event detail 使用 Alpine 原生 `<dialog>` 显示当前 Notice；确认按钮携带当前版本 ID 和明确同意值。HTMX 只替换 `#event-registration`，普通 POST 与禁用 JavaScript 路径通过独立确认页和 redirect 完成相同流程。
+- `register_for_event` 保持唯一写入入口。视图不复制身份资料，只创建指向 User、Event 和 RiskNoticeVersion 的确认记录；姓名、Email 与 USU ID 可在后续名单中从关联 User 读取。
+- 旧版本提交由服务层拒绝，视图重新装载当前版本并要求再次确认。报名成功显示 `Registered`；本步不提供取消操作，Step 42 才能改变该状态。
+- 开放性由界面隐藏和服务端拒绝共同保护，避免旧页面、直接 POST 或并发状态变化绕过限制。Production settings 继续强制关闭 Draft/Risk Notice 能力。
+- Django 测试覆盖普通 POST、HTMX、幂等重复提交、旧版本、资格及关闭状态；Playwright 覆盖 dialog、Risk Notice 正文、HTMX 更新、无 JavaScript 回退、布局、page error 与同源网络边界。
+
+### 3.40 取消报名、历史保留与重新报名
+
+- `cancel_event_registration` 在事务中锁定 Event、User 与其报名记录，重新验证启用账户、verified Email、公开活动、报名开关、Upcoming 状态及非 Production 环境。服务只把当前有效记录改为 `cancelled` 并写入 `cancelled_at`，不会删除原 Risk Notice 确认。
+- 同一取消请求重复提交时返回最近的已取消记录，不建立额外数据或改写历史。活动关闭、进入 Past 或 Draft 开关关闭后，取消入口消失，服务端直接请求也被拒绝。
+- `events:cancel` 提供普通 GET/POST 回退和 HTMX 局部响应。JavaScript 可用时由 Alpine 原生 dialog 要求确认；禁用 JavaScript 时使用独立确认页，两个路径调用同一事务服务。
+- 取消后不再存在有效报名，详情页恢复 `Register`。重新报名继续经过 Step 41 的当前版本校验，建立新的 EventRegistration；旧记录保持 `cancelled` 并继续引用当时接受的 RiskNoticeVersion。
+- 页面仍只显示当前有效状态，不公开历史记录或账户联系资料。历史名单与最小权限访问继续属于 Step 43。
+- Django 与 Playwright 测试覆盖取消状态与时间、幂等提交、关闭/Past/Production 拒绝、普通 POST、HTMX、无 JavaScript，以及切换 Risk Notice 后重新报名并保留两条历史记录。
+
+### 3.41 Admin 报名名单与最小权限
+
+- `EventRegistrationAdmin` 使用 Django 自动生成的 `events.view_eventregistration` 权限提供只读名单；Event 的编辑权限不会隐式授予报名名单访问权，普通会员和无对应权限的 Staff 均被拒绝。
+- 名单通过关联 User 即时显示姓名或 Username 回退、Username、Email 和可选 USU ID，不在报名记录中重复保存身份资料。联系方式以现有 Email 为准；系统当前不收集手机号。
+- 列表及详情同时展示有效、取消和重新报名记录，以及每条记录对应的 Risk Notice 版本、报名时间、确认时间和取消时间，从而保留版本追溯关系。
+- Admin 关闭新增、修改、删除及 actions；获授权 Staff 与 Superuser 均只能查看，伪造 change POST 不能改写报名状态或历史。
+- 前台 Event 页面继续只显示当前会员本人的有效状态，不输出名单、联系资料、USU ID 或历史版本。Step 43 没有 Model、migration、service、前台模板或状态转换变更。
+
+### 3.42 Phase 4 并发、隐私与浏览器门禁
+
+- 报名事务测试在既有并发报名与 Risk Notice 切换覆盖之外，增加并发取消场景；同一 Event 与 User 的两个取消请求经现有行锁串行处理并返回同一历史记录，不产生重复取消行或非法状态。
+- 前台隐私回归同时以 Anonymous 与另一名 verified member 请求 Home、Events 列表和详情，固定报名人的姓名、Username、Email、USU ID、取消历史与旧 Risk Notice 版本均不公开；其他会员的取消请求不能改变原报名。
+- Events 浏览器场景覆盖 desktop、mobile、200% content zoom 与禁用 JavaScript，检查 landmarks、唯一 H1、键盘 Focus、至少 24px 的触控目标、文本重排、地图链接、筛选、横向溢出、page error 和同源网络限制。
+- 报名浏览器场景覆盖 HTMX dialogs、报名、取消、重新报名、mobile dialog、200% content zoom 及无 JavaScript 完整确认页和普通 POST；这些测试复用真实 Django live server 与两个合成 verified member Session。
+- Step 44 没有修改生产 template、CSS、Model、service、URL、settings 或 migration；现有实现直接通过新增门禁。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -453,7 +523,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | 提供 Step 20 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与完整 Phase 1 门禁、启动并可靠清理本机 Django server，再运行 desktop/mobile Playwright smoke。 |
 | `scripts/accept_phase_2.py` | 提供 Step 28 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与共享项目门禁、启动并可靠清理真实 Development server，再运行 Phase 2 desktop/mobile Playwright smoke。 |
 | `scripts/accept_phase_3.py` | 提供 Step 36 全新环境端到端验收：建立临时 uv environment、执行 migration 与共享门禁、启动并可靠清理 Development server，再依次运行 Phase 2/3 desktop/mobile smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面、Home、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/Logo_without_USYD.png` | 保存获准 Home Logo 的未改动 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -467,8 +537,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `static/fonts/barlow-condensed-latin-800-normal.woff2` | 本地 Barlow Condensed Latin 800 字重文件，供高强调标题使用。 |
 | `static/vendor/alpine/alpine.min.js` | 从锁定 Alpine.js package 复制的本地 minified runtime，负责当前 USYD 条件界面与错误焦点增强。 |
 | `static/vendor/htmx/htmx.min.js` | 从锁定 HTMX package 复制的本地 minified runtime；当前仅完成资产准备，尚未接入业务请求。 |
-| `static/vendor/maplibre/maplibre-gl.mjs` | 从锁定 MapLibre GL JS package 复制的本地 ESM runtime；留待后续地图功能使用。 |
-| `static/vendor/maplibre/maplibre-gl.css` | 与本地 MapLibre runtime 配套的控件样式；当前尚未加载到无地图页面。 |
+| `static/vendor/maplibre/maplibre-gl.mjs` | 从锁定 MapLibre GL JS package 复制的本地 ESM 资产，当前页面未加载。 |
+| `static/vendor/maplibre/maplibre-gl.css` | 与本地 MapLibre runtime 配套的样式资产，当前页面未加载。 |
 | `static/vendor/licenses/inter.txt` | 保存本地分发 Inter 字体对应 package 的 license 文本。 |
 | `static/vendor/licenses/barlow-condensed.txt` | 保存本地分发 Barlow Condensed 字体对应 package 的 license 文本。 |
 | `static/vendor/licenses/htmx.txt` | 保存本地分发 HTMX 对应 package 的 license 文本。 |
@@ -483,16 +553,16 @@ ASGI / WSGI ───────────→ config.settings.production
 | `config/settings/test.py` | 定义关闭 Debug 的自动化测试环境、独立 PostgreSQL test database、in-memory Email、快速 Password hasher 及默认关闭的 Draft Risk Notice。 |
 | `config/settings/preview.py` | 继承 Production 安全配置并要求显式的 Draft Risk Notice Boolean 开关；缺少变量时拒绝加载。 |
 | `config/settings/production.py` | 定义环境变量驱动的 Production Secret、hosts、PostgreSQL、SMTP、HTTPS 安全设置及 `ManifestStaticFilesStorage`，并强制关闭 Draft Risk Notice；缺少必填值时拒绝加载。 |
-| `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入 core、safety、accounts 和 members URLConf，将 `/accounts/` 委托给 `allauth.urls`，注册 403、404 与 500 handlers，并只在 Debug 环境附加 local media patterns。 |
+| `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入 core、events、safety、accounts 和 members URLConf，将 `/accounts/` 委托给 `allauth.urls`，注册 403、404 与 500 handlers，并只在 Debug 环境附加 local media patterns。 |
 | `config/asgi.py` | 暴露 ASGI application 入口，默认加载 Production settings。 |
 | `config/wsgi.py` | 暴露 WSGI application 入口，默认加载 Production settings。 |
 | `apps/__init__.py` | 将 `apps` 标记为承载领域 App 的 Python package。 |
 | `apps/core/__init__.py` | 将 `core` 标记为 Python package。 |
 | `apps/core/apps.py` | 定义 `CoreConfig`，将 `apps.core` 注册为 Django App。 |
-| `apps/core/views.py` | 提供 Home、About 与 Beginners & Safety 的无数据库公开页面 views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view（含 Members 列表、不含个人 detail），以及不向模板传递异常详情的 403、404 与 500 handlers。 |
+| `apps/core/views.py` | 提供查询最多三条已发布 Upcoming Event 的 Home view、无数据库的 About 与 Beginners & Safety views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view（含 Members 列表、不含个人 detail 或 Events），以及不向模板传递异常详情的 403、404 与 500 handlers。 |
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
-| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格和无报名能力的静态日程。 |
+| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
 | `apps/core/templates/core/errors/403.html` | 使用共享页面壳呈现中性 Access Denied 状态和 Return Home 操作，保持 HTTP 403。 |
@@ -554,7 +624,32 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/members/migrations/0001_initial.py` | 创建 MemberProfile 全部字段、One-to-one User 关系，以及显示名规范化、忽略大小写唯一和 HTTPS 社交链接数据库约束。 |
 | `apps/events/__init__.py` | 将 `events` 标记为 Python package。 |
 | `apps/events/apps.py` | 定义 `EventsConfig`，将 `apps.events` 注册为 Django App。 |
-| `apps/events/migrations/__init__.py` | 将 `events.migrations` 标记为 migration package；当前没有 migration。 |
+| `apps/events/models.py` | 定义 Event、公开 queryset、Sydney 当地零点 Upcoming/Past 分类、时间与地图 URL 验证，以及 EventRegistration、确认记录与数据库约束。 |
+| `apps/events/services.py` | 提供合成测试环境中的事务化报名与幂等取消入口；验证会员和活动状态，报名时确认当前 Risk Notice，取消时保留原确认历史。 |
+| `apps/events/admin.py` | 定义 Event 后台表单与标准权限下的管理界面，并以 `view_eventregistration` 权限提供禁止新增、修改和删除的报名历史名单。 |
+| `apps/events/forms.py` | 定义最小报名与取消确认表单；报名只接收当前 Risk Notice ID 和明确同意，取消只接收明确确认，不重复收集账户身份资料。 |
+| `apps/events/views.py` | 提供公开 Upcoming/Past 列表、已发布 Event 详情及受登录和 verified Email 保护的报名/取消确认；协调普通 POST、HTMX 局部响应、旧版本重试与关闭状态拒绝。 |
+| `apps/events/urls.py` | 将 `/events/`、`/events/<slug>/`、`/events/<slug>/register/` 与 `/events/<slug>/cancel/` 暴露为具名路由。 |
+| `apps/events/templates/events/event_list.html` | 呈现 Upcoming/Past 筛选、共享 Event cards 和无结果状态；不提供 `All` 或报名操作。 |
+| `apps/events/templates/events/event_detail.html` | 以 Sydney 时区呈现活动详情、可选安全地图链接及共享报名区域，并只在本页加载本地 HTMX 渐进增强。 |
+| `apps/events/templates/events/event_registration_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整 Risk Notice 确认页，并保留返回 Event 的普通链接。 |
+| `apps/events/templates/events/includes/registration_form.html` | 直接呈现当前 Risk Notice 的完整正文及版本，并集中错误、CSRF 与确认按钮，供 dialog 和完整确认页复用；不添加重复正文 banner。 |
+| `apps/events/templates/events/event_cancellation_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整取消确认页，并保留返回 Event 的普通链接。 |
+| `apps/events/templates/events/includes/cancellation_form.html` | 集中取消说明、错误、CSRF 与确认按钮，供 cancellation dialog 和完整确认页复用。 |
+| `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，并包含报名/取消 Alpine dialogs 与 HTMX target。 |
+| `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的活动标题、起止时间、地点和 Upcoming/Past 状态，并根据共享当前 Notice 可用性显示一致的报名状态。 |
+| `apps/events/migrations/__init__.py` | 将 `events.migrations` 标记为 migration package。 |
+| `apps/events/migrations/0001_initial.py` | 创建 Event 表及其数据库约束。 |
+| `apps/events/migrations/0002_eventregistration.py` | 创建 EventRegistration 表、关系和数据库约束。 |
+| `tests/test_event_model_admin.py` | 验证 Event 默认值、公开查询、字段约束、本地日期判断和后台权限。 |
+| `tests/test_event_registration.py` | 验证报名与取消状态、确认版本与时间、历史保留、数据库约束、资格、关闭条件，以及并发报名、并发取消和版本切换行为。 |
+| `tests/test_event_registration_admin.py` | 验证报名名单的内置查看权限、角色隔离、只读防伪造、有效/取消/重新报名历史、Risk Notice 版本追溯及公开页面隐私。 |
+| `tests/test_event_registration_pages.py` | 验证报名/取消详情、确认正文、普通 POST、HTMX、幂等、旧版本重试、重新报名、资格、不可操作状态及跨会员报名隐私。 |
+| `tests/test_event_registration_browser.py` | 建立两个合成 verified member Session，并调用 Playwright 场景验证 JavaScript 与无 JavaScript 下的报名、取消和重新报名路径。 |
+| `tests/test_event_pages.py` | 验证 Sydney 零点下 Upcoming/Past 分类、公开性、稳定排序、无效参数回退、Home 三条限制、详情 404、HTML escaping、安全地图链接及无表单边界。 |
+| `tests/test_event_pages_browser.py` | 以真实测试站点建立合成已发布 Event，并调用 Events Playwright 场景。 |
+| `tests/browser/event-pages.mjs` | 在 desktop、mobile、200% 内容放大和禁用 JavaScript 场景验证 Home 到 Events 列表/详情的导航、Upcoming/Past、地图链接、语义结构、键盘 Focus、触控目标、内容重排、page error 与同源网络边界。 |
+| `tests/browser/event-registration.mjs` | 在真实 Chromium 中验证报名与取消 dialogs、Risk Notice、HTMX 状态更新、重新报名、mobile、200% 内容放大、无 JavaScript 完整确认页、Focus、触控目标、page error 与同源网络边界。 |
 | `apps/locations/__init__.py` | 将 `locations` 标记为 Python package。 |
 | `apps/locations/apps.py` | 定义 `LocationsConfig`，将 `apps.locations` 注册为 Django App。 |
 | `apps/locations/migrations/__init__.py` | 将 `locations.migrations` 标记为 migration package；当前没有 migration。 |
@@ -564,7 +659,12 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/safety/urls.py` | 将 `/risk-notice/` 映射为命名路由 `safety:risk_notice`。 |
 | `apps/safety/views.py` | 在 Draft 开关开启时渲染静态 Risk Notice；关闭时抛出 404，全程不访问数据库。 |
 | `apps/safety/templates/safety/risk_notice.html` | 逐字呈现获准 Draft 正文、重复 acknowledgement、Draft banner 和 `noindex, nofollow`；不提供确认或报名表单。 |
-| `apps/safety/migrations/__init__.py` | 将 `safety.migrations` 标记为 migration package；当前没有 migration。 |
+| `apps/safety/models.py` | 定义 RiskNoticeVersion、唯一版本标识、状态时间和单一当前版本约束。 |
+| `apps/safety/services.py` | 提供受环境开关保护的当前 Notice 查询，并以事务和行锁切换当前版本；Home、Events 列表与详情页共用该查询边界。 |
+| `apps/safety/admin.py` | 管理合成版本创建、权限、只读历史与单选激活操作。 |
+| `apps/safety/migrations/__init__.py` | 将 `safety.migrations` 标记为 migration package。 |
+| `apps/safety/migrations/0001_initial.py` | 创建 Risk Notice 版本表与数据库约束。 |
+| `tests/test_risk_notice_versions.py` | 验证版本切换、旧正文保留、唯一约束、环境隔离、后台权限和合成文本标记。 |
 | `tests/__init__.py` | 将顶层 `tests` 标记为 Python package。 |
 | `tests/conftest.py` | 提供全套测试自动启用的外部网络隔离，只允许 loopback、Django test host 和当前数据库 host，并对外部 DNS/socket 连接立即失败。 |
 | `tests/test_project_scaffold.py` | 验证六个 AppConfig 可导入、名称正确且没有额外项目 App 注册。 |
@@ -591,7 +691,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_user_admin.py` | 验证 UserAdmin 配置、四类角色权限差异、Verify/Reject、直接编辑防护、重新提交、审核人停用及前台敏感信息边界。 |
 | `tests/test_global_templates.py` | 验证全局页面壳、metadata/head blocks、完整品牌、Anonymous/Member Header、当前导航、已实施公开页面链接、无失效链接、skip link、landmarks、唯一 H1/title、消息播报、本地 Alpine 和普通导航/form 基线。 |
 | `tests/test_public_foundation_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 21 公开页面 Playwright scenario。 |
-| `tests/test_home_page.py` | 验证 Home 获准英文内容与 Metadata、静态日程、无 Events/报名入口、响应式 Logo 引用、受限 Branding 边界及 Anonymous/Member CTA。 |
+| `tests/test_home_page.py` | 验证 Home 获准英文内容与 Metadata、动态 Upcoming Events 区域、empty state、Events 列表入口、无报名表单、响应式 Logo 引用、受限 Branding 边界及 Anonymous/Member CTA。 |
 | `tests/test_home_images.py` | 验证获准 Logo 源文件的精确 hash、大小、格式、尺寸与模式，以及 WebP 生成物的尺寸、格式、压缩和可重复性。 |
 | `tests/test_home_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 22 Home Playwright scenario。 |
 | `tests/test_public_information_pages.py` | 验证 About 与 Beginners & Safety 的 URL、模板、Metadata、获准文案、受限内容、Header 当前页、Anonymous/Member CTA 和未实施功能边界。 |
@@ -610,6 +710,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_phase1_acceptance.py` | 验证 Step 20 验收命令失败传播、运行中 Development server 清理，以及 README 对锁定安装、自动验收和人工 Phase 1 流程的覆盖。 |
 | `tests/test_phase2_acceptance.py` | 验证 Step 28 全新环境验收的命令顺序、失败传播、Development server 清理，以及 README 对共享门禁、自动验收和人工 Phase 2 流程的覆盖。 |
 | `tests/test_phase3_acceptance.py` | 验证 Step 36 全新环境验收的锁定安装、migration、共享门禁、两组 smoke、失败传播、Development server 清理及 README Phase 3 流程。 |
+| `tests/test_phase4_acceptance.py` | 验证 Step 45 全新环境验收的锁定安装、migration、共享门禁、三组 smoke、失败传播、Development server 清理及 README Phase 4 流程。 |
 | `tests/test_phase3_accessibility_browser.py` | 以真实静态 live server、合成已验证账户和隔离临时 media 调用 Phase 3 统一 Playwright 场景，并分别验证完整资料流程、公开 empty state 和临时目录清理。 |
 | `tests/test_quality_security.py` | 验证敏感文件及高置信凭据扫描、测试外部网络阻断、认证与身份日志隐私、Anonymous 页面和 Members 公开响应的私有字段隔离、Phase 3 不收集年龄/监护人资料，以及 HttpOnly Session cookie。 |
 | `tests/test_quality_gate.py` | 验证统一门禁不会吞掉子命令失败，非零退出会作为验收失败传播。 |
@@ -619,6 +720,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/browser/development-server-smoke.mjs` | 对真实 Development server 执行 desktop/mobile Home、Signup、Login、Account redirect、CSS、布局、page error、同源请求和 Branding smoke checks。 |
 | `tests/browser/phase2-development-smoke.mjs` | 对真实 Development server 执行 Phase 2 desktop/mobile 正式页面、Draft 分支、错误页、认证入口、CSS、布局、page error 和同源请求 smoke checks。 |
 | `tests/browser/phase3-development-smoke.mjs` | 对真实 Development server 执行 Phase 3 desktop/mobile Members、Anonymous Profile redirect、不可见详情、Development media、CSS、布局、page error 和同源请求 smoke checks。 |
+| `tests/browser/phase4-development-smoke.mjs` | 对真实 Development server 执行 Phase 4 desktop/tablet/mobile Home、Events、详情、导航、报名状态、CSS、布局、page error 和同源请求 smoke checks。 |
+| `scripts/accept_phase_4.py` | 在临时全新 uv environment 中编排 PostgreSQL、锁定依赖、migrations、共享项目门禁、真实 Development server 及 Phase 2–4 smoke，并保证失败传播与资源清理。 |
 | `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
 | `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、文字可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |

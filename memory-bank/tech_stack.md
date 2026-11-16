@@ -17,8 +17,7 @@
 Browser
   ├─ Django Templates
   ├─ HTMX
-  ├─ Alpine.js
-  └─ MapLibre GL JS
+  └─ Alpine.js
           ↓
 Django application
   ├─ Accounts and permissions
@@ -46,7 +45,7 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 | Small UI state | Alpine.js | 锁定 minor/patch | 处理导航、条件字段和 dialog |
 | CSS | Tailwind CSS | v4 系列锁定版本 | 统一响应式样式和 Design Tokens |
 | CSS build | Tailwind CLI | `@tailwindcss/cli` 锁定版本 | 无需引入完整 SPA bundler |
-| Map | MapLibre GL JS | 锁定 minor/patch | 开源、支持 Marker、Popup 和交互地图 |
+| 活动地图入口 | Google Maps HTTPS 链接 | 管理员按活动填写 | 从活动详情打开位置与路线 |
 | Admin | Django Admin | 跟随 Django | 低成本完成内容和审核管理 |
 | Email | Django Email Backend + SMTP | Provider 待定 | 开发与生产配置可分离 |
 | App server | WSGI server | 部署平台确定时锁定 | Django 同步业务足以满足首期需求 |
@@ -84,7 +83,7 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 ### 3.3 前端资产策略
 
 - Django Templates 是页面来源；
-- HTMX、Alpine.js 和 MapLibre 采用明确版本并作为静态资产管理；
+- HTMX 和 Alpine.js 采用明确版本并作为静态资产管理；
 - Tailwind v4 通过 `@tailwindcss/cli` 构建生产 CSS；
 - 不在正式环境使用 Tailwind Play CDN；
 - 不引入 Vite、Webpack、React 或 Vue；
@@ -98,8 +97,7 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 | `core` | Home、About、全局布局、通用组件和 error pages | 会员及活动业务 |
 | `accounts` | User、注册、登录、邮箱验证、USU ID 和账户设置 | 公开会员资料 |
 | `members` | MemberProfile、公开列表、资料编辑和隐藏 | 身份认证 |
-| `events` | Event、EventRegistration、报名及取消 | Risk Notice 正文版本管理 |
-| `locations` | Location、地点页面和地图数据 | 地图瓦片服务 |
+| `events` | Event、地点文字与可选地图外链、EventRegistration、报名及取消 | Risk Notice 正文版本管理 |
 | `safety` | RiskNoticeVersion、安全页面及当前版本服务 | 活动报名记录 |
 
 跨 App 关系通过 `settings.AUTH_USER_MODEL` 和显式 ForeignKey 建立。业务逻辑应放在 service function、form 或 model method 中，避免将复杂规则仅写在 template 或 signal 中。
@@ -163,7 +161,7 @@ EMAIL_USE_TLS
 DEFAULT_FROM_EMAIL
 ```
 
-Map tile provider、object storage 和 error monitoring 在选定供应商后增加对应变量。
+Object storage 和 error monitoring 在选定供应商后增加对应变量。
 
 ### 6.3 Secret 管理
 
@@ -183,14 +181,11 @@ Map tile provider、object storage 和 error monitoring 在选定供应商后增
 - 验证码和登录码不得写入应用日志；
 - Provider 尚未确定，代码通过 Django Email Backend 保持可替换。
 
-## 八、地图架构
+## 八、活动地点与地图外链
 
-- MapLibre GL JS 负责地图渲染和交互；
-- Location 数据由 Django 输出；
-- 只公开已确认的地点记录；
-- 地点卡片作为地图的无 JavaScript 回退；
-- Map tile provider 尚未确定；
-- Provider 选定前不得假设免费额度、请求限制或 attribution 条款。
+- Event 保存地点文字与可选的 Google Maps HTTPS 链接。
+- Django 渲染地点文字，并在有链接时提供普通 HTML 链接。
+- 原 Phase 5 已取消。仓库仍保留前期准备的 MapLibre GL JS 本地资产和 `locations` App 骨架，活动页面使用外链。
 
 ## 九、Media 与静态文件
 
@@ -286,11 +281,10 @@ Reverse proxy / Managed platform
 Django WSGI application
    ├─ Hosted PostgreSQL
    ├─ SMTP provider
-   ├─ Persistent media storage
-   └─ Map tile provider
+   └─ Persistent media storage
 ```
 
-正式托管平台、SMTP、media storage、监控及 tile provider 均未确定。选型时评估：
+正式托管平台、SMTP、media storage 和监控的供应商均未确定。选型时评估：
 
 - 澳大利亚访问延迟；
 - 月度成本；
@@ -328,11 +322,10 @@ Django WSGI application
 1. Production hosting provider；
 2. SMTP provider；
 3. Media storage；
-4. Map tile provider；
-5. Error monitoring provider；
-6. CI Provider；
-7. WSGI server 与平台启动方式；
-8. 正式数据保留和备份周期。
+4. Error monitoring provider；
+5. CI Provider；
+6. WSGI server 与平台启动方式；
+7. 正式数据保留和备份周期。
 
 这些决定在对应阶段开始前完成 ADR 或更新本文档，不在代码中隐式确定。
 
@@ -347,4 +340,3 @@ Django WSGI application
 - [HTMX documentation](https://htmx.org/docs/)
 - [Alpine.js documentation](https://alpinejs.dev/start-here)
 - [Tailwind CLI](https://tailwindcss.com/docs/installation/tailwind-cli)
-- [MapLibre GL JS documentation](https://maplibre.org/maplibre-gl-js/docs/)

@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 12 日
+**最后更新：** 2026 年 11 月 14 日
 
 ## 一、文档边界
 
@@ -166,12 +166,12 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 
 - Visitor 和 Pending user 不能报名；
 - Member 只能以本人账户报名；
-- 报名开放状态由管理员手动控制；
+- 管理员可手动开启或关闭报名。活动进入 Past 后，报名和取消按钮均移除，服务端也拒绝这两项操作；
 - 首期不设置容量、候补名单或报名截止时间；
 - 同一会员在同一活动中最多有一条有效报名；
 - 会员取消后保留历史记录；
 - 取消后再次报名时产生新的有效报名记录，并保留以前的取消记录；
-- 活动开始后是否继续允许取消，首期由页面根据管理员是否关闭报名控制，不增加独立截止规则。
+- 按 `Australia/Sydney` 计算，活动结束日期过后的首个本地午夜自动将活动从 Upcoming 归入 Past。活动当天的报名与取消继续受管理员报名开关控制。
 
 ### 4.6 Risk Notice
 
@@ -180,7 +180,7 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 - 系统记录本次确认的版本和时间；
 - 新版本不修改历史报名记录；
 - 同一时间只有一个当前版本；
-- 正式开放报名之前必须替换临时文本；
+- 正式 Risk Notice 尚未批准。Phase 4 的报名开发与测试仅使用明确标记的合成文本，Production 在正式文本获批前不开放报名；
 - 在与 USU 确认前，预览环境必须明确标记正文为 draft。
 
 ## 五、信息架构
@@ -193,11 +193,10 @@ About
 Beginners & Safety
 Events
 Members
-Locations
 Log in / Account
 ```
 
-`Members`、`Events` 和 `Locations` 在对应阶段完成前不显示失效入口。
+Events 列表同时从 Header 导航和 Home 近期活动区进入。Development/Preview 开启 Draft 开关时，导航额外显示 `Draft Risk Notice`。
 
 桌面端 Header 使用以下结构：
 
@@ -225,9 +224,7 @@ Log in / Account
 | Member detail | Public | 查看单个已公开资料 | Phase 3 |
 | Events | Public | 浏览公开活动 | Phase 4 |
 | Event detail | Public / Member | 查看活动；会员报名或取消 | Phase 4 |
-| My registrations | Member | 查看本人当前和历史报名 | Phase 4 |
-| Locations | Public | 查看地点卡片和地图 | Phase 5 |
-| Django Admin | Staff | 审核、内容和运营管理 | Phase 1-6 |
+| Django Admin | Staff | 审核、内容和运营管理 | Phase 1–4、6 |
 
 ## 六、关键用户流程
 
@@ -388,7 +385,7 @@ Registered Member 选择 Cancel registration
 
 ### 7.3 HTMX 交互
 
-- HTMX 用于增强活动报名、取消和活动列表筛选；Members 列表不使用筛选；
+- HTMX 用于增强活动报名和取消；Events 的 Upcoming/Past 切换使用普通链接，Members 列表不使用筛选；
 - 核心操作必须保留普通 HTTP POST 回退路径；
 - 返回片段需要更新状态消息和焦点；
 - 网络失败时显示可恢复提示；
@@ -397,27 +394,25 @@ Registered Member 选择 Cancel registration
 ### 7.4 Home
 
 - Hero 以强视觉建立品牌识别，核心操作为 `Join the Club`；
-- Phase 2 使用 `New to Armwrestling?` 作为次级操作；`View Upcoming Events` 在 Phase 4 Events 页面可用后再加入；
+- Hero 次级操作为 `New to Armwrestling?`；完整 Events 入口位于近期活动区的 `View all events`；
 - Hero 下方直接展示独立的 `New to Armwrestling?` 板块，说明无需经验、基本训练方式、安全原则和加入路径；
-- Phase 2 首页使用紧凑静态日程卡展示 `1 December 2026`、`3:00–7:00 pm`、`Training Session` 和 `Venue details to be confirmed`；
-- Phase 2 日程卡只提供信息及 `Join the Club` 入口，不提供报名状态、报名操作或失效的 Events 链接；
-- Phase 4 建立 Event 数据后，首页活动区改为少量近期活动预览，并提供完整 Events 页面入口；
+- 首页 `Upcoming Events` 区从数据库读取最多三条已发布的 Upcoming Event，与 Events 列表共用活动卡片；没有近期活动时显示 `No upcoming events are currently available.`；该区始终提供 `View all events` 入口；
+- Phase 2 的静态日程卡已被上述动态预览取代，首场 Training Session 由管理员在 Admin 录入；
 - 首期 Hero 使用抽象线条、波形和简单静态图形，复杂人体结构与受力轨迹后置。
 
 ### 7.5 Events
 
 - 完整 Events 页面使用信息卡片布局；
+- 仅支持 Upcoming 和 Past 两个视图，默认显示 Upcoming，无效参数回退到 Upcoming；使用普通链接切换，禁用 JavaScript 时仍可用；
+- 管理员可为活动填写可选的 Google Maps HTTPS URL，活动详情页有有效链接时显示 `View location in map`；
+- 首场 Training Session 由管理员录入现有日程（2026 年 12 月 1 日，悉尼时间 3:00–7:00 pm）。地点未确认时显示 `Venue details to be confirmed`。Home 没有已公开的近期活动时显示空状态；
 - 每张卡片突出日期、标题、时间、地点、报名状态和明确的详情或报名入口；
 - 在缺少高质量活动照片时，以排版、日期模块和抽象图形建立层级，不要求每场活动配置封面；
 - 后续加入照片时，卡片结构应允许渐进扩展，不改变核心信息顺序。
 
-### 7.6 地图
+### 7.6 活动地点
 
-- 地图与地点卡片表达相同信息；
-- Marker、Popup 和卡片可以互相联动；
-- 键盘 focus 和手机点击均可操作；
-- 地图脚本或瓦片加载失败时，地点名称和地址仍可访问；
-- 坐标未确认的地点不得显示虚假 Marker。
+管理员在 Event 中填写可公开的地点文字，并可附上 Google Maps HTTPS 链接。活动详情页直接显示地点文字，有链接时提供 `View location in map`，使用普通链接打开 Google Maps。
 
 ### 7.7 Phase 2 英文内容基线
 
@@ -578,13 +573,14 @@ Registered Member 选择 Cancel registration
 | 验证码错误 | 保留验证页面，显示剩余操作提示 |
 | 验证码过期 | 提供受频率限制的重发入口 |
 | 账户停用 | 拒绝登录并提供联系入口 |
-| 报名已关闭 | 隐藏提交按钮并显示 Closed |
+| 报名已关闭 | 隐藏报名和取消按钮并显示 Closed |
+| 活动已归入 Past | 保留活动信息，隐藏报名和取消按钮 |
 | 重复提交报名 | 返回当前报名状态，不建立重复有效记录 |
 | Risk Notice 已更新 | 要求重新阅读并确认当前版本 |
 | 取消请求重复提交 | 保持 Cancelled 状态并返回幂等结果 |
 | 资料未公开或被隐藏 | 公共页面返回不存在或不可用状态，不泄露原因 |
 | 无公开会员或活动 | 显示明确 Empty state |
-| 地图不可用 | 保留文本地点列表 |
+| 未提供地图链接 | 活动详情照常显示地点文字，省略地图入口 |
 
 ## 九、视觉、内容与 Branding 原则
 
@@ -669,7 +665,7 @@ Registered Member 选择 Cancel registration
 - 触控目标具有足够尺寸和间距；
 - 内容在窄屏、放大和文字换行时保持可读；
 - 动效尊重 `prefers-reduced-motion`；
-- 地图之外提供等价文本信息。
+- 活动地点文字始终可读，地图外链可用键盘操作。
 
 ## 十一、隐私与数据展示边界
 
@@ -688,11 +684,11 @@ Registered Member 选择 Cancel registration
 - USYD 学生声明；
 - USU ID 及审核状态；
 - 未公开的 MemberProfile；
-- 本人的活动报名历史。
+- 本人在活动详情页的当前报名状态。
 
 ### 11.3 仅获授权管理员可见
 
-- 活动参与名单；
+- 活动参与名单、报名历史及 Risk Notice 确认记录；
 - USU 审核人和审核时间；
 - 账户停用及后台操作信息。
 
@@ -716,7 +712,7 @@ Registered Member 选择 Cancel registration
 1. Risk Notice 最终文本及 USU 确认结果；
 2. University Branding 的书面批准范围；
 3. 复杂人体结构、受力轨迹插画的最终范围和制作时间；
-4. 训练地点的准确地址、坐标和可以公开使用的地点名称；
+4. 各场活动可公开的地点名称或地址，由管理员在确认后录入；
 5. 会员退出、账户删除和数据保留规则；
 6. 中文版本的时间和范围；
 7. Phase 7 排行榜的训练动作、成绩单位、左右手区分、审核方式、并列规则和公开范围。

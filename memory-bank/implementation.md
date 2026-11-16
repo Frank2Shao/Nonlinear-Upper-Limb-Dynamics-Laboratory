@@ -28,7 +28,7 @@
 
 ### 2.1 渐进式展开
 
-- 始终保留 Phase 1–6 的完整范围、依赖和验收门槛；
+- 始终保留首期各阶段的范围、依赖、验收门槛及取消记录；
 - 只将当前阶段展开为可直接执行的微步骤；
 - 当前阶段全部通过后，根据真实代码、测试和依赖版本展开下一阶段；
 - 不根据尚未验证的假设提前写完后续阶段的实现细节；
@@ -58,8 +58,8 @@ AI 开发者一次只执行一个步骤。每一步必须：
 - 采用 Django 单体架构，不建立独立 SPA 或 REST API；
 - 页面使用 Django Templates，局部增强使用 HTMX 和 Alpine.js；
 - 样式使用 Tailwind CSS v4 与 Tailwind CLI；
-- 地图使用 MapLibre GL JS；
-- 使用 npm 管理并锁定前端依赖；HTMX、Alpine.js 和 MapLibre GL JS 作为本地静态资源提供，Production 不依赖第三方 CDN；
+- 活动地点使用 Event 的地点文字和可选 Google Maps HTTPS 链接；
+- 使用 npm 管理并锁定前端依赖，HTMX 和 Alpine.js 作为本地静态资源提供，Production 不依赖第三方 CDN；
 - 浏览器端到端测试使用 Playwright；
 - 认证使用 django-allauth；
 - 开发、测试和生产均以 PostgreSQL 行为为准；
@@ -75,8 +75,8 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | `apps/core/` | Home、About、全局页面框架和 error pages |
 | `apps/accounts/` | User、认证、USYD 声明、USU ID 与账户设置 |
 | `apps/members/` | MemberProfile、公开资料与资料管理 |
-| `apps/events/` | Event、报名、取消及历史记录 |
-| `apps/locations/` | Location、地点页面与地图数据 |
+| `apps/events/` | Event、活动地点文字与可选地图外链、报名、取消及历史记录 |
+| `apps/locations/` | 前期创建的 App 骨架 |
 | `apps/safety/` | Risk Notice 版本及当前版本管理 |
 | `templates/` | 页面、组件、account templates 与 HTMX partials |
 | `static_src/` | Tailwind 输入和源码级前端资产 |
@@ -482,29 +482,37 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 **完成条件：** Roadmap 的 Phase 3 退出门槛全部满足；记录遗留 media 与外部依赖；将阶段标记为 `Ready for review`；向项目负责人申请更新 `architecture.md`，获得批准并完成验收后才能标记 `Complete` 和展开 Phase 4。
 
-## 八、Phase 4 概要：活动、Risk Notice 与报名
+## 八、Phase 4：活动、Risk Notice 与报名
 
-**展开条件：** Phase 3 已验收，Risk Notice 正式文本或获准测试版本可用。
+**展开条件：** Phase 3 已验收。开发和测试仅使用明确标记的合成 Risk Notice。正式文本获批前，Production 报名保持关闭。
 
-**范围：** Event、RiskNoticeVersion、EventRegistration、Events 页面、Event detail、报名、取消、重新报名、My registrations 和管理员名单。
+**范围：** Event、RiskNoticeVersion、EventRegistration、Events 列表与详情、报名、取消、重新报名和管理员名单。会员在活动详情页查看本人的当前状态。
 
 **关键约束：** 不增加 capacity、waitlist、deadline、payment 或 external registration；每次报名主动确认当前 Risk Notice；历史记录保留当时版本；同一用户和活动最多一条有效报名；取消不删除记录；报名与确认在同一事务完成。
 
 **阶段验证：** 权限、报名开关、重复提交、并发报名、Risk Notice 版本竞争、取消幂等、重新报名、历史保留、名单隐私、普通 POST 与 HTMX 回退全部通过。
 
-## 九、Phase 5 概要：地点与地图
+| 步骤 | 实施与验收 |
+| --- | --- |
+| 37 | 建立 `RiskNoticeVersion` 和 Admin 切换流程。验证唯一当前版本、原版本保留和环境隔离。 |
+| 38 | 建立 `Event` 和 Admin。验证公开状态、报名开关、起止时间及可选 Google Maps HTTPS URL。 |
+| 39 | 建立 `EventRegistration` 和事务服务。验证单一有效报名约束、Risk Notice 版本引用、时间记录和并发一致性。 |
+| 40 | 从 Home 接入 Events 列表及详情。支持 Upcoming、Past 和 All，按悉尼时间在活动结束日期过后的首个本地午夜自动归档。Home 改用数据库近期活动，支持空状态。由管理员录入已确认的 12 月 1 日日程。活动详情在提供地图 URL 时显示 `View location in map`。验证日期边界、公开范围、地图链接和普通链接回退。 |
+| 41 | 实现已验证会员报名，主动确认当前 Risk Notice。验证过期版本重提、关闭及 Past 时拒绝报名、Production 门禁、普通 POST 与 HTMX。 |
+| 42 | 实现幂等取消和重新报名。验证关闭及 Past 时拒绝取消、保留取消记录及重新确认当前版本。 |
+| 43 | 建立 Admin 报名名单。验证最小权限及报名和 Risk Notice 历史只向获授权管理员开放。 |
+| 44 | 验证并发、隐私、响应式、Accessibility、禁用 JavaScript 和浏览器流程。 |
+| 45 | 完成全新环境验收、人工走查和文档收尾。 |
 
-**展开条件：** Phase 4 已验收，地点地址、坐标和联系人已由管理员确认。
+原 Step 43（My registrations）已取消，其余步骤沿用已讨论的编号。首场活动通过 Admin 录入。
 
-**范围：** Location、地点卡片、MapLibre 地图、Marker、Popup、卡片联动和无 JavaScript 回退。
+## 九、Phase 5：地点与地图（已取消）
 
-**关键约束：** 未确认坐标不得显示 Marker；文字地点列表始终可用；地图数据通过安全 JSON 输出；不得在 template 中拼接未转义 JavaScript；tile provider 未确定前不得假设额度或 attribution。
-
-**阶段验证：** 数据精度、缺失坐标、键盘操作、手机点击、地图加载失败、脚本禁用、Popup 与卡片联动、公开字段和 attribution 检查全部通过。
+项目负责人确认，以 Phase 4 的 Event 地点文字和可选 Google Maps HTTPS 链接满足首期地点展示需求。Phase 5 状态为 `Cancelled`，保留阶段编号。
 
 ## 十、Phase 6 概要：上线与运维
 
-**展开条件：** Phase 5 已验收，hosting、SMTP、media storage、monitoring、tile provider 和数据保留决策已确认。
+**展开条件：** Phase 1–4 已验收，hosting、SMTP、media storage、monitoring 和数据保留决策已确认。
 
 **范围：** Production image、部署流程、HTTPS、domain、collectstatic、migrations、health check、日志、监控、数据库和 media 备份、恢复演练、回滚及生产 smoke test。
 
@@ -526,10 +534,8 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 1. `accounts.0001_initial` 创建 Custom User；
 2. `members.0001_initial` 创建 MemberProfile；
-3. `locations.0001_initial` 创建 Location；
-4. `safety.0001_initial` 创建 RiskNoticeVersion；
-5. `events.0001_initial` 创建 Event 与 EventRegistration；
-6. 仅在内容确认后使用 data migration 写入初始地点或 Risk Notice。
+3. `safety.0001_initial` 创建 RiskNoticeVersion；
+4. `events.0001_initial` 创建 Event，后续 migration 创建 EventRegistration。
 
 不得在 Custom User 建立前运行项目首次业务 migration。初始管理员使用明确的管理命令建立，不写入 migration。
 
@@ -557,7 +563,7 @@ Phase 3 按当前已确认范围不需要新增 migration；若实施时发现 s
 - University Branding 的使用范围；
 - 会员退出、账户删除和数据保留规则；
 - 中文版本范围；
-- 正式 hosting、SMTP、media storage、monitoring 和 tile provider；
+- 正式 hosting、SMTP、media storage 和 monitoring；
 - 在 Phase 7 之前新增训练成绩、排行榜、Elo 或比赛管理功能；
 - Phase 7 的动作、单位、审核、并列、分类和公开规则。
 

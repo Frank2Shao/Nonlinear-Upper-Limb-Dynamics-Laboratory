@@ -8,8 +8,10 @@ from pathlib import Path
 from PIL import Image
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SOURCE_PATH = PROJECT_ROOT / "static_src" / "images" / "brand" / "Logo_without_USYD.png"
-SOURCE_SHA256 = "1bc738b3a7af5719a296bc0aecc67f2ea943d1acf7eadb499c3dd28592308944"
+SOURCE_PATH = (
+    PROJECT_ROOT / "static_src" / "images" / "brand" / "nuldl-club-logo-transparent.png"
+)
+SOURCE_SHA256 = "65114bdc25ca376408b3c715a02b100fa979ca1eba182c9f5baf87911eaa89d1"
 OUTPUT_DIRECTORY = PROJECT_ROOT / "static" / "images" / "brand"
 VARIANTS = {
     480: OUTPUT_DIRECTORY / "nuldl-club-logo-480.webp",
@@ -30,7 +32,7 @@ def render_variant(source: Image.Image, width: int) -> bytes:
         output,
         format="WEBP",
         quality=84,
-        method=6,
+        method=4,
         lossless=False,
         exact=True,
         exif=b"",
@@ -48,8 +50,10 @@ def build(*, check_only: bool) -> None:
         if source.format != "PNG" or source.size != (1254, 1254):
             raise RuntimeError("The approved Home logo must remain a 1254 x 1254 PNG.")
         source.load()
-        if source.mode != "RGB":
-            raise RuntimeError("The approved Home logo must remain an RGB image.")
+        if source.mode != "RGBA" or source.getchannel("A").getextrema() != (0, 255):
+            raise RuntimeError(
+                "The approved Home logo must retain its RGBA transparency."
+            )
 
         for width, target in VARIANTS.items():
             generated_bytes = render_variant(source, width)

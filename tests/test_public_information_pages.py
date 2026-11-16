@@ -127,13 +127,14 @@ def test_beginners_safety_page_uses_approved_content_metadata_and_headings(clien
 
 
 @pytest.mark.parametrize("url_name", ["home", "about", "beginners_safety"])
+@pytest.mark.django_db
 def test_public_navigation_links_only_available_public_pages(client, url_name):
     _, content = response_content(client, url_name)
 
     for available_name in ("home", "about", "beginners_safety", "members:list"):
         assert f'href="{reverse(available_name)}"' in content
     assert f'href="{reverse(url_name)}" aria-current="page"' in content
-    for unavailable_path in ("/events/", "/locations/"):
+    for unavailable_path in ("/locations/",):
         assert f'href="{unavailable_path}"' not in content
     assert "Risk Notice" not in content
 

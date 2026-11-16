@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+{% load static tz %}
+{% block title %}{{ event.title }} | NULDL Armwrestling Club{% endblock %}
+{% block extra_head %}{{ block.super }}<script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>{% endblock %}
+{% block content %}
+  <div class="public-page">
+    <section class="public-section" aria-labelledby="event-title">
+      <p class="eyebrow">Club activity</p>
+      <h1 id="event-title">{{ event.title }}</h1>
+      <div class="content-card event-card">
+        {% timezone "Australia/Sydney" %}
+          <p><strong>Starts:</strong> <time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"j F Y, g:i a" }}</time></p>
+          <p><strong>Ends:</strong> <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"j F Y, g:i a" }}</time></p>
+        {% endtimezone %}
+        <p><strong>Venue:</strong> {{ event.venue_text }}</p>
+        {% if event.map_url %}<p><a href="{{ event.map_url }}" target="_blank" rel="noopener noreferrer">View location in map</a></p>{% endif %}
+        <p>{{ event.description|linebreaksbr }}</p>
+        {% include "events/includes/registration_panel.html" %}
+      </div>
+      <p class="event-detail-actions"><a class="button button--secondary" href="{% url 'events:list' %}">Back to events</a></p>
+    </section>
+  </div>
+{% endblock %}

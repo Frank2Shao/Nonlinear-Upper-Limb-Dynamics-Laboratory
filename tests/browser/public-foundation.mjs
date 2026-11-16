@@ -73,6 +73,16 @@ try {
   await mobilePage.keyboard.press("Enter");
   assert.equal(await disclosure.getAttribute("open"), "");
   await mobilePage.getByRole("link", { name: "Home", exact: true }).waitFor();
+  const main = await mobilePage.locator("#main-content").boundingBox();
+  for (const selector of [".brand", ".nav-toggle", ".nav-list", ".nav-actions"]) {
+    const box = await mobilePage.locator(selector).boundingBox();
+    assert.equal(box.x, main.x, `${selector} must align with the page content.`);
+    assert.equal(box.width, main.width, `${selector} must span the page content width.`);
+  }
+  const home = await mobilePage.locator(".nav-list a").nth(0).boundingBox();
+  const about = await mobilePage.locator(".nav-list a").nth(1).boundingBox();
+  assert.equal(home.y, about.y, "The first two navigation links must share a row.");
+  assert.ok(home.x + home.width < about.x, "The navigation columns must have a gap.");
   await mobilePage.keyboard.press("Space");
   assert.equal(await disclosure.getAttribute("open"), null);
   assert.equal(

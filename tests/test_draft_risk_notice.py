@@ -74,6 +74,7 @@ def test_environment_settings_keep_draft_visibility_explicit_and_safe():
     assert "RISK_NOTICE_DRAFT_VISIBLE" in preview_without_approval.stderr
 
 
+@pytest.mark.django_db
 def test_draft_is_closed_by_default_and_not_discoverable(client):
     risk_notice_path = reverse("safety:risk_notice")
 
@@ -141,6 +142,7 @@ def test_enabled_draft_has_navigation_and_risk_panel_action(client):
 
 @override_settings(RISK_NOTICE_DRAFT_VISIBLE=True)
 @pytest.mark.parametrize("url_name", ["home", "about", "beginners_safety"])
+@pytest.mark.django_db
 def test_enabled_draft_is_linked_from_public_header(client, url_name):
     content = client.get(reverse(url_name)).content.decode()
 
