@@ -18,8 +18,7 @@
     "@fontsource/barlow-condensed": "5.3.0",
     "@fontsource/inter": "5.3.0",
     "alpinejs": "3.17.5",
-    "htmx.org": "2.0.11",
-    "maplibre-gl": "6.15.0"
+    "htmx.org": "2.0.11"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

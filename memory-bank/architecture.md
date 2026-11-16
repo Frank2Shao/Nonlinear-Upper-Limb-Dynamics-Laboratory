@@ -1,14 +1,14 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 11 月 14 日
+**最后更新：** 2026 年 11 月 17 日
 **对应进度：** Phase 4, Step 45
 **当前状态：** Phase 1–4 已完成，Phase 5 已取消，Phase 6 尚未开始
 
 ## 一、当前架构结论
 
-仓库当前包含项目治理文档、基础 Git 配置、可重现的 Python 与前端依赖元数据、能够通过 Django system check 的项目骨架、由 Docker Compose 管理的本地 PostgreSQL 环境、Development、Test、Production 分环境 settings、具有受保护身份状态转换的 Custom User、完整的 MemberProfile 数据与公开查询边界，以及可重复构建的本地静态资源 pipeline。Python 运行时限定为 3.13.x，后端依赖由 `uv` 锁定，前端依赖由 npm 锁定。Django 已能加载六个项目 App，并从主机 `uv` 环境连接容器中的 PostgreSQL 18.6。
+仓库当前包含项目治理文档、基础 Git 配置、可重现的 Python 与前端依赖元数据、能够通过 Django system check 的项目骨架、由 Docker Compose 管理的本地 PostgreSQL 环境、Development、Test、Production 分环境 settings、具有受保护身份状态转换的 Custom User、完整的 MemberProfile 数据与公开查询边界，以及可重复构建的本地静态资源 pipeline。Python 运行时限定为 3.13.x，后端依赖由 `uv` 锁定，前端依赖由 npm 锁定。Django 已能加载五个项目 App，并从主机 `uv` 环境连接容器中的 PostgreSQL 18.6。
 
-当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 已在 Step 40 从 Phase 2 静态日程过渡为最多三条 Upcoming Event 的动态预览，并继续使用由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 公开 Home、About、Beginners & Safety 和 Members 列表，始终排除个人 Member detail、Draft、Events、认证、Account、Admin 和错误页面。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 现用于报名区域的局部渐进增强，MapLibre 仍只完成本地资产准备。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
+当前已实现 App 边界、启动配置、本地数据库连接、环境隔离、Custom User schema、USYD/USU ID 领域规则、MemberProfile 数据边界，以及 django-allauth 注册、Email verification by code、Username/Password 登录、可选 Email Magic Code 登录、link-based Password reset、POST logout、会员 Account 身份信息管理和 USU ID Admin 审核闭环。邮箱验证成功会通过官方 signal 调用幂等 service，只建立一个默认隐藏的 MemberProfile。`/account/` 提供本人账户与身份信息管理；`/admin/` 通过专用权限、只读审核字段和受控 actions 实现最小权限人工审核。项目已有全局语义化页面壳、统一 allauth 页面、本地 Alpine 渐进增强、Tailwind 第一版响应式视觉、版本及 hash 可验证的 vendor assets，以及 Production manifest static storage；核心认证流程在禁用 JavaScript 时仍可用。Phase 1 具有本地与 CI 共用的质量安全门禁，以及从临时全新 uv environment 执行锁定安装、PostgreSQL migration、完整门禁、Development server 和 desktop/mobile Playwright smoke 的端到端验收入口。README 已记录首次安装、日常开发、自动验收和人工流程；项目负责人已确认自动化与人工验收通过。Phase 2 已建立可覆盖的 metadata/Open Graph head 边界、完整 `NULDL Armwrestling Club` 品牌命名、键盘可用的响应式 Header、公开页面复用样式，以及正式 Home、About 与 Beginners & Safety。三个正式公开页面使用获准英文内容和认证状态分支 CTA；Home 已在 Step 40 从 Phase 2 静态日程过渡为最多三条 Upcoming Event 的动态预览，并继续使用由受保护源图确定性生成的响应式 WebP Logo。Draft Risk Notice 以显式环境开关隔离：Development 开启、获准 Preview 必须显式开启、Test 默认关闭、Production 强制关闭；关闭时直接 URL 返回 404 且导航与 CTA 不公开入口。项目已注册 403、404 和 500 handlers，三个错误状态使用共享页面壳、正确状态码和不泄露内部信息的中性恢复页面。Home、About 和 Beginners & Safety 已固定获准 metadata 与 Open Graph 值；Open Graph URL 由 request 派生，未硬编码尚未确认的 canonical host。`/sitemap.xml` 通过显式 allowlist 公开 Home、About、Beginners & Safety 和 Members 列表，始终排除个人 Member detail、Draft、Events、认证、Account、Admin 和错误页面。Footer 只公开已批准的 Instagram，不公开联系邮箱或未经授权的 University Branding。desktop、mobile、键盘、200% content zoom 和无 JavaScript 场景均已通过相应浏览器验证。HTMX 现用于报名区域的局部渐进增强；活动地点只使用 Google Maps 外链，项目不分发地图库。后续架构和技术选型仍以 `design_document.md`、`tech_stack.md` 与 `implementation.md` 为准。只有后续步骤实际完成并通过验证后，才在本文档记录对应结构及其理由。
 
 Phase 2 现有统一 Playwright accessibility 门禁覆盖全部正式公开页、Draft 及真实错误页，并在 desktop、mobile、200% 内容放大、键盘、无 JavaScript 和 reduced-motion 场景检查语义、Focus、触控目标、重排、对比度、替代文本、错误及网络边界。
 
@@ -46,10 +46,9 @@ Phase 4 已建立 Risk Notice 合成版本、Event 与 EventRegistration 事务�
 
 ### 2.2 前端工具层
 
-- HTMX 和 Alpine.js 用于浏览器端交互。MapLibre GL JS 仍由现有构建流程复制到本地静态资产，页面未加载这些地图资产。
+- HTMX 和 Alpine.js 用于浏览器端交互。原 Phase 5 取消后，MapLibre GL JS 依赖与本地资产已在代码清理第 1 批移除；活动地点只输出 Google Maps 外链。
 - Tailwind CSS、Tailwind CLI 与 Playwright 属于开发工具依赖。
 - Tailwind CSS 与 Tailwind CLI 使用相同版本 4.3.0，避免构建器与框架补丁版本不一致。
-- MapLibre GL JS 6.15.0 的根入口仅提供 ESM `import` 导出；Node.js 检查和后续资产处理必须使用 ESM 兼容方式。
 - `package.json` 声明精确直接依赖，`package-lock.json` 固定完整 npm 依赖树和包完整性信息。
 
 ### 2.3 本地生成目录
@@ -115,10 +114,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `accounts` | Custom User、标准与专用审核权限、Email/USU ID 规范化、USYD 声明、状态转换、受控审核服务、signup、Magic Code request 与 Account identity forms、完整认证流程、`/account/` 本人身份信息管理，以及 `/admin/` 最小权限 USU ID 审核 | 统一认证页面表现及其他业务 App 的后台管理 |
 | `members` | MemberProfile schema、字段与 Avatar 验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、本人资料编辑、Avatar 文件生命周期、本人 Preview、Publish/Unpublish、公开 Members 列表与详情、会员字段白名单、使用标准 change 权限的 Admin hide/unhide 与 Executive role 维护，以及 Phase 3 响应式、Accessibility、隐私与全新环境验收 | — |
 | `events` | Event 模型、地点文字与可选 Google Maps 外链、公开查询、Sydney 日期分类、Event Admin、EventRegistration、报名与取消事务服务、Upcoming/Past 列表、已发布活动详情、报名/取消前台，以及最小权限只读 Admin 报名名单 | — |
-| `locations` | 已注册的 App 骨架 | 原 Phase 5 的 Location 模型、地点页面及地图输出已取消 |
 | `safety` | 环境隔离的静态 Draft Risk Notice 页面、测试版本管理、事务化激活及报名确认集成 | 正式 Risk Notice |
 
-`accounts` 管理 Custom User 及身份规则，`members` 管理 Profile 数据，`safety` 管理 Risk Notice 测试版本，`events` 已建立 Event 模型。`locations` 仍为骨架。
+`accounts` 管理 Custom User 及身份规则，`members` 管理 Profile 数据，`safety` 管理 Risk Notice 测试版本，`events` 管理 Event、地点文字与报名。原 Phase 5 取消后，`locations` App 骨架已在代码清理第 1 批移除；它没有 migration，因此不涉及 schema 变更。
 
 ### 3.4 Custom User 与 migration 边界
 
@@ -254,10 +252,10 @@ ASGI / WSGI ───────────→ config.settings.production
 
 - `static_src/css/site.css` 是 Tailwind CSS v4 的唯一项目样式源；`static/css/site.css` 是 minified 构建产物。设计 token、字体声明、component classes、focus、mobile 和 reduced-motion 规则均从 source 构建，生成文件不应手工维护。
 - 浏览器资产从精确锁定的 npm dependency 复制到 `static/`，运行页面不访问第三方 CDN。复制脚本同时生成 `static/vendor/manifest.json`，记录 package、version、source 和 SHA-256，使版本与文件内容都可检查。
-- Alpine.js 负责当前小型客户端状态；HTMX 与 MapLibre GL JS 只完成本地资产准备，尚未建立业务行为或地图组件。资产存在不代表相应后续功能已经实施。
+- Alpine.js 负责小型客户端状态；HTMX 负责活动报名与取消区域的局部请求和替换（见 3.39–3.40），并只在 Event detail 页面加载。项目不分发地图库。
 - Development/Test 通过 `STATICFILES_DIRS` 读取项目静态目录；Production 使用 `ManifestStaticFilesStorage` 和独立 `STATIC_ROOT`，由 `collectstatic` 生成内容哈希文件名。`staticfiles/` 是部署输出并被 Git 排除。
 - `package.json` 将 vendor copy、hash check、Tailwind build/watch 与 watch smoke 暴露为固定 scripts。字体和前端 library 均由 `package-lock.json` 锁定，license 文件随本地分发资产保存。
-- `scripts/verify_steps_17_18.py` 是 Step 17–18 的原子验收入口：安装锁定 npm dependency 与对应 Playwright Chromium、构建并校验资产、验证 watch、运行完整 pytest、migration、Django、Ruff 和 Production collectstatic。任一子命令失败即返回失败，两步不能分别标记完成。
+- Step 17–18 曾由 `scripts/verify_steps_17_18.py` 作为原子验收入口；其职责已由共享门禁 `scripts/verify_project.py`（见 3.26）完整覆盖，该脚本已在代码清理第 1 批删除。
 - Playwright 测试使用真实 `StaticLiveServerTestCase` 和 Chromium，覆盖小屏布局、键盘焦点、Alpine 交互、整串 code 输入、无 JavaScript 回退和服务端错误恢复。Node 输出显式按 UTF-8 解码，避免 Windows locale 遮蔽真实浏览器错误。
 - 静态资源测试同时检查版本/hash manifest、无第三方 CDN、核心 token、focus/reduced-motion 规则和关键颜色 contrast；这些自动检查补充真实浏览器流程，不替代后续页面内容层面的人工设计审查。
 
@@ -502,6 +500,16 @@ ASGI / WSGI ───────────→ config.settings.production
 - 报名浏览器场景覆盖 HTMX dialogs、报名、取消、重新报名、mobile dialog、200% content zoom 及无 JavaScript 完整确认页和普通 POST；这些测试复用真实 Django live server 与两个合成 verified member Session。
 - Step 44 没有修改生产 template、CSS、Model、service、URL、settings 或 migration；现有实现直接通过新增门禁。
 
+### 3.43 代码清理第 1 批
+
+- 依据 `memory-bank/cleanup_audit.md` 的第 1 批清单，只做删除与明确纠错，不改变业务规则、权限、隐私边界、schema 或 migration。
+- 删除 `apps.locations` App 骨架及其 `PROJECT_APPS` 注册；项目 App 现为 `core`、`accounts`、`members`、`events` 与 `safety`。该 App 从未建立 migration，因此不需要数据库变更。
+- 移除 `maplibre-gl` npm 依赖，以及 vendor 复制清单、`static/vendor/maplibre/` 资产、对应 license 和 manifest 条目。前端运行时现在只分发 Alpine.js、HTMX 与本地字体。
+- 删除已由 `scripts/verify_project.py` 取代的 `scripts/verify_steps_17_18.py`，以及 `scripts/accept_phase_1.py` 中未使用的 npm 常量；USU 审核 Admin action 直接调用 `review_usu_id`，不再经过无意义的别名。
+- CSS 将 Members 名称链接中不存在的 `--color-text` 改为既有的 `--color-cream` token，并删除 Step 40 后已无引用的 `.session-details` 与 `.session-note` 规则；会员模板移除了 3 个没有对应样式的 class，页面布局不变。
+- 审计初稿将 Home Logo WebP 增大归因于 `exact=True`；实测构建参数只影响约 5%，因此本批未修改 `scripts/build_home_images.py`，Logo 体积另行决策。
+- 已通过 Ruff lint/format、Django system check 和 `npm run static:check`；在本地 Docker PostgreSQL 上以全新 test database 运行完整 pytest，`380 passed`，其中包含全部 Django 调用的 Playwright 浏览器场景。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -514,10 +522,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
 | `package.json` | 定义锁定的浏览器 library、字体与前端开发工具，并提供 vendor copy/check、Home 图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
 | `package-lock.json` | 记录完整 npm 依赖树、下载来源和完整性信息，供 `npm ci` 可重复安装；不手工编辑。 |
-| `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、MapLibre GL JS、字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
+| `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
 | `scripts/build_home_images.py` | 校验获准 Home Logo 源文件的 SHA-256、格式、尺寸与模式，并以锁定 Pillow 确定性生成或检查三个响应式 WebP 版本。 |
 | `scripts/check-css-watch.mjs` | 在临时目录启动 Tailwind `--watch=always`，确认首次 watch build 完成后终止进程并清理临时输出。 |
-| `scripts/verify_steps_17_18.py` | 提供 Step 17–18 原子联合门禁，顺序执行依赖与 Chromium 准备、资产 build/check、watch smoke、完整测试、Django/Ruff 检查和 Production collectstatic。 |
 | `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
 | `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
 | `scripts/accept_phase_1.py` | 提供 Step 20 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与完整 Phase 1 门禁、启动并可靠清理本机 Django server，再运行 desktop/mobile Playwright smoke。 |
@@ -536,13 +543,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `static/fonts/barlow-condensed-latin-700-normal.woff2` | 本地 Barlow Condensed Latin 700 字重文件，供主要标题使用。 |
 | `static/fonts/barlow-condensed-latin-800-normal.woff2` | 本地 Barlow Condensed Latin 800 字重文件，供高强调标题使用。 |
 | `static/vendor/alpine/alpine.min.js` | 从锁定 Alpine.js package 复制的本地 minified runtime，负责当前 USYD 条件界面与错误焦点增强。 |
-| `static/vendor/htmx/htmx.min.js` | 从锁定 HTMX package 复制的本地 minified runtime；当前仅完成资产准备，尚未接入业务请求。 |
-| `static/vendor/maplibre/maplibre-gl.mjs` | 从锁定 MapLibre GL JS package 复制的本地 ESM 资产，当前页面未加载。 |
-| `static/vendor/maplibre/maplibre-gl.css` | 与本地 MapLibre runtime 配套的样式资产，当前页面未加载。 |
+| `static/vendor/htmx/htmx.min.js` | 从锁定 HTMX package 复制的本地 minified runtime；只由 Event detail 页面加载，负责报名与取消区域的局部更新。 |
 | `static/vendor/licenses/inter.txt` | 保存本地分发 Inter 字体对应 package 的 license 文本。 |
 | `static/vendor/licenses/barlow-condensed.txt` | 保存本地分发 Barlow Condensed 字体对应 package 的 license 文本。 |
 | `static/vendor/licenses/htmx.txt` | 保存本地分发 HTMX 对应 package 的 license 文本。 |
-| `static/vendor/licenses/maplibre-gl.txt` | 保存本地分发 MapLibre GL JS 对应 package 的 license 文本。 |
 | `static/vendor/manifest.json` | 记录全部脚本管理 vendor/font 输出的 package、精确版本、源路径与 SHA-256，供 `assets:check` 检测漂移。 |
 | `compose.yaml` | 定义本地 PostgreSQL 18.6 service、端口映射、健康检查、重启策略和持久化 named volume。 |
 | `manage.py` | 本地运行 Django management command 的命令行入口，默认加载 `config.settings.development`。 |
@@ -650,9 +654,6 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_event_pages_browser.py` | 以真实测试站点建立合成已发布 Event，并调用 Events Playwright 场景。 |
 | `tests/browser/event-pages.mjs` | 在 desktop、mobile、200% 内容放大和禁用 JavaScript 场景验证 Home 到 Events 列表/详情的导航、Upcoming/Past、地图链接、语义结构、键盘 Focus、触控目标、内容重排、page error 与同源网络边界。 |
 | `tests/browser/event-registration.mjs` | 在真实 Chromium 中验证报名与取消 dialogs、Risk Notice、HTMX 状态更新、重新报名、mobile、200% 内容放大、无 JavaScript 完整确认页、Focus、触控目标、page error 与同源网络边界。 |
-| `apps/locations/__init__.py` | 将 `locations` 标记为 Python package。 |
-| `apps/locations/apps.py` | 定义 `LocationsConfig`，将 `apps.locations` 注册为 Django App。 |
-| `apps/locations/migrations/__init__.py` | 将 `locations.migrations` 标记为 migration package；当前没有 migration。 |
 | `apps/safety/__init__.py` | 将 `safety` 标记为 Python package。 |
 | `apps/safety/apps.py` | 定义 `SafetyConfig`，将 `apps.safety` 注册为 Django App。 |
 | `apps/safety/context_processors.py` | 将当前环境是否允许 Draft Risk Notice 作为单一 Boolean 提供给全局 RequestContext，供 Header 与页面 CTA 同步控制可发现性。 |
@@ -667,7 +668,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_risk_notice_versions.py` | 验证版本切换、旧正文保留、唯一约束、环境隔离、后台权限和合成文本标记。 |
 | `tests/__init__.py` | 将顶层 `tests` 标记为 Python package。 |
 | `tests/conftest.py` | 提供全套测试自动启用的外部网络隔离，只允许 loopback、Django test host 和当前数据库 host，并对外部 DNS/socket 连接立即失败。 |
-| `tests/test_project_scaffold.py` | 验证六个 AppConfig 可导入、名称正确且没有额外项目 App 注册。 |
+| `tests/test_project_scaffold.py` | 验证五个 AppConfig 可导入、名称正确且没有额外项目 App 注册。 |
 | `tests/test_database_settings.py` | 验证 PostgreSQL URL 解析、encoded credentials、连接 options、非 PostgreSQL 拒绝和必填变量失败行为。 |
 | `tests/test_environment_settings.py` | 验证 Development、Test、Production 的环境职责、Production 安全设置、manifest static storage 和缺少 Secret 时的安全失败。 |
 | `tests/test_user_model.py` | 验证 Custom User 创建、标准权限字段、身份与审核默认值、Email 必填与唯一，以及审核人 Self ForeignKey 的 `SET_NULL` 行为。 |
@@ -737,6 +738,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `memory-bank/项目开发_Roadmap.md` | 阶段、依赖、交付物、退出门槛、状态和外部阻塞事项的权威来源。 |
 | `memory-bank/progress.md` | 记录实际完成的步骤、验证结果、仓库状态和遗留事项，供后续开发者继续执行。 |
 | `memory-bank/architecture.md` | 记录已经实际实施并验证的架构、文件职责及重要技术理由；不把尚未实现的计划描述为现状。 |
+| `memory-bank/cleanup_audit.md` | 记录 Phase 1–4 后的代码清理审计清单，包括每条问题的位置、建议、风险、受影响测试、优先级与分批计划，以及各批次的执行更正。 |
 
 ## 五、架构维护原则
 

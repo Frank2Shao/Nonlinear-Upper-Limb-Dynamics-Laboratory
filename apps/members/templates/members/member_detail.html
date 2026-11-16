@@ -7,7 +7,7 @@
 
 {% block content %}
   <section class="profile-flow">
-    <a class="text-link" href="{% url 'members:list' %}">Back to Members</a>
+    <a href="{% url 'members:list' %}">Back to Members</a>
     {% include "members/includes/profile_public_fields.html" with profile=profile public_profile_detail=True %}
   </section>
 {% endblock %}

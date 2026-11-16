@@ -40,7 +40,6 @@ def test_generated_vendor_manifest_matches_local_assets():
         "@fontsource/inter": "5.3.0",
         "alpinejs": "3.17.5",
         "htmx.org": "2.0.11",
-        "maplibre-gl": "6.15.0",
     }
     for relative_path, expected_hash in manifest["files"].items():
         assert sha256(settings.BASE_DIR / relative_path) == expected_hash

@@ -11,7 +11,6 @@ import urllib.request
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-NPM = "npm.cmd" if os.name == "nt" else "npm"
 
 
 def run(command: list[str], *, environment: dict[str, str] | None = None) -> None:

@@ -3,7 +3,7 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **文档职责：** 定义技术选型、架构边界、环境、安全和运维方案  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 10 月 22 日
+**最后更新：** 2026 年 11 月 17 日
 
 ## 一、文档边界
 
@@ -185,7 +185,7 @@ Object storage 和 error monitoring 在选定供应商后增加对应变量。
 
 - Event 保存地点文字与可选的 Google Maps HTTPS 链接。
 - Django 渲染地点文字，并在有链接时提供普通 HTML 链接。
-- 原 Phase 5 已取消。仓库仍保留前期准备的 MapLibre GL JS 本地资产和 `locations` App 骨架，活动页面使用外链。
+- 原 Phase 5 已取消。前期准备的 MapLibre GL JS 依赖、本地资产和 `locations` App 骨架已在代码清理第 1 批移除；项目不分发地图库，活动页面只使用外链。
 
 ## 九、Media 与静态文件
 

@@ -14,14 +14,6 @@ const assets = [
   ["node_modules/alpinejs/dist/cdn.min.js", "static/vendor/alpine/alpine.min.js"],
   ["node_modules/htmx.org/dist/htmx.min.js", "static/vendor/htmx/htmx.min.js"],
   [
-    "node_modules/maplibre-gl/dist/maplibre-gl.mjs",
-    "static/vendor/maplibre/maplibre-gl.mjs",
-  ],
-  [
-    "node_modules/maplibre-gl/dist/maplibre-gl.css",
-    "static/vendor/maplibre/maplibre-gl.css",
-  ],
-  [
     "node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2",
     "static/fonts/inter-latin-400-normal.woff2",
   ],
@@ -47,10 +39,6 @@ const assets = [
   ],
   ["node_modules/htmx.org/LICENSE", "static/vendor/licenses/htmx.txt"],
   [
-    "node_modules/maplibre-gl/LICENSE.txt",
-    "static/vendor/licenses/maplibre-gl.txt",
-  ],
-  [
     "node_modules/@fontsource/inter/LICENSE",
     "static/vendor/licenses/inter.txt",
   ],
@@ -68,7 +56,6 @@ const manifest = {
     "@fontsource/inter": packageJson.dependencies["@fontsource/inter"],
     alpinejs: packageJson.dependencies.alpinejs,
     "htmx.org": packageJson.dependencies["htmx.org"],
-    "maplibre-gl": packageJson.dependencies["maplibre-gl"],
   },
   files: {},
 };

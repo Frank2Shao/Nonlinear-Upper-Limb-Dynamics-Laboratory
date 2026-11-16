@@ -7,7 +7,6 @@ EXPECTED_APP_CONFIGS = {
     "apps.accounts.apps.AccountsConfig": "apps.accounts",
     "apps.members.apps.MembersConfig": "apps.members",
     "apps.events.apps.EventsConfig": "apps.events",
-    "apps.locations.apps.LocationsConfig": "apps.locations",
     "apps.safety.apps.SafetyConfig": "apps.safety",
 }
 

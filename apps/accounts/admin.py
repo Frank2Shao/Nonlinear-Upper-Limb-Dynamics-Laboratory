@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -146,10 +144,9 @@ class UserAdmin(DjangoUserAdmin):
     ) -> None:
         reviewed_count = 0
         skipped_count = 0
-        review: Callable[..., User] = review_usu_id
         for user in queryset:
             try:
-                review(user=user, reviewer=request.user, status=status)
+                review_usu_id(user=user, reviewer=request.user, status=status)
             except (PermissionDenied, ValidationError):
                 skipped_count += 1
             else:

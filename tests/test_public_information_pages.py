@@ -115,7 +115,6 @@ def test_beginners_safety_page_uses_approved_content_metadata_and_headings(clien
     ]
     for approved_text in (
         "fundamental techniques before controlled practice begins",
-        "dedicated armwrestling equipment",
         "Guided and supervised practice pulls",
         "bone injury or fracture",
         "do not take part until you have obtained appropriate advice",

@@ -31,7 +31,6 @@ PROJECT_APPS = [
     "apps.accounts.apps.AccountsConfig",
     "apps.members.apps.MembersConfig",
     "apps.events.apps.EventsConfig",
-    "apps.locations.apps.LocationsConfig",
     "apps.safety.apps.SafetyConfig",
 ]
 
