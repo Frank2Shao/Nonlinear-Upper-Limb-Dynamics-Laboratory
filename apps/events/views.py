@@ -1,24 +1,22 @@
-from allauth.account.models import EmailAddress
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
+from apps.accounts.selectors import is_verified_active_member
 from apps.safety.services import current_risk_notice
 
 from .forms import EventCancellationForm, EventRegistrationForm
 from .models import Event, EventRegistration
 from .services import cancel_event_registration, register_for_event
 
+PANEL_TEMPLATE = "events/includes/registration_panel.html"
+_UNSET = object()
 
-def _is_verified_member(user) -> bool:
-    return bool(
-        user.is_authenticated
-        and user.is_active
-        and EmailAddress.objects.filter(user=user, verified=True).exists()
-    )
+
+def _is_htmx(request) -> bool:
+    return request.headers.get("HX-Request") == "true"
 
 
 def _active_registration(user, event):
@@ -35,6 +33,8 @@ def _registration_context(
     request,
     event,
     *,
+    notice=_UNSET,
+    registration=_UNSET,
     registration_form=None,
     registration_error="",
     open_dialog=False,
@@ -42,16 +42,15 @@ def _registration_context(
     cancellation_error="",
     open_cancel_dialog=False,
 ):
-    registration = _active_registration(request.user, event)
-    notice = current_risk_notice()
-    registration_available = bool(
-        event.registration_open and event.is_upcoming and notice is not None
+    """Build the panel context; pass ``notice``/``registration`` when known."""
+    if notice is _UNSET:
+        notice = current_risk_notice()
+    if registration is _UNSET:
+        registration = _active_registration(request.user, event)
+    registration_available = event.accepts_registration(
+        notice_available=notice is not None
     )
-    cancellation_available = bool(
-        settings.RISK_NOTICE_DRAFT_VISIBLE
-        and event.registration_open
-        and event.is_upcoming
-    )
+    is_member = is_verified_active_member(request.user)
     if registration_form is None and notice is not None:
         registration_form = EventRegistrationForm(initial={"risk_notice_id": notice.pk})
     if cancellation_form is None:
@@ -60,12 +59,10 @@ def _registration_context(
         "event": event,
         "registration": registration,
         "registration_available": registration_available,
-        "can_register": registration_available
-        and registration is None
-        and _is_verified_member(request.user),
-        "can_cancel": cancellation_available
+        "can_register": registration_available and registration is None and is_member,
+        "can_cancel": event.accepts_cancellation()
         and registration is not None
-        and _is_verified_member(request.user),
+        and is_member,
         "current_notice": notice,
         "notice_text": notice.body.strip() if notice is not None else "",
         "registration_form": registration_form,
@@ -75,6 +72,17 @@ def _registration_context(
         "cancellation_error": cancellation_error,
         "open_cancel_dialog": open_cancel_dialog,
     }
+
+
+def _render_panel(request, event):
+    return render(request, PANEL_TEMPLATE, _registration_context(request, event))
+
+
+def _render_invalid(request, context, *, page_template):
+    """Re-render a failed submission as the HTMX panel or the full page."""
+    if _is_htmx(request):
+        return render(request, PANEL_TEMPLATE, context)
+    return render(request, page_template, context, status=400)
 
 
 @require_GET
@@ -112,28 +120,23 @@ def event_detail(request, slug):
 @require_http_methods(["GET", "POST"])
 def event_register(request, slug):
     event = get_object_or_404(Event.objects.public(), slug=slug)
-    if not _is_verified_member(request.user):
+    if not is_verified_active_member(request.user):
         raise PermissionDenied
 
-    registration = _active_registration(request.user, event)
-    if registration is not None:
-        if request.headers.get("HX-Request") == "true":
-            return render(
-                request,
-                "events/includes/registration_panel.html",
-                _registration_context(request, event),
-            )
+    if _active_registration(request.user, event) is not None:
+        if _is_htmx(request):
+            return _render_panel(request, event)
         return redirect("events:detail", slug=event.slug)
 
     notice = current_risk_notice()
-    if not event.registration_open or event.is_past or notice is None:
+    if not event.accepts_registration(notice_available=notice is not None):
         raise PermissionDenied("Registration is unavailable.")
 
     if request.method == "GET":
         return render(
             request,
             "events/event_registration_confirm.html",
-            _registration_context(request, event),
+            _registration_context(request, event, notice=notice, registration=None),
         )
 
     form = EventRegistrationForm(request.POST)
@@ -148,35 +151,26 @@ def event_register(request, slug):
             )
         except ValidationError as exc:
             error = " ".join(exc.messages)
-            current_notice = current_risk_notice()
-            if current_notice is not None:
-                form = EventRegistrationForm(
-                    initial={"risk_notice_id": current_notice.pk}
-                )
+            # The notice may have changed since the page loaded; ask again.
+            notice = current_risk_notice()
+            if notice is not None:
+                form = EventRegistrationForm(initial={"risk_notice_id": notice.pk})
         else:
-            if request.headers.get("HX-Request") == "true":
-                return render(
-                    request,
-                    "events/includes/registration_panel.html",
-                    _registration_context(request, event),
-                )
+            if _is_htmx(request):
+                return _render_panel(request, event)
             messages.success(request, "Your registration has been recorded.")
             return redirect("events:detail", slug=event.slug)
 
     context = _registration_context(
         request,
         event,
+        notice=notice,
         registration_form=form,
         registration_error=error,
         open_dialog=True,
     )
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "events/includes/registration_panel.html", context)
-    return render(
-        request,
-        "events/event_registration_confirm.html",
-        context,
-        status=400,
+    return _render_invalid(
+        request, context, page_template="events/event_registration_confirm.html"
     )
 
 
@@ -184,13 +178,9 @@ def event_register(request, slug):
 @require_http_methods(["GET", "POST"])
 def event_cancel(request, slug):
     event = get_object_or_404(Event.objects.public(), slug=slug)
-    if not _is_verified_member(request.user):
+    if not is_verified_active_member(request.user):
         raise PermissionDenied
-    if (
-        not settings.RISK_NOTICE_DRAFT_VISIBLE
-        or not event.registration_open
-        or event.is_past
-    ):
+    if not event.accepts_cancellation():
         raise PermissionDenied("Cancellation is unavailable.")
 
     registration = _active_registration(request.user, event)
@@ -200,7 +190,7 @@ def event_cancel(request, slug):
         return render(
             request,
             "events/event_cancellation_confirm.html",
-            _registration_context(request, event),
+            _registration_context(request, event, registration=registration),
         )
 
     form = EventCancellationForm(request.POST)
@@ -211,12 +201,8 @@ def event_cancel(request, slug):
         except ValidationError as exc:
             error = " ".join(exc.messages)
         else:
-            if request.headers.get("HX-Request") == "true":
-                return render(
-                    request,
-                    "events/includes/registration_panel.html",
-                    _registration_context(request, event),
-                )
+            if _is_htmx(request):
+                return _render_panel(request, event)
             messages.success(request, "Your registration has been cancelled.")
             return redirect("events:detail", slug=event.slug)
 
@@ -227,11 +213,6 @@ def event_cancel(request, slug):
         cancellation_error=error,
         open_cancel_dialog=True,
     )
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "events/includes/registration_panel.html", context)
-    return render(
-        request,
-        "events/event_cancellation_confirm.html",
-        context,
-        status=400,
+    return _render_invalid(
+        request, context, page_template="events/event_cancellation_confirm.html"
     )

@@ -6,20 +6,19 @@ from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
+
+from apps.core.validators import normalize_https_scheme, validate_https_url
 
 DEFAULT_VENUE_TEXT = "Venue details to be confirmed"
 SYDNEY = ZoneInfo("Australia/Sydney")
 
 
-def validate_https_url(value: str) -> None:
-    if not value:
-        return
-    URLValidator(schemes=["https"])(value)
-    if not value.lower().startswith("https://"):
-        raise ValidationError("Use an HTTPS URL.")
+def sydney_midnight_today() -> datetime:
+    """Start of the current Sydney calendar day, the Upcoming/Past boundary."""
+    today = timezone.localdate(timezone=SYDNEY)
+    return datetime.combine(today, time.min, tzinfo=SYDNEY)
 
 
 class EventQuerySet(models.QuerySet):
@@ -27,14 +26,10 @@ class EventQuerySet(models.QuerySet):
         return self.filter(is_published=True)
 
     def upcoming(self):
-        today = timezone.localdate(timezone=SYDNEY)
-        midnight = datetime.combine(today, time.min, tzinfo=SYDNEY)
-        return self.filter(ends_at__gte=midnight)
+        return self.filter(ends_at__gte=sydney_midnight_today())
 
     def past(self):
-        today = timezone.localdate(timezone=SYDNEY)
-        midnight = datetime.combine(today, time.min, tzinfo=SYDNEY)
-        return self.filter(ends_at__lt=midnight)
+        return self.filter(ends_at__lt=sydney_midnight_today())
 
 
 class Event(models.Model):
@@ -69,15 +64,13 @@ class Event(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    def clean(self) -> None:
+    def clean_fields(self, exclude=None) -> None:
+        # Normalize first so whitespace-only text fails the fields' blank check.
         self._normalize_fields()
+        super().clean_fields(exclude=exclude)
+
+    def clean(self) -> None:
         super().clean()
-        if not self.title:
-            raise ValidationError({"title": "Enter an event title."})
-        if not self.description:
-            raise ValidationError({"description": "Enter an event description."})
-        if not self.venue_text:
-            raise ValidationError({"venue_text": "Enter venue information."})
         if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
             raise ValidationError({"ends_at": "End time must be after start time."})
 
@@ -90,9 +83,7 @@ class Event(models.Model):
         self.title = self.title.strip()
         self.description = self.description.strip()
         self.venue_text = self.venue_text.strip()
-        self.map_url = self.map_url.strip()
-        if self.map_url.lower().startswith("https://"):
-            self.map_url = f"https://{self.map_url[8:]}"
+        self.map_url = normalize_https_scheme(self.map_url.strip())
 
     def is_past_on(self, local_date: date) -> bool:
         return timezone.localtime(self.ends_at, SYDNEY).date() < local_date
@@ -104,6 +95,18 @@ class Event(models.Model):
     @property
     def is_upcoming(self) -> bool:
         return not self.is_past
+
+    def accepts_registration(self, *, notice_available: bool) -> bool:
+        """UI-level registration availability; the service rechecks under lock."""
+        return bool(self.registration_open and self.is_upcoming and notice_available)
+
+    def accepts_cancellation(self) -> bool:
+        """UI-level cancellation availability; the service rechecks under lock."""
+        return bool(
+            settings.RISK_NOTICE_DRAFT_VISIBLE
+            and self.registration_open
+            and self.is_upcoming
+        )
 
 
 class EventRegistration(models.Model):

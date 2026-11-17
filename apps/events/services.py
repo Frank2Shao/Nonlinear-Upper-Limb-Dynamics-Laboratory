@@ -1,12 +1,12 @@
 """Transactional registration foundation for synthetic development data."""
 
-from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from apps.accounts.selectors import is_verified_active_member
 from apps.safety.models import RiskNoticeVersion
 
 from .models import Event, EventRegistration
@@ -22,10 +22,7 @@ def register_for_event(*, user, event_id: int, risk_notice_id: int, accepted: bo
 
     event = Event.objects.select_for_update().get(pk=event_id)
     member = get_user_model().objects.select_for_update().get(pk=user.pk)
-    if (
-        not member.is_active
-        or not EmailAddress.objects.filter(user=member, verified=True).exists()
-    ):
+    if not is_verified_active_member(member):
         raise PermissionDenied("A verified active account is required.")
     if not event.is_published or not event.registration_open or event.is_past:
         raise ValidationError("Registration is closed.")
@@ -61,10 +58,7 @@ def cancel_event_registration(*, user, event_id: int):
 
     event = Event.objects.select_for_update().get(pk=event_id)
     member = get_user_model().objects.select_for_update().get(pk=user.pk)
-    if (
-        not member.is_active
-        or not EmailAddress.objects.filter(user=member, verified=True).exists()
-    ):
+    if not is_verified_active_member(member):
         raise PermissionDenied("A verified active account is required.")
     if not event.is_published or not event.registration_open or event.is_past:
         raise ValidationError("Cancellation is unavailable.")

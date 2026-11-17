@@ -510,6 +510,17 @@ ASGI / WSGI ───────────→ config.settings.production
 - 审计初稿将 Home Logo WebP 增大归因于 `exact=True`；实测构建参数只影响约 5%，因此本批未修改 `scripts/build_home_images.py`，Logo 体积另行决策。
 - 已通过 Ruff lint/format、Django system check 和 `npm run static:check`；在本地 Docker PostgreSQL 上以全新 test database 运行完整 pytest，`380 passed`，其中包含全部 Django 调用的 Playwright 浏览器场景。
 
+### 3.44 代码清理第 2 批
+
+- 依据 `memory-bank/cleanup_audit.md` 第 2 批清单，只合并重复的 Python 规则实现，不删除任何文档要求的防线：model 状态机、service 行锁与锁内复核、Event → User → RiskNoticeVersion 加锁顺序以及全部数据库约束均保持不变，也没有新增 migration。
+- `apps/accounts/forms.py` 新增 `UsuIdentityFields` 基类，供 Account 身份表单与 allauth Signup 表单共用 USYD/USU 字段、Alpine widget attributes 与校验；“USU ID is only available to USYD students.” 改由 `apps/accounts/models.py` 的 `USU_ID_REQUIRES_USYD_MESSAGE` 常量统一提供。数字校验保持在 form 与 model 各自执行，以免同一字段出现重复错误。
+- 新增 `apps/accounts/selectors.py::is_verified_active_member()`，统一“账户启用且存在 verified Email”判断，Members 本人流程、Events views 和 Events services 共用；Account 页面判断的是当前 Email 是否已验证，语义不同，保留原实现。
+- 新增 `apps/core/validators.py`，集中提供 `validate_https_url` 与 `normalize_https_scheme`；Members 与 Events models 改为导入共享实现，既有 migration 引用的模块路径依旧可解析。非 HTTPS 链接现在先得到 “Use an HTTPS URL.”，这是本批唯一的用户可见文案变化。
+- Event 新增 `accepts_registration(notice_available=...)`、`accepts_cancellation()` 与模块级 `sydney_midnight_today()`；`clean_fields()` 先规范化再执行字段校验，删除与字段 `blank=False` 重复的空值检查。`event_card.html` 无法向方法传参，保留模板条件，结果与新方法一致。
+- `apps/events/views.py` 收敛 HTMX 判断、面板模板名和“HTMX 片段 / 整页 400”分支，并在一次请求内复用会员资格、当前 Notice 与有效报名查询；报名面板去掉冗余的 `registration_available` 条件。
+- MemberProfile 新增 `public_experience_level` 与 `public_preferred_arm`，未指定时返回 `None`，公开模板不再硬编码 `not_spec`；`__str__` 复用 `resolved_display_name`，Publish 确认页的公开路径改用 `reverse()`。
+- 已通过 Ruff lint/format、Django system check 与 `makemigrations --check`；在本地 Docker PostgreSQL 上以全新 test database 运行完整 pytest，`380 passed`，未修改任何测试。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -564,6 +575,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/__init__.py` | 将 `core` 标记为 Python package。 |
 | `apps/core/apps.py` | 定义 `CoreConfig`，将 `apps.core` 注册为 Django App。 |
 | `apps/core/views.py` | 提供查询最多三条已发布 Upcoming Event 的 Home view、无数据库的 About 与 Beginners & Safety views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view（含 Members 列表、不含个人 detail 或 Events），以及不向模板传递异常详情的 403、404 与 500 handlers。 |
+| `apps/core/validators.py` | 提供 Members 与 Events 共用的 HTTPS URL validator（先给出明确的 HTTPS 提示，再执行 `URLValidator`）和 `https://` scheme 小写规范化函数。 |
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
@@ -579,9 +591,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/migrations/__init__.py` | 将 `core.migrations` 标记为 migration package；当前没有 migration。 |
 | `apps/accounts/__init__.py` | 将 `accounts` 标记为 Python package。 |
 | `apps/accounts/apps.py` | 定义 `AccountsConfig`，将 `apps.accounts` 注册为 Django App。 |
-| `apps/accounts/models.py` | 定义 Custom User、专用 USU 审核权限、Email/USU ID 规范化、数字 validator、USU 状态转换、审核字段写入保护及三项数据库约束。 |
+| `apps/accounts/models.py` | 定义 Custom User、专用 USU 审核权限、Email/USU ID 规范化、数字 validator、共享的 USU ID 资格错误文案常量、USU 状态转换、审核字段写入保护及三项数据库约束。 |
+| `apps/accounts/selectors.py` | 提供 `is_verified_active_member()`，作为 Members 本人流程与 Events 报名/取消共用的“启用账户且拥有 verified Email”判断。 |
 | `apps/accounts/admin.py` | 注册 Custom UserAdmin，提供 USU 审核列表、筛选、搜索、只读角色视图及 Verify/Reject actions，并隔离无权限 Staff。 |
-| `apps/accounts/forms.py` | 定义 Account 身份更新、allauth signup、Magic Code request 及两类 code confirmation forms；通过字段白名单与既有 service 隔离只读/审核字段，并为 USYD 渐进增强和不回显数字 code 提供 widget attributes。 |
+| `apps/accounts/forms.py` | 定义共享 USYD/USU 字段与校验的 `UsuIdentityFields` 基类，以及基于它的 Account 身份更新与 allauth signup forms，另含 Magic Code request 及两类 code confirmation forms；通过字段白名单与既有 service 隔离只读/审核字段，并为 USYD 渐进增强和不回显数字 code 提供 widget attributes。 |
 | `apps/accounts/views.py` | 提供登录保护的 Account GET/POST view，固定使用当前 User，查询本人 Email verification status 与 MemberProfile 摘要，并在成功更新后执行 redirect-after-POST。 |
 | `apps/accounts/urls.py` | 将项目 Account view 暴露为命名路由 `account`，路径为 `/account/`。 |
 | `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，使用三个主卡片显示只读账户、Profile 摘要与发布操作、USYD/USU form、Password change 和 POST logout；使用 Alpine 条件显示 USU ID并保留无 JavaScript 普通 POST。 |
@@ -609,7 +622,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/accounts/migrations/0003_alter_user_options.py` | 在 User model options 中声明 `review_usu_id` 专用权限，不改变业务字段或约束。 |
 | `apps/members/__init__.py` | 将 `members` 标记为 Python package。 |
 | `apps/members/apps.py` | 定义 `MembersConfig`，将 `apps.members` 注册为 Django App，并在 `ready()` 中加载 Email 确认 signal receiver。 |
-| `apps/members/models.py` | 定义 MemberProfile、字段 choices、规范化与验证、Avatar 大小/扩展名/MIME/真实格式检查、已提交 Avatar 重复校验时的安全 reopen/close、PostgreSQL 约束，以及只返回可公开 Profile 的 queryset。 |
+| `apps/members/models.py` | 定义 MemberProfile、字段 choices、规范化与验证（HTTPS 规则来自 `apps/core/validators.py`）、未指定时返回 `None` 的公开经验与惯用手 properties、Avatar 大小/扩展名/MIME/真实格式检查、已提交 Avatar 重复校验时的安全 reopen/close、PostgreSQL 约束，以及只返回可公开 Profile 的 queryset。 |
 | `apps/members/services.py` | 提供 Email 确认使用的幂等 Profile 创建入口、协调 Avatar storage 生命周期的 Profile 保存入口，以及使用 row lock 幂等更新本人发布状态的 service。 |
 | `apps/members/signals.py` | 接收 allauth 官方 `email_confirmed` signal，并在 Email 验证成功后通过 service 确保 MemberProfile 存在。 |
 | `apps/members/forms.py` | 定义七个会员可写资料字段、非 Model Avatar 删除控制、上传/删除冲突检查、Display name 重复检查和 Instagram Username 清理；隔离发布、管理员字段、User 及系统时间戳。 |
@@ -628,11 +641,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/members/migrations/0001_initial.py` | 创建 MemberProfile 全部字段、One-to-one User 关系，以及显示名规范化、忽略大小写唯一和 HTTPS 社交链接数据库约束。 |
 | `apps/events/__init__.py` | 将 `events` 标记为 Python package。 |
 | `apps/events/apps.py` | 定义 `EventsConfig`，将 `apps.events` 注册为 Django App。 |
-| `apps/events/models.py` | 定义 Event、公开 queryset、Sydney 当地零点 Upcoming/Past 分类、时间与地图 URL 验证，以及 EventRegistration、确认记录与数据库约束。 |
+| `apps/events/models.py` | 定义 Event、公开 queryset、共享的 Sydney 当地零点计算与 Upcoming/Past 分类、时间与地图 URL 验证（HTTPS 规则来自 `apps/core/validators.py`）、页面层报名/取消开放判断，以及 EventRegistration、确认记录与数据库约束。 |
 | `apps/events/services.py` | 提供合成测试环境中的事务化报名与幂等取消入口；验证会员和活动状态，报名时确认当前 Risk Notice，取消时保留原确认历史。 |
 | `apps/events/admin.py` | 定义 Event 后台表单与标准权限下的管理界面，并以 `view_eventregistration` 权限提供禁止新增、修改和删除的报名历史名单。 |
 | `apps/events/forms.py` | 定义最小报名与取消确认表单；报名只接收当前 Risk Notice ID 和明确同意，取消只接收明确确认，不重复收集账户身份资料。 |
-| `apps/events/views.py` | 提供公开 Upcoming/Past 列表、已发布 Event 详情及受登录和 verified Email 保护的报名/取消确认；协调普通 POST、HTMX 局部响应、旧版本重试与关闭状态拒绝。 |
+| `apps/events/views.py` | 提供公开 Upcoming/Past 列表、已发布 Event 详情及受登录和 verified Email 保护的报名/取消确认；协调普通 POST、HTMX 局部响应、旧版本重试与关闭状态拒绝；单次请求内复用会员资格、当前 Notice 与有效报名查询结果。 |
 | `apps/events/urls.py` | 将 `/events/`、`/events/<slug>/`、`/events/<slug>/register/` 与 `/events/<slug>/cancel/` 暴露为具名路由。 |
 | `apps/events/templates/events/event_list.html` | 呈现 Upcoming/Past 筛选、共享 Event cards 和无结果状态；不提供 `All` 或报名操作。 |
 | `apps/events/templates/events/event_detail.html` | 以 Sydney 时区呈现活动详情、可选安全地图链接及共享报名区域，并只在本页加载本地 HTMX 渐进增强。 |

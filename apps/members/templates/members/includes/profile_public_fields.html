@@ -23,15 +23,15 @@
     </div>
   {% endif %}
 
-  {% if profile.experience_level != "not_spec" or profile.preferred_arm != "not_spec" %}
+  {% if profile.public_experience_level or profile.public_preferred_arm %}
     <dl class="definition-list">
-      {% if profile.experience_level != "not_spec" %}
+      {% if profile.public_experience_level %}
         <dt>Experience level</dt>
-        <dd>{{ profile.get_experience_level_display }}</dd>
+        <dd>{{ profile.public_experience_level }}</dd>
       {% endif %}
-      {% if profile.preferred_arm != "not_spec" %}
+      {% if profile.public_preferred_arm %}
         <dt>Preferred arm</dt>
-        <dd>{{ profile.get_preferred_arm_display }}</dd>
+        <dd>{{ profile.public_preferred_arm }}</dd>
       {% endif %}
     </dl>
   {% endif %}

@@ -4,16 +4,14 @@ from typing import ClassVar
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import (
-    FileExtensionValidator,
-    RegexValidator,
-    URLValidator,
-)
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.db.models import Exists, OuterRef
 from django.db.models.functions import Lower, Trim
 from django.utils.html import strip_tags
 from PIL import Image, UnidentifiedImageError
+
+from apps.core.validators import normalize_https_scheme, validate_https_url
 
 MAX_AVATAR_SIZE = 5 * 1024 * 1024
 ALLOWED_AVATAR_FORMATS = {
@@ -74,12 +72,6 @@ def validate_avatar(uploaded_file) -> None:
 def validate_plain_text(value: str) -> None:
     if strip_tags(value) != value:
         raise ValidationError("Bio must contain plain text only.")
-
-
-def validate_https_url(value: str) -> None:
-    URLValidator(schemes=["https"])(value)
-    if not value.lower().startswith("https://"):
-        raise ValidationError("Use an HTTPS URL.")
 
 
 class MemberProfileQuerySet(models.QuerySet):
@@ -184,11 +176,25 @@ class MemberProfile(models.Model):
         ]
 
     def __str__(self) -> str:
-        return self.display_name or self.user.get_username()
+        return self.resolved_display_name
 
     @property
     def resolved_display_name(self) -> str:
         return self.display_name or self.user.get_username()
+
+    @property
+    def public_experience_level(self) -> str | None:
+        """Display value for public pages; None when the member left it unset."""
+        if self.experience_level == self.ExperienceLevel.NOT_SPECIFIED:
+            return None
+        return self.get_experience_level_display()
+
+    @property
+    def public_preferred_arm(self) -> str | None:
+        """Display value for public pages; None when the member left it unset."""
+        if self.preferred_arm == self.PreferredArm.NOT_SPECIFIED:
+            return None
+        return self.get_preferred_arm_display()
 
     def clean(self) -> None:
         self._normalize_optional_fields()
@@ -204,10 +210,8 @@ class MemberProfile(models.Model):
         self.bio = self._optional_text(self.bio)
         self.executive_role = self._optional_text(self.executive_role)
         other_social_url = self._optional_text(self.other_social_url)
-        if other_social_url is not None and other_social_url.lower().startswith(
-            "https://"
-        ):
-            other_social_url = f"https://{other_social_url[8:]}"
+        if other_social_url is not None:
+            other_social_url = normalize_https_scheme(other_social_url)
         self.other_social_url = other_social_url
 
         instagram_handle = self._optional_text(self.instagram_handle)

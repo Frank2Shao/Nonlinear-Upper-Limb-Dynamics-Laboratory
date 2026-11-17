@@ -2,7 +2,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .models import User, usu_id_validator
+from .models import USU_ID_REQUIRES_USYD_MESSAGE, User, usu_id_validator
 
 
 @transaction.atomic
@@ -19,7 +19,7 @@ def update_usu_identity(
         except ValidationError as exc:
             raise ValidationError({"usu_id": exc.messages}) from exc
     if not is_usyd_student and normalized_usu_id is not None:
-        raise ValidationError({"usu_id": "USU ID is only available to USYD students."})
+        raise ValidationError({"usu_id": USU_ID_REQUIRES_USYD_MESSAGE})
 
     locked_user = User.objects.select_for_update().get(pk=user.pk)
     locked_user.is_usyd_student = is_usyd_student

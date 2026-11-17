@@ -11,7 +11,7 @@ from allauth.account.forms import SignupForm as AllauthSignupForm
 from allauth.account.models import EmailAddress
 from django import forms
 
-from .models import User, usu_id_validator
+from .models import USU_ID_REQUIRES_USYD_MESSAGE, User, usu_id_validator
 from .services import update_usu_identity
 
 
@@ -52,7 +52,9 @@ class ConfirmLoginCodeForm(
     pass
 
 
-class AccountIdentityForm(forms.Form):
+class UsuIdentityFields(forms.Form):
+    """USYD declaration and optional USU ID shared by signup and Account."""
+
     is_usyd_student = forms.BooleanField(
         label="Are you a USYD student?",
         required=False,
@@ -64,14 +66,10 @@ class AccountIdentityForm(forms.Form):
         validators=[usu_id_validator],
     )
 
-    def __init__(self, *args, user: User, **kwargs) -> None:
-        self.user = user
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fields["is_usyd_student"].widget.attrs["x-model"] = "isUsyd"
         self.fields["usu_id"].widget.attrs["x-ref"] = "usuId"
-        if not self.is_bound:
-            self.initial.setdefault("is_usyd_student", user.is_usyd_student)
-            self.initial.setdefault("usu_id", user.usu_id)
 
     def clean_usu_id(self) -> str | None:
         return User.normalize_usu_id(self.cleaned_data.get("usu_id"))
@@ -82,11 +80,17 @@ class AccountIdentityForm(forms.Form):
             not cleaned_data.get("is_usyd_student")
             and cleaned_data.get("usu_id") is not None
         ):
-            self.add_error(
-                "usu_id",
-                "USU ID is only available to USYD students.",
-            )
+            self.add_error("usu_id", USU_ID_REQUIRES_USYD_MESSAGE)
         return cleaned_data
+
+
+class AccountIdentityForm(UsuIdentityFields):
+    def __init__(self, *args, user: User, **kwargs) -> None:
+        self.user = user
+        super().__init__(*args, **kwargs)
+        if not self.is_bound:
+            self.initial.setdefault("is_usyd_student", user.is_usyd_student)
+            self.initial.setdefault("usu_id", user.usu_id)
 
     def save(self) -> User:
         return update_usu_identity(
@@ -114,22 +118,9 @@ class RequestLoginCodeForm(AllauthRequestLoginCodeForm):
         return email
 
 
-class SignupForm(AllauthSignupForm):
-    is_usyd_student = forms.BooleanField(
-        label="Are you a USYD student?",
-        required=False,
-    )
-    usu_id = forms.CharField(
-        label="USU ID",
-        max_length=64,
-        required=False,
-        validators=[usu_id_validator],
-    )
-
+class SignupForm(UsuIdentityFields, AllauthSignupForm):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.fields["is_usyd_student"].widget.attrs["x-model"] = "isUsyd"
-        self.fields["usu_id"].widget.attrs["x-ref"] = "usuId"
         self.order_fields(
             (
                 "username",
@@ -140,21 +131,6 @@ class SignupForm(AllauthSignupForm):
                 "usu_id",
             )
         )
-
-    def clean_usu_id(self) -> str | None:
-        return User.normalize_usu_id(self.cleaned_data.get("usu_id"))
-
-    def clean(self) -> dict[str, object]:
-        cleaned_data = super().clean()
-        if (
-            not cleaned_data.get("is_usyd_student")
-            and cleaned_data.get("usu_id") is not None
-        ):
-            self.add_error(
-                "usu_id",
-                "USU ID is only available to USYD students.",
-            )
-        return cleaned_data
 
     def save(self, request) -> User:
         user = super().save(request)

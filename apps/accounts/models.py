@@ -10,6 +10,7 @@ usu_id_validator = RegexValidator(
     regex=r"^[0-9]+$",
     message="USU ID must contain digits only.",
 )
+USU_ID_REQUIRES_USYD_MESSAGE = "USU ID is only available to USYD students."
 
 
 class User(AbstractUser):
@@ -103,9 +104,7 @@ class User(AbstractUser):
         self._normalize_identity_fields()
         super().clean()
         if not self.is_usyd_student and self.usu_id is not None:
-            raise ValidationError(
-                {"usu_id": "USU ID is only available to USYD students."}
-            )
+            raise ValidationError({"usu_id": USU_ID_REQUIRES_USYD_MESSAGE})
 
     def save(self, *args, **kwargs) -> None:
         self._normalize_identity_fields()

@@ -1,11 +1,13 @@
-from allauth.account.models import EmailAddress
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models.functions import Coalesce, Lower
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
+
+from apps.accounts.selectors import is_verified_active_member
 
 from .forms import MemberProfileForm
 from .models import MemberProfile
@@ -48,13 +50,7 @@ def member_detail(request: HttpRequest, username: str) -> HttpResponse:
 
 
 def _get_owned_profile(request: HttpRequest) -> MemberProfile:
-    if (
-        not request.user.is_active
-        or not EmailAddress.objects.filter(
-            user=request.user,
-            verified=True,
-        ).exists()
-    ):
+    if not is_verified_active_member(request.user):
         raise PermissionDenied
 
     return get_object_or_404(
@@ -109,7 +105,10 @@ def profile_publish(request: HttpRequest) -> HttpResponse:
         "members/profile_publish_confirm.html",
         {
             "profile": profile,
-            "public_profile_path": f"/members/{request.user.get_username()}/",
+            "public_profile_path": reverse(
+                "members:detail",
+                kwargs={"username": request.user.get_username()},
+            ),
         },
     )
 

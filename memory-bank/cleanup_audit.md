@@ -146,7 +146,15 @@
 每批独立提交（`chore:`/`refactor:`/`test:`），每批结束执行 `ruff check .`、`ruff format --check .`、`pytest`、`npm run static:check`；涉及模板或 CSS 的批次再执行完整 Playwright 浏览器测试，并附 desktop/mobile 截图。
 
 1. **第 1 批：纯删除与明确 bug（低风险，半天）**：C1、A2/E6、A1、C8、E1、A5、`accept_phase_1.py:14` 中未用的 `NPM`、T16。E3 经实测后从本批移出，改为等待决策。需要更新：`test_static_assets.py`、`test_project_scaffold.py`。完成后请项目负责人批准 `architecture.md` 和 `tech_stack.md` 的对应修订。**状态（2026-11-17）：已完成**。Ruff、Django check、`static:check` 均通过，完整 pytest 结果为 `380 passed`；文档修订已获批准，并已更新 `architecture.md` 3.43 与 `tech_stack.md`。
-2. **第 2 批：Python 规则去重（低风险，行为不变）**：A3、A4、A7、A12、A14、A13、A17、A18、A11、A10、A9（含 T11 的 model property）。原有测试应全部原样通过；如有失败，说明行为发生了变化，需要回退。
+2. **第 2 批：Python 规则去重（低风险，行为不变）**：A3、A4、A7、A12、A14、A13、A17、A18、A11、A10、A9（含 T11 的 model property）。原有测试应全部原样通过；如有失败，说明行为发生了变化，需要回退。**状态（2026-11-17）：已完成，`architecture.md` 3.44 与文件职责表已同步**。Ruff、`makemigrations --check`（No changes detected）、Django check 均通过；全新 test database 上完整 pytest（含浏览器场景）`380 passed`，没有修改任何测试。与审计建议的差异如下：
+   - **A3**：新增 `UsuIdentityFields(forms.Form)` 作为共享基类（Django 的声明式字段需要 Form 子类才能被收集），`SignupForm(UsuIdentityFields, AllauthSignupForm)` 的字段顺序保持不变。`SignupForm.save` 中的 `refresh_from_db` 保留：改为逐字段复制并不更清晰。
+   - **A4**：只抽出 `USU_ID_REQUIRES_USYD_MESSAGE` 常量，由 model、service 和 form 共用；没有做单一 `validate_usu_identity()`。原因是 `model.clean` 若再执行数字校验，会与 field validator 产生重复错误。三层防线各自保留本层职责。
+   - **A7**：新增 `apps/accounts/selectors.py::is_verified_active_member()`，由 members views、events views 和 events services（锁内复核）共用。`accounts/views.py` 检查的是“当前 Email 已验证”，语义不同，因此保留；`MemberProfile.objects.public()` 的 `Exists` 子查询也保留。
+   - **A9**：新增 `Event.accepts_registration(notice_available=)` 与 `Event.accepts_cancellation()`，供 views 与 context 共用；`registration_panel.html` 删除了冗余的 `registration_available and`。`event_card.html` 无法在模板中传参，仍沿用 `registration_open and registration_notice_available`（在 `is_past` 分支之后，与方法等价）。
+   - **A10/A11**：每次构建 context 时 verified-member 查询从 2 次降为 1 次；GET 确认页复用已查询的 notice 和 registration；新增 `_is_htmx()`、`_render_panel()`、`_render_invalid()` 与 `PANEL_TEMPLATE`。
+   - **A12**：新增 `apps/core/validators.py`（`validate_https_url`、`normalize_https_scheme`），members 与 events 改为 import，迁移文件中的旧引用路径继续可解析。**行为微调**：`http://` URL 现在先报 “Use an HTTPS URL.”，而不是 URLValidator 的 “Enter a valid URL.”；测试只断言有错误，不受影响。
+   - **A13**：删除三条空值检查，并把 normalize 移到 `clean_fields()` 开头，使只含空白的字段在单独调用 `full_clean()` 时仍被字段级 blank 检查拒绝。
+   - **A14**：新增 `sydney_midnight_today()`。**A17**、**A18**、**T11** 按建议完成（`public_experience_level`/`public_preferred_arm`）。
 3. **第 3 批：模板去重**：T1、T2、T3、T6、T7、T9、T10、T13、T14、T15。以渲染输出不变为验收标准，必要时先补快照式比较。
 4. **第 4 批：测试与脚本收敛（只改 tests/ 与 scripts/）**：D1、D2、D3、E2 + D4、D6、D7、D8、D9、D10。D5 先征求项目负责人意见。
 5. **第 5 批：CSS Token 与去补丁**：C2、C3、C6、C7、C9、C10、C11、C12。浏览器全量回归并逐页截图对比。

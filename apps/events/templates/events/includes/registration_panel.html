@@ -23,7 +23,7 @@
         </div>
       </dialog>
     {% endif %}
-  {% elif registration_available and can_register %}
+  {% elif can_register %}
     <a
       class="button"
       href="{% url 'events:register' event.slug %}"
