@@ -351,7 +351,7 @@ ASGI / WSGI ───────────→ config.settings.production
 - `scripts/verify_phase_1.py` 保留为兼容 wrapper，使既有 Phase 1 命令继续委派到同一共享门禁，避免门禁逻辑分叉。
 - `scripts/accept_phase_2.py` 使用 `UV_PROJECT_ENVIRONMENT` 在 OS 临时目录建立独立锁定环境，等待 Docker PostgreSQL、执行 Development migration 与共享门禁，再在动态 loopback port 启动真实 Development server 并运行 Phase 2 smoke；所有退出路径都会终止 server 并清理临时环境。
 - `phase2-development-smoke.mjs` 在 desktop/mobile 下覆盖正式公开页、Draft 分支、错误页与认证入口，验证 CSS、响应式布局、页面错误及同源网络边界，不向 Development database 写入合成会员数据。
-- `tests/test_phase2_acceptance.py` 锁定命令失败传播、运行中 server 清理及 README 验收说明；`tests/test_quality_gate.py` 直接验证共享门禁，防止兼容 wrapper 掩盖真实入口。
+- 阶段验收测试（代码清理第 4 批起合并为 `tests/test_acceptance.py`）锁定命令顺序、失败传播、运行中 server 清理及 README 验收入口；`tests/test_quality_gate.py` 直接验证共享门禁，防止兼容 wrapper 掩盖真实入口。
 - 初次全新环境验收通过 234 个测试、94% branch coverage、Production 检查与 browser smoke。人工走查后的 Home、About 和 Beginners & Safety 内容与 CTA 收尾通过专项 Django/Playwright、静态与 Ruff 验证，项目负责人确认最终验收。
 - 本节记录 Step 28 完成时的 Phase 2 验收边界；Phase 3 后续已按 3.27–3.34 实施并完成。Risk Notice 最终文本、University Branding、地点、Production Provider、数据保留和中文版本仍由后续批准或阶段处理。
 
@@ -532,6 +532,22 @@ ASGI / WSGI ───────────→ config.settings.production
 - Header JavaScript 断点与 CSS 断点的单一来源（T2）、`<body>` 错误聚焦脚本外置（T15）推迟到 CSS 断点统一时一并决策。
 - 已通过 Ruff lint/format、Django system check、`makemigrations --check` 与 `npm run static:check`；在本地 Docker PostgreSQL 上以全新 test database 运行完整 pytest（含浏览器场景），`380 passed`，未修改任何测试。
 
+### 3.46 代码清理第 4 批
+
+- 依据 `memory-bank/cleanup_audit.md` 第 4 批清单，只修改 `tests/` 与 `scripts/`，生产代码、模板、CSS、settings 与 migration 均未变动。
+- 测试数据由 `tests/factories.py` 统一建立：`create_user` 以 `verified=None/True/False` 表示不建 EmailAddress、已验证或未验证，`create_member` 同时建立 MemberProfile；`tests/conftest.py` 提供共享 `verified_member` fixture。各测试文件只保留声明自身默认值的薄包装，所有数据仍为合成值。
+- Python browser wrapper 统一通过 `tests/browser_runner.py::run_node_scenario` 启动 Node 场景，保持 UTF-8 输出解码和失败时输出完整日志。`tests/browser/browser-support.mjs` 集中提供会话 cookie、横向溢出、页面边界、landmark 结构、可见内容、触控目标与 Focus 断言；各场景以参数声明自身检查的元素范围。
+- 四个 `scripts/accept_phase_N.py` 改为只声明门禁脚本与 smoke 列表的入口，共同调用 `scripts/_acceptance.py::run_acceptance`。共享流程保持临时 uv environment、PostgreSQL、migration、门禁、真实 Development server、smoke、server log 输出和可靠清理的顺序；直接执行脚本时通过导入回退定位共享模块，README 命令不变。`tests/test_acceptance.py` 取代四个阶段专属验收测试。
+- 测试断言改为针对需求，不再依赖实现细节：
+  - 不再读取模板源码，也不再断言 class 名或 Alpine 属性原文；
+  - Canonical host 改由不同请求 host 下的 og:url 与 sitemap URL 验证；
+  - 颜色对比度从 `static_src/css/site.css` 的 `@theme` 读取 token；
+  - vendor manifest 与 `package.json` 依赖比对；
+  - 项目 App 测试只验证可导入且名称与包路径一致。
+- 公开页面隐私扫描通过 `tests/privacy.py::assert_no_private_values` 执行；各测试仍各自声明受保护的私有值，覆盖范围不变。
+- README 测试只确认每个阶段的验收脚本及其门禁脚本命令存在；文档措辞由人工审阅，不再由测试固定。
+- 已通过 Ruff lint/format、Django system check、`makemigrations --check` 与 `npm run static:check`；完整 pytest（含浏览器场景）通过；4 个 Development server smoke 对真实 runserver 通过；重构后的 `scripts/accept_phase_4.py` 在临时全新环境中完整通过，共享门禁 branch coverage 为 95%。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -550,9 +566,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/check-css-watch.mjs` | 在临时目录启动 Tailwind `--watch=always`，确认首次 watch build 完成后终止进程并清理临时输出。 |
 | `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
 | `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
-| `scripts/accept_phase_1.py` | 提供 Step 20 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与完整 Phase 1 门禁、启动并可靠清理本机 Django server，再运行 desktop/mobile Playwright smoke。 |
-| `scripts/accept_phase_2.py` | 提供 Step 28 全新环境端到端验收：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与共享项目门禁、启动并可靠清理真实 Development server，再运行 Phase 2 desktop/mobile Playwright smoke。 |
-| `scripts/accept_phase_3.py` | 提供 Step 36 全新环境端到端验收：建立临时 uv environment、执行 migration 与共享门禁、启动并可靠清理 Development server，再依次运行 Phase 2/3 desktop/mobile smoke。 |
+| `scripts/_acceptance.py` | 提供各阶段共享的全新环境验收流程：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与指定门禁、启动并可靠清理真实 Development server、依次运行 smoke，并在失败时输出 server log。 |
+| `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
+| `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
+| `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
 | `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/Logo_without_USYD.png` | 保存获准 Home Logo 的未改动 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
@@ -698,8 +715,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/safety/migrations/0001_initial.py` | 创建 Risk Notice 版本表与数据库约束。 |
 | `tests/test_risk_notice_versions.py` | 验证版本切换、旧正文保留、唯一约束、环境隔离、后台权限和合成文本标记。 |
 | `tests/__init__.py` | 将顶层 `tests` 标记为 Python package。 |
-| `tests/conftest.py` | 提供全套测试自动启用的外部网络隔离，只允许 loopback、Django test host 和当前数据库 host，并对外部 DNS/socket 连接立即失败。 |
-| `tests/test_project_scaffold.py` | 验证五个 AppConfig 可导入、名称正确且没有额外项目 App 注册。 |
+| `tests/conftest.py` | 提供全套测试自动启用的外部网络隔离，只允许 loopback、Django test host 和当前数据库 host，并对外部 DNS/socket 连接立即失败；另提供共享 `verified_member` fixture。 |
+| `tests/factories.py` | 统一建立合成 User、可选 EmailAddress 验证状态、USU 审核权限及 MemberProfile，供各测试以显式参数声明差异。 |
+| `tests/browser_runner.py` | 以 UTF-8 捕获输出启动 `tests/browser/` 下的 Node Playwright 场景，传入 live server URL 与额外环境变量，并在失败时附带完整输出。 |
+| `tests/privacy.py` | 提供公开页面私有值扫描断言与 Email/USU ID/审核状态集合，一次报告全部泄露值。 |
+| `tests/test_project_scaffold.py` | 验证每个 `PROJECT_APPS` 条目可导入，且 AppConfig 名称与所在包路径一致。 |
 | `tests/test_database_settings.py` | 验证 PostgreSQL URL 解析、encoded credentials、连接 options、非 PostgreSQL 拒绝和必填变量失败行为。 |
 | `tests/test_environment_settings.py` | 验证 Development、Test、Production 的环境职责、Production 安全设置、manifest static storage 和缺少 Secret 时的安全失败。 |
 | `tests/test_user_model.py` | 验证 Custom User 创建、标准权限字段、身份与审核默认值、Email 必填与唯一，以及审核人 Self ForeignKey 的 `SET_NULL` 行为。 |
@@ -736,24 +756,21 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_phase2_accessibility_browser.py` | 在 `DEBUG=False` 下开启 Draft 并复用隔离错误 URLConf，以真实静态 live server 调用 Step 27 统一 accessibility Playwright scenario。 |
 | `tests/test_public_metadata_sitemap_footer.py` | 验证三个正式宣传页的准确 Metadata/Open Graph、环境派生 URL、无硬编码 canonical host、含 Members 列表且排除个人 detail 与 Draft 的 sitemap XML 精确 allowlist，以及 Footer 的获准 Instagram 与禁止内容边界。 |
 | `tests/test_authentication_templates.py` | 验证项目认证模板覆盖、共享页面壳、Alpine/no-JavaScript 边界、ARIA error 关联、数字 code attributes 及 Password/code 不回显。 |
-| `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 精确版本与 SHA-256、无第三方 CDN、design tokens、focus/reduced-motion 和关键颜色 contrast。 |
+| `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 与 `package.json` 运行依赖一致及 SHA-256、无第三方 CDN、构建产物中的 design tokens 与 focus/reduced-motion，以及从 `@theme` 读取的关键颜色 contrast。 |
 | `tests/test_authentication_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Node Playwright；显式按 UTF-8 捕获输出，失败时保留真实浏览器诊断。 |
 | `tests/test_phase1_browser_flows.py` | 编排 Phase 1 Signup/verification、Password login/Account update、Magic Code 和 Admin USU review 浏览器流程，并从隔离的 Playwright storage state 读取服务端 Session code 以继续真实流程。 |
-| `tests/test_phase1_acceptance.py` | 验证 Step 20 验收命令失败传播、运行中 Development server 清理，以及 README 对锁定安装、自动验收和人工 Phase 1 流程的覆盖。 |
-| `tests/test_phase2_acceptance.py` | 验证 Step 28 全新环境验收的命令顺序、失败传播、Development server 清理，以及 README 对共享门禁、自动验收和人工 Phase 2 流程的覆盖。 |
-| `tests/test_phase3_acceptance.py` | 验证 Step 36 全新环境验收的锁定安装、migration、共享门禁、两组 smoke、失败传播、Development server 清理及 README Phase 3 流程。 |
-| `tests/test_phase4_acceptance.py` | 验证 Step 45 全新环境验收的锁定安装、migration、共享门禁、三组 smoke、失败传播、Development server 清理及 README Phase 4 流程。 |
+| `tests/test_acceptance.py` | 以参数化方式验证四个阶段验收入口的完整命令序列、smoke 失败时输出 server log 并停止 server、缺少 uv 时失败、terminate/kill 清理、脚本直接执行时的导入，以及 README 列出各阶段验收与门禁命令。 |
 | `tests/test_phase3_accessibility_browser.py` | 以真实静态 live server、合成已验证账户和隔离临时 media 调用 Phase 3 统一 Playwright 场景，并分别验证完整资料流程、公开 empty state 和临时目录清理。 |
 | `tests/test_quality_security.py` | 验证敏感文件及高置信凭据扫描、测试外部网络阻断、认证与身份日志隐私、Anonymous 页面和 Members 公开响应的私有字段隔离、Phase 3 不收集年龄/监护人资料，以及 HttpOnly Session cookie。 |
 | `tests/test_quality_gate.py` | 验证统一门禁不会吞掉子命令失败，非零退出会作为验收失败传播。 |
-| `tests/browser/browser-support.mjs` | 为 Playwright scenarios 提供必填环境变量读取、只允许当前 live-server origin 的 browser context，以及外部请求断言。 |
+| `tests/browser/browser-support.mjs` | 为 Playwright scenarios 提供必填环境变量读取、只允许当前 live-server origin 的 browser context、外部请求断言，以及共享的会话 cookie、溢出、页面边界、landmark、可见内容、触控目标与 Focus 断言。 |
 | `tests/browser/authentication-ui.mjs` | 在 Chromium 中执行小屏、键盘、Alpine、整串 code 输入、无 JavaScript fallback 和服务端错误焦点的端到端断言，并复用同源网络隔离。 |
 | `tests/browser/phase1-core-flows.mjs` | 在 Chromium 中执行 Phase 1 注册验证、两种登录、账户更新、登出和 Admin USU review 操作，所有场景均使用同源网络限制。 |
 | `tests/browser/development-server-smoke.mjs` | 对真实 Development server 执行 desktop/mobile Home、Signup、Login、Account redirect、CSS、布局、page error、同源请求和 Branding smoke checks。 |
 | `tests/browser/phase2-development-smoke.mjs` | 对真实 Development server 执行 Phase 2 desktop/mobile 正式页面、Draft 分支、错误页、认证入口、CSS、布局、page error 和同源请求 smoke checks。 |
 | `tests/browser/phase3-development-smoke.mjs` | 对真实 Development server 执行 Phase 3 desktop/mobile Members、Anonymous Profile redirect、不可见详情、Development media、CSS、布局、page error 和同源请求 smoke checks。 |
 | `tests/browser/phase4-development-smoke.mjs` | 对真实 Development server 执行 Phase 4 desktop/tablet/mobile Home、Events、详情、导航、报名状态、CSS、布局、page error 和同源请求 smoke checks。 |
-| `scripts/accept_phase_4.py` | 在临时全新 uv environment 中编排 PostgreSQL、锁定依赖、migrations、共享项目门禁、真实 Development server 及 Phase 2–4 smoke，并保证失败传播与资源清理。 |
+| `scripts/accept_phase_4.py` | Step 45 验收入口：以共享项目门禁依次运行 Phase 2–4 Development smoke。 |
 | `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
 | `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、文字可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |

@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from apps.accounts.admin import UserAdmin
 from apps.accounts.services import review_usu_id, update_usu_identity
+from tests import factories
 
 User = get_user_model()
 PASSWORD = "A-valid-password-2026"
@@ -13,8 +14,8 @@ pytestmark = pytest.mark.django_db
 
 
 def create_user(*, username: str, **extra_fields):
-    return User.objects.create_user(
-        username=username,
+    return factories.create_user(
+        username,
         email=f"{username}@example.net",
         password=PASSWORD,
         **extra_fields,

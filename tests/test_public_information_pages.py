@@ -2,8 +2,6 @@ import re
 from html.parser import HTMLParser
 
 import pytest
-from allauth.account.models import EmailAddress
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 
@@ -29,22 +27,6 @@ class HeadingParser(HTMLParser):
             self.headings.append((self._current_level, text))
             self._current_level = None
             self._current_text = []
-
-
-@pytest.fixture
-def verified_member(db):
-    user = get_user_model().objects.create_user(
-        username="public-page-member",
-        email="public-page-member@example.com",
-        password="test-password",
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
-        verified=True,
-    )
-    return user
 
 
 def response_content(client, url_name):

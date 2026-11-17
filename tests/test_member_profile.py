@@ -8,22 +8,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from PIL import Image
 
-from apps.accounts.models import User
 from apps.members.admin import MemberProfileAdmin
 from apps.members.forms import MemberProfileForm
 from apps.members.models import MAX_AVATAR_SIZE, MemberProfile
 from apps.members.services import ensure_member_profile
+from tests.factories import create_user
 
 pytestmark = pytest.mark.django_db
-
-
-def create_user(*, username: str, is_active: bool = True) -> User:
-    return User.objects.create_user(
-        username=username,
-        email=f"{username}@example.com",
-        password="test-password",
-        is_active=is_active,
-    )
 
 
 def create_image_upload(

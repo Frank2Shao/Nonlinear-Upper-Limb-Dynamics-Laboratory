@@ -9,14 +9,16 @@ from django.utils import timezone
 from apps.events.admin import EventRegistrationAdmin
 from apps.events.models import Event, EventRegistration
 from apps.safety.models import RiskNoticeVersion
+from tests import factories
+from tests.privacy import assert_no_private_values
 
 pytestmark = pytest.mark.django_db
 PASSWORD = "A-valid-password-2026"
 
 
-def create_user(django_user_model, *, username: str, **extra_fields):
-    return django_user_model.objects.create_user(
-        username=username,
+def create_user(*, username: str, **extra_fields):
+    return factories.create_user(
+        username,
         email=f"{username}@example.test",
         password=PASSWORD,
         **extra_fields,
@@ -35,7 +37,6 @@ def grant_permission(user, codename: str):
 
 def create_registration_history(django_user_model):
     member = create_user(
-        django_user_model,
         username="roster-member",
         first_name="Synthetic",
         last_name="Member",
@@ -104,9 +105,7 @@ def test_regular_member_cannot_access_registration_roster(client, django_user_mo
 
 
 def test_staff_without_roster_permission_cannot_access(client, django_user_model):
-    staff = create_user(
-        django_user_model, username="unpermitted-roster-staff", is_staff=True
-    )
+    staff = create_user(username="unpermitted-roster-staff", is_staff=True)
     _member, _event, _cancelled, active = create_registration_history(django_user_model)
     client.force_login(staff)
 
@@ -126,7 +125,7 @@ def test_event_editor_permission_does_not_grant_roster_access(
     client, django_user_model
 ):
     staff = grant_permission(
-        create_user(django_user_model, username="event-editor-only", is_staff=True),
+        create_user(username="event-editor-only", is_staff=True),
         "change_event",
     )
     create_registration_history(django_user_model)
@@ -141,7 +140,7 @@ def test_authorized_staff_can_view_current_and_historical_registration_data(
     client, django_user_model
 ):
     staff = grant_permission(
-        create_user(django_user_model, username="roster-viewer", is_staff=True),
+        create_user(username="roster-viewer", is_staff=True),
         "view_eventregistration",
     )
     member, event, cancelled, active = create_registration_history(django_user_model)
@@ -166,9 +165,7 @@ def test_authorized_staff_has_read_only_detail_and_cannot_forge_changes(
     client, django_user_model
 ):
     staff = grant_permission(
-        create_user(
-            django_user_model, username="readonly-roster-viewer", is_staff=True
-        ),
+        create_user(username="readonly-roster-viewer", is_staff=True),
         "view_eventregistration",
     )
     _member, _event, _cancelled, active = create_registration_history(django_user_model)
@@ -225,8 +222,14 @@ def test_public_event_page_does_not_expose_roster_or_history(client, django_user
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert member.get_full_name() not in content
-    assert member.email not in content
-    assert member.usu_id not in content
-    assert cancelled.risk_notice.version not in content
-    assert active.risk_notice.version not in content
+    assert_no_private_values(
+        content,
+        (
+            member.get_full_name(),
+            member.email,
+            member.usu_id,
+            cancelled.risk_notice.version,
+            active.risk_notice.version,
+        ),
+        context="Public event detail",
+    )

@@ -2,21 +2,17 @@ import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 
 import {
+  addSessionCookie,
   assertNoExternalRequests,
   createLocalContext,
   requireEnvironment,
 } from "./browser-support.mjs";
 
 const baseUrl = requireEnvironment("NULDL_LIVE_SERVER_URL");
-const cookieName = requireEnvironment("NULDL_SESSION_COOKIE_NAME");
 const cookieValue = requireEnvironment("NULDL_SESSION_COOKIE_VALUE");
 const externalRequests = [];
 const pageErrors = [];
 const browser = await chromium.launch({ headless: true });
-
-const addSession = async (context) => {
-  await context.addCookies([{ name: cookieName, value: cookieValue, url: baseUrl }]);
-};
 
 const assertAvatarInterface = async (page, label) => {
   await page.getByRole("heading", { level: 1, name: "Edit Profile" }).waitFor();
@@ -55,7 +51,7 @@ try {
     { viewport: { width: 1280, height: 900 } },
     externalRequests,
   );
-  await addSession(desktopContext);
+  await addSessionCookie(desktopContext, baseUrl, cookieValue);
   const desktopPage = await desktopContext.newPage();
   desktopPage.on("pageerror", (error) => pageErrors.push(error.message));
   await desktopPage.goto(`${baseUrl}/profile/edit/`);
@@ -86,7 +82,7 @@ try {
     { viewport: { width: 390, height: 844 } },
     externalRequests,
   );
-  await addSession(mobileContext);
+  await addSessionCookie(mobileContext, baseUrl, cookieValue);
   const mobilePage = await mobileContext.newPage();
   mobilePage.on("pageerror", (error) => pageErrors.push(error.message));
   await mobilePage.goto(`${baseUrl}/profile/edit/`);

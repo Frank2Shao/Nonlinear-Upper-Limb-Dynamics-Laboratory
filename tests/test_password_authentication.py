@@ -4,7 +4,6 @@ import pytest
 from allauth.account.internal.flows.email_verification_by_code import (
     EMAIL_VERIFICATION_CODE_SESSION_KEY,
 )
-from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -12,6 +11,7 @@ from django.core.cache import cache
 from django.urls import reverse
 
 from apps.members.models import MemberProfile
+from tests import factories
 
 User = get_user_model()
 PASSWORD = "A-valid-password-2026"
@@ -31,19 +31,13 @@ def create_user(
     verified: bool = True,
     is_active: bool = True,
 ):
-    user = User.objects.create_user(
-        username=username,
+    return factories.create_user(
+        username,
         email=email,
         password=PASSWORD,
+        verified=verified,
         is_active=is_active,
     )
-    EmailAddress.objects.create(
-        user=user,
-        email=email,
-        primary=True,
-        verified=verified,
-    )
-    return user
 
 
 def login(client, *, username: str, password: str, next_url: str | None = None):

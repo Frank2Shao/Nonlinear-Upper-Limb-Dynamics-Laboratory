@@ -1,9 +1,9 @@
 import pytest
-from allauth.account.models import EmailAddress
 from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.members.models import MemberProfile
+from tests import factories
 
 pytestmark = pytest.mark.django_db
 
@@ -14,19 +14,11 @@ def create_member(
     verified: bool = True,
     is_active: bool = True,
 ) -> tuple[User, MemberProfile]:
-    user = User.objects.create_user(
-        username=username,
-        email=f"{username}@example.com",
-        password="correct horse battery staple",
-        is_active=is_active,
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
+    return factories.create_member(
+        username,
         verified=verified,
+        user_fields={"is_active": is_active},
     )
-    return user, MemberProfile.objects.create(user=user)
 
 
 def valid_profile_data(**overrides):

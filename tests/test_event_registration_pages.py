@@ -8,6 +8,8 @@ from django.utils import timezone
 from apps.events.models import Event, EventRegistration
 from apps.safety.models import RiskNoticeVersion
 from apps.safety.services import activate_risk_notice
+from tests.factories import create_user
+from tests.privacy import assert_no_private_values
 
 pytestmark = pytest.mark.django_db
 
@@ -344,28 +346,19 @@ def test_public_and_other_member_views_do_not_expose_registration_history(
         reverse("events:list"),
         reverse("events:detail", args=[event.slug]),
     ):
-        content = client.get(path).content.decode()
-        for private_value in private_values:
-            assert private_value not in content
+        assert_no_private_values(
+            client.get(path).content.decode(), private_values, context=path
+        )
 
-    other_member = django_user_model.objects.create_user(
-        username="other-event-member",
-        email="other-event-member@example.test",
-        password="test-password",
-    )
-    EmailAddress.objects.create(
-        user=other_member,
-        email=other_member.email,
-        verified=True,
-        primary=True,
+    other_member = create_user(
+        "other-event-member", email="other-event-member@example.test", verified=True
     )
     client.force_login(other_member)
     detail = client.get(reverse("events:detail", args=[event.slug])).content.decode()
     assert ">Register</a>" in detail
     assert "Cancel registration" not in detail
     assert "Registered" not in detail
-    for private_value in private_values:
-        assert private_value not in detail
+    assert_no_private_values(detail, private_values, context="Other member detail")
 
     cancellation = client.post(cancel_url, {"confirmed": "true"})
     assert cancellation.status_code == 400

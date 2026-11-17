@@ -3,6 +3,7 @@ import { chromium } from "@playwright/test";
 
 import {
   assertNoExternalRequests,
+  assertNoHorizontalOverflow,
   createLocalContext,
   requireEnvironment,
 } from "./browser-support.mjs";
@@ -11,14 +12,6 @@ const baseUrl = requireEnvironment("NULDL_LIVE_SERVER_URL");
 const externalRequests = [];
 const pageErrors = [];
 const browser = await chromium.launch({ headless: true });
-
-const assertNoHorizontalOverflow = async (page, label) => {
-  assert.equal(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
-    true,
-    `${label} must not overflow horizontally.`,
-  );
-};
 
 const assertReadableElements = async (page, label) => {
   const clipped = await page.locator("h1, h2, p, li, .button").evaluateAll(

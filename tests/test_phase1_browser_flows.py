@@ -1,6 +1,4 @@
 import json
-import os
-import subprocess
 import tempfile
 from importlib import import_module
 from pathlib import Path
@@ -16,33 +14,19 @@ from django.contrib.auth.models import Permission
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
 from apps.accounts.services import update_usu_identity
+from tests.browser_runner import run_node_scenario
 
 User = get_user_model()
 PASSWORD = "A-valid-password-2026"
-SCRIPT = Path(__file__).parent / "browser" / "phase1-core-flows.mjs"
 
 
 class Phase1CoreBrowserFlowTests(StaticLiveServerTestCase):
     def run_scenario(self, scenario: str, **values: object) -> None:
-        environment = os.environ.copy()
-        environment.update(
-            {
-                "NULDL_BROWSER_SCENARIO": scenario,
-                "NULDL_LIVE_SERVER_URL": self.live_server_url,
-                **{key: str(value) for key, value in values.items()},
-            }
+        run_node_scenario(
+            "phase1-core-flows.mjs",
+            self.live_server_url,
+            extra_env={"NULDL_BROWSER_SCENARIO": scenario, **values},
         )
-        result = subprocess.run(
-            ["node", str(SCRIPT)],
-            capture_output=True,
-            check=False,
-            encoding="utf-8",
-            errors="replace",
-            env=environment,
-            timeout=90,
-        )
-        output = (result.stdout or "") + (result.stderr or "")
-        assert result.returncode == 0, output
 
     def session_data(self, storage_state: str) -> dict[str, object]:
         state = json.loads(Path(storage_state).read_text(encoding="utf-8"))

@@ -1,25 +1,7 @@
 import pytest
-from allauth.account.models import EmailAddress
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def verified_member(db):
-    user = get_user_model().objects.create_user(
-        username="home-member",
-        email="home-member@example.com",
-        password="test-password",
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
-        verified=True,
-    )
-    return user
 
 
 def test_home_uses_approved_metadata_and_content(client):

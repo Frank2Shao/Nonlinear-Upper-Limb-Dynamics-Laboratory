@@ -65,3 +65,11 @@ def block_external_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
     monkeypatch.setattr(socket, "getaddrinfo", guarded_getaddrinfo)
+
+
+@pytest.fixture
+def verified_member(db):
+    """An active member with a verified primary email and no profile."""
+    from tests.factories import create_user
+
+    return create_user("verified-member", verified=True)

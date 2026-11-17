@@ -3,12 +3,13 @@ import time
 
 import pytest
 from allauth.account.internal.stagekit import LOGIN_SESSION_KEY
-from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.cache import cache
 from django.urls import reverse
+
+from tests import factories
 
 User = get_user_model()
 PASSWORD = "A-valid-password-2026"
@@ -27,19 +28,14 @@ def create_user(
     verified: bool = True,
     is_active: bool = True,
 ):
-    user = User.objects.create_user(
-        username=username,
+    user = factories.create_user(
+        username,
         email=email,
         password=PASSWORD,
+        verified=verified,
         is_active=is_active,
     )
-    email_address = EmailAddress.objects.create(
-        user=user,
-        email=email,
-        primary=True,
-        verified=verified,
-    )
-    return user, email_address
+    return user, user.emailaddress_set.get()
 
 
 def request_login_code(client, *, email: str, next_url: str | None = None):

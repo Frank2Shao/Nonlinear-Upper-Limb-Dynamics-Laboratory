@@ -1,18 +1,15 @@
-import os
-import subprocess
 import tempfile
 from io import BytesIO
-from pathlib import Path
 
-from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from PIL import Image
 
-from apps.accounts.models import User
 from apps.members.models import MemberProfile
+from tests.browser_runner import run_node_scenario
+from tests.factories import create_user
 
 
 @override_settings(
@@ -36,17 +33,7 @@ class AvatarBrowserTests(StaticLiveServerTestCase):
     def test_avatar_edit_interface_and_upload_error(self):
         image = BytesIO()
         Image.new("RGB", (12, 8), color="gold").save(image, format="PNG")
-        user = User.objects.create_user(
-            username="avatar-browser",
-            email="avatar-browser@example.com",
-            password="correct horse battery staple",
-        )
-        EmailAddress.objects.create(
-            user=user,
-            email=user.email,
-            primary=True,
-            verified=True,
-        )
+        user = create_user("avatar-browser", verified=True)
         MemberProfile.objects.create(
             user=user,
             avatar=SimpleUploadedFile(
@@ -57,23 +44,13 @@ class AvatarBrowserTests(StaticLiveServerTestCase):
         )
         self.client.force_login(user)
 
-        environment = os.environ.copy()
-        environment["NULDL_LIVE_SERVER_URL"] = self.live_server_url
-        environment["NULDL_SESSION_COOKIE_NAME"] = settings.SESSION_COOKIE_NAME
-        environment["NULDL_SESSION_COOKIE_VALUE"] = self.client.cookies[
-            settings.SESSION_COOKIE_NAME
-        ].value
-        script = Path(__file__).parent / "browser" / "avatar-edit.mjs"
-
-        result = subprocess.run(
-            ["node", str(script)],
-            capture_output=True,
-            check=False,
-            encoding="utf-8",
-            errors="replace",
-            env=environment,
-            timeout=90,
+        run_node_scenario(
+            "avatar-edit.mjs",
+            self.live_server_url,
+            extra_env={
+                "NULDL_SESSION_COOKIE_NAME": settings.SESSION_COOKIE_NAME,
+                "NULDL_SESSION_COOKIE_VALUE": self.client.cookies[
+                    settings.SESSION_COOKIE_NAME
+                ].value,
+            },
         )
-
-        output = (result.stdout or "") + (result.stderr or "")
-        assert result.returncode == 0, output

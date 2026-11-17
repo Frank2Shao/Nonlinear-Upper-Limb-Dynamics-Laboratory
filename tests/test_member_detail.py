@@ -1,11 +1,11 @@
 import re
 
 import pytest
-from allauth.account.models import EmailAddress
 from django.urls import reverse
 
-from apps.accounts.models import User
 from apps.members.models import MemberProfile
+from tests.factories import create_member
+from tests.privacy import assert_no_private_values
 
 pytestmark = pytest.mark.django_db
 
@@ -19,27 +19,20 @@ def create_profile(
     is_verified: bool = True,
     **profile_fields,
 ) -> MemberProfile:
-    user = User.objects.create_user(
-        username=username,
+    return create_member(
+        username,
         email=f"private-{username}@example.com",
-        password="test-password",
-        is_active=is_active,
-        is_usyd_student=True,
-        usu_id="00112233",
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
         verified=is_verified,
-    )
-    return MemberProfile.objects.create(
-        user=user,
+        user_fields={
+            "is_active": is_active,
+            "is_usyd_student": True,
+            "usu_id": "00112233",
+        },
         is_published=is_published,
         is_hidden_by_admin=is_hidden_by_admin,
         executive_role="PRIVATE EXECUTIVE SENTINEL",
         **profile_fields,
-    )
+    )[1]
 
 
 def test_detail_uses_exact_username_url_and_public_template(client):
@@ -92,17 +85,20 @@ def test_detail_shows_only_allowed_public_fields_and_safe_external_links(client)
         'href="https://example.com/member?from=club&amp;view=public" '
         'target="_blank" rel="noopener noreferrer"' in content
     )
-    for private_value in (
-        "private-public-detail@example.com",
-        "00112233",
-        "PRIVATE EXECUTIVE SENTINEL",
-        "pending",
-        "USYD",
-        "USU ID",
-        str(profile.created_at),
-        str(profile.updated_at),
-    ):
-        assert private_value not in content
+    assert_no_private_values(
+        content,
+        (
+            "private-public-detail@example.com",
+            "00112233",
+            "PRIVATE EXECUTIVE SENTINEL",
+            "pending",
+            "USYD",
+            "USU ID",
+            profile.created_at,
+            profile.updated_at,
+        ),
+        context="Member detail",
+    )
 
 
 def test_detail_escapes_profile_content(client):

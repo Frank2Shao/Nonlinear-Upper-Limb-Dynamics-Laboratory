@@ -2,42 +2,22 @@ import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 
 import {
+  addSessionCookie,
+  assertFocusIndicator,
   assertNoExternalRequests,
+  assertNoHorizontalOverflow,
+  assertTouchTargets,
+  assertVisibleContentFits,
   createLocalContext,
   requireEnvironment,
 } from "./browser-support.mjs";
 
 const baseUrl = requireEnvironment("NULDL_LIVE_SERVER_URL");
+const VISIBLE_CONTENT = { selector: "h1, h2, h3, p, li, dt, dd, a, button, label, img" };
 const mode = process.env.NULDL_PHASE3_MODE || "full";
 const externalRequests = [];
 const pageErrors = [];
 const browser = await chromium.launch({ headless: true });
-
-const assertNoHorizontalOverflow = async (page, label) => {
-  const dimensions = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-  }));
-  assert.ok(
-    dimensions.scrollWidth <= dimensions.clientWidth + 1,
-    `${label} has horizontal overflow: ${JSON.stringify(dimensions)}`,
-  );
-};
-
-const assertVisibleContentFits = async (page, label) => {
-  const clipped = await page
-    .locator("h1, h2, h3, p, li, dt, dd, a, button, label, img")
-    .evaluateAll((elements) =>
-      elements
-        .filter((element) => element.checkVisibility())
-        .filter((element) => {
-          const rectangle = element.getBoundingClientRect();
-          return rectangle.left < -1 || rectangle.right > document.documentElement.clientWidth + 1;
-        })
-        .map((element) => element.textContent?.trim() || element.getAttribute("alt")),
-    );
-  assert.deepEqual(clipped, [], `${label} contains clipped visible content.`);
-};
 
 const assertSemanticPage = async (page, label) => {
   const state = await page.evaluate(() => {
@@ -71,54 +51,7 @@ const assertPage = async (page, path, label) => {
   await page.locator("main#main-content h1").waitFor();
   await assertSemanticPage(page, label);
   await assertNoHorizontalOverflow(page, label);
-  await assertVisibleContentFits(page, label);
-};
-
-const assertTouchTargets = async (page, label) => {
-  const undersized = await page
-    .locator("a:not(.skip-link), button, summary, input, select, textarea")
-    .evaluateAll((elements) =>
-      elements
-        .filter((element) => element.checkVisibility())
-        .map((element) => {
-          const rectangle = element.getBoundingClientRect();
-          return {
-            height: rectangle.height,
-            name:
-              element.getAttribute("aria-label") ||
-              element.textContent?.trim() ||
-              element.getAttribute("name"),
-            width: rectangle.width,
-          };
-        })
-        .filter(({ height, width }) => height < 24 || width < 24),
-    );
-  assert.deepEqual(undersized, [], `${label} contains touch targets smaller than 24px.`);
-};
-
-const assertFocusIndicator = async (locator, label) => {
-  await locator.focus();
-  const focus = await locator.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      active: document.activeElement === element,
-      outlineStyle: style.outlineStyle,
-      outlineWidth: Number.parseFloat(style.outlineWidth),
-    };
-  });
-  assert.equal(focus.active, true, `${label} must accept keyboard focus.`);
-  assert.notEqual(focus.outlineStyle, "none", `${label} must expose a focus outline.`);
-  assert.ok(focus.outlineWidth >= 2, `${label} focus outline must be clearly visible.`);
-};
-
-const addSession = async (context) => {
-  await context.addCookies([
-    {
-      name: requireEnvironment("NULDL_SESSION_COOKIE_NAME"),
-      value: requireEnvironment("NULDL_SESSION_COOKIE_VALUE"),
-      url: baseUrl,
-    },
-  ]);
+  await assertVisibleContentFits(page, label, VISIBLE_CONTENT);
 };
 
 const assertEmptyDirectory = async (page, label) => {
@@ -160,7 +93,7 @@ try {
       { viewport: { width: 1440, height: 900 } },
       externalRequests,
     );
-    await addSession(desktopContext);
+    await addSessionCookie(desktopContext, baseUrl, requireEnvironment("NULDL_SESSION_COOKIE_VALUE"));
     const desktopPage = await desktopContext.newPage();
     desktopPage.on("pageerror", (error) => pageErrors.push(error.message));
     for (const path of [...privatePaths, ...publicPaths]) {
@@ -231,7 +164,7 @@ try {
       { viewport: { width: 390, height: 844 } },
       externalRequests,
     );
-    await addSession(mobileContext);
+    await addSessionCookie(mobileContext, baseUrl, requireEnvironment("NULDL_SESSION_COOKIE_VALUE"));
     const mobilePage = await mobileContext.newPage();
     mobilePage.on("pageerror", (error) => pageErrors.push(error.message));
     for (const path of [...privatePaths, ...publicPaths]) {
@@ -255,7 +188,7 @@ try {
       { viewport: { width: 640, height: 900 } },
       externalRequests,
     );
-    await addSession(zoomContext);
+    await addSessionCookie(zoomContext, baseUrl, requireEnvironment("NULDL_SESSION_COOKIE_VALUE"));
     const zoomPage = await zoomContext.newPage();
     zoomPage.on("pageerror", (error) => pageErrors.push(error.message));
     for (const path of [...privatePaths, ...publicPaths]) {
@@ -264,7 +197,7 @@ try {
         document.documentElement.style.fontSize = "200%";
       });
       await assertNoHorizontalOverflow(zoomPage, `200% content zoom ${path}`);
-      await assertVisibleContentFits(zoomPage, `200% content zoom ${path}`);
+      await assertVisibleContentFits(zoomPage, `200% content zoom ${path}`, VISIBLE_CONTENT);
     }
     await zoomContext.close();
 
@@ -274,7 +207,7 @@ try {
       { javaScriptEnabled: false, viewport: { width: 390, height: 844 } },
       externalRequests,
     );
-    await addSession(noJavaScriptContext);
+    await addSessionCookie(noJavaScriptContext, baseUrl, requireEnvironment("NULDL_SESSION_COOKIE_VALUE"));
     const noJavaScriptPage = await noJavaScriptContext.newPage();
     await noJavaScriptPage.goto(`${baseUrl}/profile/edit/`);
     await noJavaScriptPage.locator("#id_display_name").fill("No JavaScript Profile");
@@ -298,7 +231,7 @@ try {
       { reducedMotion: "reduce", viewport: { width: 1440, height: 900 } },
       externalRequests,
     );
-    await addSession(reducedMotionContext);
+    await addSessionCookie(reducedMotionContext, baseUrl, requireEnvironment("NULDL_SESSION_COOKIE_VALUE"));
     const reducedMotionPage = await reducedMotionContext.newPage();
     reducedMotionPage.on("pageerror", (error) => pageErrors.push(error.message));
     await reducedMotionPage.goto(`${baseUrl}/profile/preview/`);

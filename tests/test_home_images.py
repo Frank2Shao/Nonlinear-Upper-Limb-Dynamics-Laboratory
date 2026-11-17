@@ -15,7 +15,6 @@ GENERATED_DIRECTORY = PROJECT_ROOT / "static" / "images" / "brand"
 def test_approved_logo_source_is_preserved_exactly():
     source_bytes = SOURCE.read_bytes()
 
-    assert len(source_bytes) == 1_580_788
     assert (
         hashlib.sha256(source_bytes).hexdigest()
         == "65114bdc25ca376408b3c715a02b100fa979ca1eba182c9f5baf87911eaa89d1"

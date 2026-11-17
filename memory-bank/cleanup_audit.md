@@ -166,6 +166,25 @@
    - **T14**：新增 `events/includes/confirm_page.html`，两张整页确认模板只传 heading、heading_id 与表单 include；保留原模板名和元素 id。
    - **T2 推迟**：`tests/test_global_templates.py:93` 固定断言 `matchMedia('(max-width: 60rem)')` 字符串，而且 CSS media query 无法读取自定义属性，单一来源需与 C5 的断点统一一起设计。
    - **T15 推迟**：属于可选项，需要新增手写静态 JS 并决定其构建与 manifest 归属，会改变 `<body>` 输出，与本批“输出不变”的标准冲突。
-4. **第 4 批：测试与脚本收敛（只改 tests/ 与 scripts/）**：D1、D2、D3、E2 + D4、D6、D7、D8、D9、D10。D5 先征求项目负责人意见。
+4. **第 4 批：测试与脚本收敛（只改 tests/ 与 scripts/）**：D1、D2、D3、E2 + D4、D6、D7、D8、D9、D10。D5 先征求项目负责人意见。**状态（2026-11-17）：已完成 D1–D10 与 E2；D5 按项目负责人选择的方案 B 实施；`architecture.md` 3.46 与文件职责表已同步。** 只修改了 `tests/` 与 `scripts/`。验证结果：Ruff、Django check、`makemigrations --check`、`static:check` 均通过；完整 pytest `385 passed`（原 380）；4 个 Development server smoke 对真实 runserver 全部通过；`accept_phase_N.py` 直接执行时的导入回退也已验证；重构后的 `scripts/accept_phase_4.py` 在临时全新环境中完整通过（共享门禁 branch coverage 95%，以及 Phase 2–4 Development smoke）。实施说明与偏差：
+   - **D1**：新增 `tests/factories.py`（`create_user`、`create_member`）和 conftest 共享的 `verified_member` fixture。`create_user` 的 `verified=None/True/False` 分别表示不建 EmailAddress、已验证、未验证。各文件仍保留带自身默认值（邮箱域名、密码、USU 资料、哨兵字段）的薄包装，以保持调用处语义不变。同时去掉了 4 份 `verified_member` 副本和 3 个 browser 测试里内联创建用户的代码。本批 `tests/` 与 `scripts/` 合计净减少约 570 行，已计入新增的共享模块与测试。
+   - **D2**：新增 `tests/browser_runner.py::run_node_scenario`，13 个 browser wrapper 不再各自调用 `subprocess`；UTF-8 解码和失败时输出完整日志的行为保持不变。
+   - **D3**：`browser-support.mjs` 新增共享的 `addSessionCookie`、`assertNoHorizontalOverflow`、`assertPageBounds`、`assertPageStructure`、`assertVisibleContentFits`、`assertTouchTargets` 和 `assertFocusIndicator`，并逐份比对了原有副本。各页的元素选择器本来就不同，因此改为调用方以参数传入：`assertVisibleContentFits` 必须传 selector，Phase 2 额外开启 `rejectEmptyBoxes`。**两处有意加严**：Events 两个场景的触控目标检查改用统一的默认选择器（新增 `input/select/textarea`）；Beginners/About 场景的溢出判断由 `innerWidth` 改为 `clientWidth`。两者现有页面都能通过。`pageerror`/外部请求收集只是一行事件监听，不再另行抽取。
+   - **E2 + D4**：新增 `scripts/_acceptance.py::run_acceptance`，4 个 `accept_phase_N.py` 改为约 20 行的入口，只声明门禁脚本与 smoke 列表；README 命令不变，直接执行时通过导入回退定位共享模块。Phase 2 原先缺少“失败时打印 server log”的逻辑，现在与其他阶段一致。`run` 复用 `verify_project.run`，其失败传播由 `test_quality_gate.py` 覆盖。4 个 `test_phaseN_acceptance.py` 合并为 `tests/test_acceptance.py`，覆盖内容为：
+     - 按 phase 参数化的完整命令序列；
+     - smoke 失败时打印日志并停止 server；
+     - 缺少 uv 时报错；
+     - terminate 与 kill 两条停止路径；
+     - 4 个脚本直接执行时的导入。
+   - **D6**：
+     - 删除读取 `base.html` 源码的 block 断言；渲染出的 metadata 已有断言。
+     - Header/Footer/菜单的 class 断言改为 landmark 级断言（`<header`、`<footer`、`<details`、`>Menu</summary>`），同时去掉 `matchMedia('(max-width: 60rem)')` 字符串断言，解除 T2 的测试阻碍；移动端收起行为仍由 `public-foundation.mjs` 验证。
+     - Signup/Account 的 Alpine 字符串断言改为“USYD 与 USU 字段已渲染且无 `x-cloak`”，条件显示与清空由 `authentication-ui.mjs` 验证。
+     - 扫描源码中 host 的测试改为行为测试：以 `preview.example.test` 请求页面和 sitemap，断言 og:url 与全部 sitemap URL 都使用请求 host，且没有 canonical。
+   - **D7**：从 `static_src/css/site.css` 的 `@theme` 解析颜色 token；对比度改为按 token 名参数化（5 组），构建产物断言改用容忍空白的正则。
+   - **D8**：manifest `packages` 改为与 `package.json` 的 `dependencies` 比较；Logo 源图删除字节数断言（SHA-256 已覆盖）。
+   - **D9**：快照式 App 列表改为“每个 `PROJECT_APPS` 条目都能导入，且 `name` 与包路径一致”。
+   - **D10**：新增 `tests/privacy.py`（`assert_no_private_values`、`private_identity_values`），5 个文件的隐私扫描改为调用它，失败时一次列出全部泄露值，并拒绝空字符串哨兵。各测试保留原有私有值清单，覆盖范围不变。
+   - **D5（项目负责人选择方案 B）**：README 测试不再固定措辞，只确认 README 写出了每个阶段的验收脚本（`scripts\accept_phase_N.py`）及其门禁脚本（Phase 1 为 `scripts\verify_phase_1.py`，其余为 `scripts\verify_project.py`）。文档内容改由人工审阅。
 5. **第 5 批：CSS Token 与去补丁**：C2、C3、C6、C7、C9、C10、C11、C12。浏览器全量回归并逐页截图对比。
 6. **第 6 批：中风险/需决策项（逐项单独评审）**：C4、C5、T12、T8、T4/T5、A8、A15、A16、E5、E7、E8、E9、A6、A19。每项先确认方案，再单独实施。N1 由项目负责人修订文档；N2、N3a 属于文档同步，可随第 1 批的 `architecture.md`/`design_document.md` 修订一并提交审批。

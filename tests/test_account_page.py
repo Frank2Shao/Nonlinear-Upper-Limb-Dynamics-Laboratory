@@ -1,11 +1,10 @@
 import pytest
-from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.urls import reverse
 
 from apps.accounts.services import review_usu_id
 from apps.members.models import MemberProfile
+from tests import factories
 
 User = get_user_model()
 PASSWORD = "A-valid-password-2026"
@@ -13,28 +12,13 @@ pytestmark = pytest.mark.django_db
 
 
 def create_user(*, username: str, verified: bool = True, **extra_fields):
-    can_review_usu_id = extra_fields.pop("can_review_usu_id", False)
-    email = f"{username}@example.net"
-    user = User.objects.create_user(
-        username=username,
-        email=email,
+    return factories.create_user(
+        username,
+        email=f"{username}@example.net",
         password=PASSWORD,
+        verified=verified,
         **extra_fields,
     )
-    EmailAddress.objects.create(
-        user=user,
-        email=email,
-        primary=True,
-        verified=verified,
-    )
-    if can_review_usu_id:
-        user.user_permissions.add(
-            Permission.objects.get(
-                content_type__app_label="accounts",
-                codename="review_usu_id",
-            )
-        )
-    return user
 
 
 def test_anonymous_user_is_redirected_to_login(client):

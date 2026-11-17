@@ -3,11 +3,18 @@ import { chromium } from "@playwright/test";
 
 import {
   assertNoExternalRequests,
+  assertNoHorizontalOverflow,
+  assertTouchTargets,
+  assertVisibleContentFits,
   createLocalContext,
   requireEnvironment,
 } from "./browser-support.mjs";
 
 const baseUrl = requireEnvironment("NULDL_LIVE_SERVER_URL");
+const VISIBLE_CONTENT = {
+  selector: "h1, h2, h3, p, li, dt, dd, a, summary, img",
+  rejectEmptyBoxes: true,
+};
 const externalRequests = [];
 const pageErrors = [];
 
@@ -50,39 +57,6 @@ const contrastRatio = (foreground, background) => {
     (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
     (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
   );
-};
-
-const assertNoHorizontalOverflow = async (page, label) => {
-  const overflow = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-  }));
-  assert.ok(
-    overflow.scrollWidth <= overflow.clientWidth + 1,
-    `${label} has horizontal overflow: ${JSON.stringify(overflow)}`,
-  );
-};
-
-const assertVisibleContentFits = async (page, label) => {
-  const clipped = await page
-    .locator("h1, h2, h3, p, li, dt, dd, a, summary, img")
-    .evaluateAll((elements) =>
-      elements
-        .filter((element) => {
-          if (!element.checkVisibility()) {
-            return false;
-          }
-          const rectangle = element.getBoundingClientRect();
-          return (
-            rectangle.width <= 0 ||
-            rectangle.height <= 0 ||
-            rectangle.left < -1 ||
-            rectangle.right > document.documentElement.clientWidth + 1
-          );
-        })
-        .map((element) => element.textContent?.trim() || element.getAttribute("alt") || element.tagName),
-    );
-  assert.deepEqual(clipped, [], `${label} contains clipped visible content.`);
 };
 
 const assertSemanticStructure = async (page, label) => {
@@ -161,30 +135,7 @@ const assertPage = async (page, definition, label) => {
   await assertSemanticStructure(page, label);
   await assertRequiredContent(page, definition);
   await assertNoHorizontalOverflow(page, label);
-  await assertVisibleContentFits(page, label);
-};
-
-const assertTouchTargets = async (page, label) => {
-  const undersized = await page
-    .locator("a:not(.skip-link), button, summary, input, select, textarea")
-    .evaluateAll((elements) =>
-      elements
-        .filter((element) => element.checkVisibility())
-        .map((element) => {
-          const rectangle = element.getBoundingClientRect();
-          return {
-            height: rectangle.height,
-            name:
-              element.getAttribute("aria-label") ||
-              element.textContent?.trim() ||
-              element.getAttribute("name") ||
-              element.tagName,
-            width: rectangle.width,
-          };
-        })
-        .filter(({ height, width }) => height < 24 || width < 24),
-    );
-  assert.deepEqual(undersized, [], `${label} contains touch targets smaller than 24px.`);
+  await assertVisibleContentFits(page, label, VISIBLE_CONTENT);
 };
 
 const assertFocusVisibleAndInViewport = async (page, expectedName) => {
@@ -343,7 +294,7 @@ try {
       document.documentElement.style.fontSize = "200%";
     });
     await assertNoHorizontalOverflow(zoomPage, `200% content zoom ${definition.path}`);
-    await assertVisibleContentFits(zoomPage, `200% content zoom ${definition.path}`);
+    await assertVisibleContentFits(zoomPage, `200% content zoom ${definition.path}`, VISIBLE_CONTENT);
   }
   await zoomContext.close();
 

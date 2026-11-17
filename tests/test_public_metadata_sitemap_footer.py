@@ -1,5 +1,4 @@
 import re
-from pathlib import Path
 from xml.etree import ElementTree
 
 import pytest
@@ -49,8 +48,8 @@ def test_public_pages_use_approved_metadata_and_open_graph(
     assert "nuldl.com" not in content
 
 
-def sitemap_locations(client):
-    response = client.get(reverse("sitemap"))
+def sitemap_locations(client, **request_headers):
+    response = client.get(reverse("sitemap"), **request_headers)
 
     assert response.status_code == 200
     assert response.headers["Content-Type"].startswith("application/xml")
@@ -113,25 +112,16 @@ def test_footer_exposes_only_approved_instagram_contact(client, url_name):
     assert "University of Sydney" not in content
 
 
-def test_step_26_sources_do_not_hardcode_a_canonical_host():
-    project_root = Path(__file__).parents[1]
-    source_paths = (
-        project_root / "apps" / "core" / "views.py",
-        project_root / "apps" / "core" / "urls.py",
-        project_root / "apps" / "core" / "templates" / "core" / "base.html",
-        project_root
-        / "apps"
-        / "core"
-        / "templates"
-        / "core"
-        / "includes"
-        / "footer.html",
-        project_root / "apps" / "core" / "templates" / "core" / "sitemap.xml",
-    )
+@override_settings(ALLOWED_HOSTS=["preview.example.test"])
+@pytest.mark.django_db
+def test_public_urls_follow_the_request_host_without_a_canonical_link(client):
+    host = "preview.example.test"
 
-    combined_source = "\n".join(
-        path.read_text(encoding="utf-8") for path in source_paths
-    )
-    assert "nuldl.com" not in combined_source
-    assert "testserver" not in combined_source
-    assert 'rel="canonical"' not in combined_source
+    content = client.get(reverse("about"), HTTP_HOST=host).content.decode()
+    _, locations = sitemap_locations(client, HTTP_HOST=host)
+
+    assert f'<meta property="og:url" content="http://{host}/about/">' in content
+    assert 'rel="canonical"' not in content
+    assert "nuldl.com" not in content
+    assert locations
+    assert all(location.startswith(f"http://{host}/") for location in locations)

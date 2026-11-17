@@ -1,10 +1,7 @@
-import os
-import subprocess
 import tempfile
 from io import BytesIO
 from pathlib import Path
 
-from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -13,6 +10,8 @@ from PIL import Image
 
 from apps.accounts.models import User
 from apps.members.models import MemberProfile
+from tests.browser_runner import run_node_scenario
+from tests.factories import create_user
 
 
 @override_settings(
@@ -43,37 +42,15 @@ class PhaseThreeAccessibilityBrowserTests(StaticLiveServerTestCase):
 
     @staticmethod
     def create_verified_user(username: str) -> User:
-        user = User.objects.create_user(
-            username=username,
-            email=f"{username}@example.com",
-            password="test-password",
-        )
-        EmailAddress.objects.create(
-            user=user,
-            email=user.email,
-            primary=True,
-            verified=True,
-        )
-        return user
+        return create_user(username, verified=True)
 
     def run_scenario(self, **extra_environment: str) -> None:
-        environment = os.environ.copy()
-        environment["NULDL_LIVE_SERVER_URL"] = self.live_server_url
-        environment.update(extra_environment)
-        script = Path(__file__).parent / "browser" / "phase3-accessibility.mjs"
-
-        result = subprocess.run(
-            ["node", str(script)],
-            capture_output=True,
-            check=False,
-            encoding="utf-8",
-            errors="replace",
-            env=environment,
+        run_node_scenario(
+            "phase3-accessibility.mjs",
+            self.live_server_url,
+            extra_env=extra_environment,
             timeout=240,
         )
-
-        output = (result.stdout or "") + (result.stderr or "")
-        assert result.returncode == 0, output
 
     def test_phase_three_profile_pages_meet_accessibility_and_browser_checks(self):
         owner_username = "phase3_" + "member" * 18

@@ -1,12 +1,24 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 
+import pytest
 from django.conf import settings
 
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def theme_tokens() -> dict[str, str]:
+    """Read colour tokens from the single Tailwind source of design tokens."""
+    source = (settings.BASE_DIR / "static_src" / "css" / "site.css").read_text(
+        encoding="utf8"
+    )
+    theme = re.search(r"@theme\s*\{(?P<body>.*?)\}", source, re.S)
+    assert theme, "static_src/css/site.css must declare an @theme block."
+    return dict(re.findall(r"(--color-[\w-]+):\s*(#[0-9a-fA-F]{6})\s*;", theme["body"]))
 
 
 def relative_luminance(hex_color: str) -> float:
@@ -35,33 +47,44 @@ def test_generated_vendor_manifest_matches_local_assets():
     manifest_path = settings.BASE_DIR / "static" / "vendor" / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf8"))
 
-    assert manifest["packages"] == {
-        "@fontsource/barlow-condensed": "5.3.0",
-        "@fontsource/inter": "5.3.0",
-        "alpinejs": "3.17.5",
-        "htmx.org": "2.0.11",
-    }
+    package = json.loads(
+        (settings.BASE_DIR / "package.json").read_text(encoding="utf8")
+    )
+
+    # Every runtime npm dependency is vendored, at the exact locked version.
+    assert manifest["packages"] == package["dependencies"]
     for relative_path, expected_hash in manifest["files"].items():
         assert sha256(settings.BASE_DIR / relative_path) == expected_hash
 
 
 def test_built_css_contains_design_and_accessibility_tokens():
     css = (settings.BASE_DIR / "static" / "css" / "site.css").read_text(encoding="utf8")
+    tokens = theme_tokens()
 
-    assert "--color-ink:#090909" in css
-    assert "--color-gold-bright:#ffd166" in css
+    for name in ("--color-ink", "--color-gold-bright"):
+        assert re.search(rf"{name}:\s*{tokens[name]}", css, re.I), name
     assert "Barlow Condensed" in css
     assert "Inter" in css
-    assert "prefers-reduced-motion:reduce" in css
+    assert re.search(r"prefers-reduced-motion:\s*reduce", css)
     assert ":focus-visible" in css
 
 
-def test_key_text_and_focus_colours_meet_wcag_contrast_thresholds():
-    assert contrast_ratio("#f4f0e7", "#090909") >= 4.5
-    assert contrast_ratio("#bdb5a7", "#090909") >= 4.5
-    assert contrast_ratio("#090909", "#d9ad50") >= 4.5
-    assert contrast_ratio("#ff938b", "#171717") >= 4.5
-    assert contrast_ratio("#ffd166", "#090909") >= 3
+@pytest.mark.parametrize(
+    ("foreground", "background", "minimum"),
+    (
+        ("--color-cream", "--color-ink", 4.5),
+        ("--color-muted", "--color-ink", 4.5),
+        ("--color-ink", "--color-gold", 4.5),
+        ("--color-error", "--color-surface", 4.5),
+        ("--color-gold-bright", "--color-ink", 3),
+    ),
+)
+def test_key_text_and_focus_colours_meet_wcag_contrast_thresholds(
+    foreground, background, minimum
+):
+    tokens = theme_tokens()
+
+    assert contrast_ratio(tokens[foreground], tokens[background]) >= minimum
 
 
 def test_phase_one_templates_do_not_load_third_party_cdns():

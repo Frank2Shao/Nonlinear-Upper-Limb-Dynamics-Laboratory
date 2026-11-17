@@ -2,29 +2,11 @@ import pytest
 from allauth.account.internal.flows.email_verification_by_code import (
     EMAIL_VERIFICATION_CODE_SESSION_KEY,
 )
-from allauth.account.models import EmailAddress
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 PASSWORD = "A-valid-password-2026"
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def verified_member():
-    user = get_user_model().objects.create_user(
-        username="template_member",
-        email="template-member@example.net",
-        password=PASSWORD,
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
-        verified=True,
-    )
-    return user
 
 
 def signup_data(**overrides) -> dict[str, str]:
@@ -80,12 +62,11 @@ def test_signup_uses_alpine_with_visible_no_javascript_fallback(client):
     response = client.get(reverse("account_signup"))
 
     content = response.content.decode()
-    assert 'x-data="{ isUsyd: false }"' in content
-    assert 'x-model="isUsyd"' in content
-    assert 'x-ref="usuId"' in content
-    assert 'x-show="isUsyd || false"' in content
-    assert "x-cloak" not in content
+    # Alpine only enhances visibility; without JavaScript the field must render
+    # and must not be hidden by x-cloak (behaviour is covered in the browser).
+    assert 'name="is_usyd_student"' in content
     assert 'name="usu_id"' in content
+    assert "x-cloak" not in content
 
 
 def test_signup_field_error_is_associated_with_input(client):
@@ -162,10 +143,9 @@ def test_account_alpine_markup_preserves_server_side_form(
     response = client.get(reverse("account"))
 
     content = response.content.decode()
-    assert 'x-data="{ isUsyd: false }"' in content
-    assert 'x-model="isUsyd"' in content
-    assert 'x-ref="usuId"' in content
-    assert 'x-show="isUsyd || false"' in content
+    assert 'name="is_usyd_student"' in content
+    assert 'name="usu_id"' in content
+    assert "x-cloak" not in content
     assert "<form" in content
     assert 'method="post"' in content
 

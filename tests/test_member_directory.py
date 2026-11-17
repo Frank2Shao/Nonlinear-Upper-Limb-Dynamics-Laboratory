@@ -1,9 +1,9 @@
 import pytest
-from allauth.account.models import EmailAddress
 from django.urls import reverse
 
-from apps.accounts.models import User
 from apps.members.models import MemberProfile
+from tests.factories import create_member
+from tests.privacy import assert_no_private_values
 
 pytestmark = pytest.mark.django_db
 
@@ -19,27 +19,20 @@ def create_profile(
     usu_id: str | None = None,
     **profile_fields,
 ) -> MemberProfile:
-    user = User.objects.create_user(
-        username=username,
+    return create_member(
+        username,
         email=f"private-{username}@example.com",
-        password="test-password",
-        is_active=is_active,
-        is_usyd_student=usu_id is not None,
-        usu_id=usu_id,
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
         verified=is_verified,
-    )
-    return MemberProfile.objects.create(
-        user=user,
+        user_fields={
+            "is_active": is_active,
+            "is_usyd_student": usu_id is not None,
+            "usu_id": usu_id,
+        },
         display_name=display_name,
         is_published=is_published,
         is_hidden_by_admin=is_hidden_by_admin,
         **profile_fields,
-    )
+    )[1]
 
 
 def test_directory_is_public_and_uses_members_template(client):
@@ -110,18 +103,21 @@ def test_directory_cards_show_only_allowed_summary_fields(client):
     assert "Summary Member" in content
     assert "1–3 years" in content
     assert "Both" in content
-    for private_value in (
-        "private-summary-member@example.com",
-        "00112233",
-        "PRIVATE BIO SENTINEL",
-        "private.instagram",
-        "https://example.com/private-social",
-        "PRIVATE EXECUTIVE SENTINEL",
-        "pending",
-        "USYD",
-        "USU ID",
-    ):
-        assert private_value not in content
+    assert_no_private_values(
+        content,
+        (
+            "private-summary-member@example.com",
+            "00112233",
+            "PRIVATE BIO SENTINEL",
+            "private.instagram",
+            "https://example.com/private-social",
+            "PRIVATE EXECUTIVE SENTINEL",
+            "pending",
+            "USYD",
+            "USU ID",
+        ),
+        context="Members list",
+    )
     assert f'href="{reverse("members:detail", args=["summary-member"])}"' in content
 
 

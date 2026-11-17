@@ -4,6 +4,7 @@ import { chromium } from "@playwright/test";
 
 import {
   assertNoExternalRequests,
+  assertPageBounds,
   createLocalContext,
   requireEnvironment,
 } from "./browser-support.mjs";
@@ -38,19 +39,6 @@ const pages = [
     requiredText: ["DRAFT — NOT APPROVED FOR PARTICIPATION USE"],
   },
 ];
-
-async function assertPageBounds(page, label) {
-  const dimensions = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-    styleSheets: document.styleSheets.length,
-  }));
-  assert.ok(
-    dimensions.scrollWidth <= dimensions.clientWidth + 1,
-    `${label} has horizontal overflow: ${JSON.stringify(dimensions)}`,
-  );
-  assert.ok(dimensions.styleSheets > 0, `${label} did not load project CSS.`);
-}
 
 try {
   for (const viewport of viewports) {

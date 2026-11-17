@@ -1,12 +1,9 @@
-import os
-import subprocess
-from pathlib import Path
-
 from allauth.account.models import EmailAddress
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
 from apps.accounts.models import User
 from apps.members.models import MemberProfile
+from tests.browser_runner import run_node_scenario
 
 
 class MemberDirectoryBrowserTests(StaticLiveServerTestCase):
@@ -37,19 +34,7 @@ class MemberDirectoryBrowserTests(StaticLiveServerTestCase):
                 other_social_url=f"https://example.com/{username}",
             )
 
-        environment = os.environ.copy()
-        environment["NULDL_LIVE_SERVER_URL"] = self.live_server_url
-        script = Path(__file__).parent / "browser" / "member-directory.mjs"
-
-        result = subprocess.run(
-            ["node", str(script)],
-            capture_output=True,
-            check=False,
-            encoding="utf-8",
-            errors="replace",
-            env=environment,
-            timeout=90,
+        run_node_scenario(
+            "member-directory.mjs",
+            self.live_server_url,
         )
-
-        output = (result.stdout or "") + (result.stderr or "")
-        assert result.returncode == 0, output

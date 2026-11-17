@@ -2,16 +2,15 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from allauth.account.models import EmailAddress
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import RequestFactory, override_settings
 from django.urls import resolve, reverse
 from PIL import Image
 
-from apps.accounts.models import User
 from apps.members.models import MAX_AVATAR_SIZE, MemberProfile
 from config.urls import development_media_urlpatterns
+from tests.factories import create_member
 
 pytestmark = pytest.mark.django_db
 
@@ -37,18 +36,7 @@ def image_upload(
 
 
 def create_member_with_avatar(*, username: str, avatar=None):
-    user = User.objects.create_user(
-        username=username,
-        email=f"{username}@example.com",
-        password="correct horse battery staple",
-    )
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
-        verified=True,
-    )
-    return user, MemberProfile.objects.create(user=user, avatar=avatar)
+    return create_member(username, avatar=avatar)
 
 
 def profile_data(**overrides):

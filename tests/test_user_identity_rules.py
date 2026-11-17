@@ -1,30 +1,12 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 
 from apps.accounts.services import review_usu_id, update_usu_identity
+from tests.factories import create_user
 
 User = get_user_model()
-
-
-def create_user(username: str, **extra_fields):
-    can_review_usu_id = extra_fields.pop("can_review_usu_id", False)
-    user = User.objects.create_user(
-        username=username,
-        email=f"{username}@example.com",
-        password="test-password",
-        **extra_fields,
-    )
-    if can_review_usu_id:
-        user.user_permissions.add(
-            Permission.objects.get(
-                content_type__app_label="accounts",
-                codename="review_usu_id",
-            )
-        )
-    return user
 
 
 @pytest.mark.django_db

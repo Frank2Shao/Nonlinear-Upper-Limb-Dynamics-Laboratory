@@ -1,5 +1,4 @@
 import pytest
-from allauth.account.models import EmailAddress
 from django.contrib import admin
 from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.auth.models import Permission
@@ -9,30 +8,20 @@ from django.urls import reverse
 from apps.accounts.models import User
 from apps.members.admin import MemberProfileAdmin
 from apps.members.models import MemberProfile
+from tests import factories
 
 pytestmark = pytest.mark.django_db
 PASSWORD = "A-valid-password-2026"
 
 
 def create_user(*, username: str, **extra_fields) -> User:
-    return User.objects.create_user(
-        username=username,
-        email=f"{username}@example.com",
-        password=PASSWORD,
-        **extra_fields,
-    )
+    return factories.create_user(username, password=PASSWORD, **extra_fields)
 
 
 def create_profile(*, username: str = "profile-member") -> tuple[User, MemberProfile]:
-    user = create_user(username=username)
-    EmailAddress.objects.create(
-        user=user,
-        email=user.email,
-        primary=True,
-        verified=True,
-    )
-    profile = MemberProfile.objects.create(
-        user=user,
+    return factories.create_member(
+        username,
+        password=PASSWORD,
         display_name="Member Authored Name",
         bio="Member-authored biography",
         experience_level=MemberProfile.ExperienceLevel.ONE_TO_THREE_YEARS,
@@ -41,7 +30,6 @@ def create_profile(*, username: str = "profile-member") -> tuple[User, MemberPro
         other_social_url="https://example.com/member",
         is_published=True,
     )
-    return user, profile
 
 
 def grant_change_permission(user: User) -> User:

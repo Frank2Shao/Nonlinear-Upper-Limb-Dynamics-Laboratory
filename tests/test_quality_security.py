@@ -15,6 +15,7 @@ from django.urls import reverse
 from apps.accounts.services import update_usu_identity
 from apps.members.forms import MemberProfileForm
 from apps.members.models import MemberProfile
+from tests.privacy import assert_no_private_values, private_identity_values
 
 User = get_user_model()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -138,9 +139,9 @@ def test_public_pages_do_not_expose_private_identity_fields(client):
     ):
         response = client.get(reverse(url_name))
         assert response.status_code == 200
-        content = response.content.decode()
-        for private_value in private_values:
-            assert private_value not in content
+        assert_no_private_values(
+            response.content.decode(), private_values, context=url_name
+        )
 
 
 @pytest.mark.django_db
@@ -192,17 +193,17 @@ def test_public_member_pages_exclude_private_identity_and_unpublished_profile_da
     ):
         response = client.get(path)
         assert response.status_code == 200
-        content = response.content.decode()
-        for private_value in (
-            user.email,
-            user.usu_id,
-            user.get_usu_review_status_display(),
-            profile.executive_role,
-            private_user.email,
-            "UNPUBLISHED PROFILE SENTINEL",
-            "UNPUBLISHED BIO SENTINEL",
-        ):
-            assert private_value not in content
+        assert_no_private_values(
+            response.content.decode(),
+            (
+                *private_identity_values(user),
+                profile.executive_role,
+                private_user.email,
+                "UNPUBLISHED PROFILE SENTINEL",
+                "UNPUBLISHED BIO SENTINEL",
+            ),
+            context=path,
+        )
 
 
 def test_phase_three_models_and_member_form_do_not_collect_age_or_guardian_data():
