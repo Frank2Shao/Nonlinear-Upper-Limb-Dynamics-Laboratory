@@ -186,5 +186,28 @@
    - **D9**：快照式 App 列表改为“每个 `PROJECT_APPS` 条目都能导入，且 `name` 与包路径一致”。
    - **D10**：新增 `tests/privacy.py`（`assert_no_private_values`、`private_identity_values`），5 个文件的隐私扫描改为调用它，失败时一次列出全部泄露值，并拒绝空字符串哨兵。各测试保留原有私有值清单，覆盖范围不变。
    - **D5（项目负责人选择方案 B）**：README 测试不再固定措辞，只确认 README 写出了每个阶段的验收脚本（`scripts\accept_phase_N.py`）及其门禁脚本（Phase 1 为 `scripts\verify_phase_1.py`，其余为 `scripts\verify_project.py`）。文档内容改由人工审阅。
-5. **第 5 批：CSS Token 与去补丁**：C2、C3、C6、C7、C9、C10、C11、C12。浏览器全量回归并逐页截图对比。
+5. **第 5 批：CSS Token 与去补丁**：C2、C3、C6、C7、C9、C10、C11、C12。浏览器全量回归并逐页截图对比。**状态（2026-11-17）：C2、C3、C6、C9、C10、C11、C12 已完成；C7 部分完成；`architecture.md` 3.47 与文件职责表已同步。**
+
+   **验证**
+   - 用临时 Playwright 脚本（未提交）为 26 个页面状态截取 desktop 1440×900 与 mobile 390×844 全页截图，共 51 张。页面状态覆盖：Anonymous/会员、mobile 展开菜单、Members 头像与 fallback、Events 列表/详情/报名 dialog/整页确认、Account、Profile 编辑与 Preview、服务端表单错误、404。
+   - 改动前后逐像素比较，除基线自身就会抖动的 1 张（Chrome 原生 email 校验气泡的淡出时机）外，全部完全一致。
+   - 服务端错误状态另以旧 CSS 重新截图对照，确认无 `!important` 后无效字段的红色边框不变。
+   - Ruff、`static:check` 通过；完整 pytest（含全部浏览器场景）`385 passed`。构建产物由 21,532 bytes 降至 21,304 bytes。
+
+   **实施说明与偏差**
+   - **C2**：`@theme` 新增 10 个 token：`--color-divider`、`--color-border`、`--color-border-strong`、`--color-separator`、`--color-input`、`--color-header`、`--color-overlay`、`--color-warning-surface`、`--color-error-surface`、`--color-cta-surface`。`@theme` 之外不再有任何 hex 或 `rgb()` 字面量。审计时的近似色 `#4a4438` 已在 Phase 3 收尾中消失，只剩 `#4a4439`，因此保留为 `--color-separator`，取值不变。
+   - **C3**：文本输入框选择器改为 `.field input:where(:not([type="checkbox"], [type="radio"]))`，优先级降到 (0,1,1)；`.field [aria-invalid="true"]` 不再需要 `!important`。剩余 4 个 `!important` 都是 reduced-motion 规则，属于合理用法。
+   - **C6**：
+     - About 的大号 Join 改为 `.button--hero` 修饰类（`about.html` 加 class），规则放在 `.button` 各变体之后。第一次放在前面时，截图发现按钮高度从 75px 降到 60px：原后代选择器靠更高的优先级掩盖了顺序依赖。调整位置后与基线一致。
+     - Home 卡片 h3 的 `calc(1rem + 3px)` 改为 `1.1875rem`，默认字号下相同，并随用户字号缩放。
+     - Hero 的 `:nth-child(3)` 改为 `:last-child:nth-child(odd)`。按钮数量为 3（Anonymous）或 2（会员）时结果与原来相同，以后增减按钮也不会错位。
+   - **C7**：
+     - 已删除 `.content-card { height: 100% }` 和 `.event-card { height: auto }` 补丁：grid 默认 stretch，非 grid 父元素中百分比高度本来就无效。
+     - 已把两条 mobile `definition-list` 规则合并为一条。注意 `.profile-public-card > .definition-list` 的覆盖本身不是冗余：它的优先级更高，必须在 mobile 下单独重置。
+     - **未改** Members 卡片的 `clamp(7rem, 12vw, 10rem)` 加 mobile `5.5rem` 写法：这是有意的阶梯尺寸，Phase 3 人工收尾时确认 mobile 使用固定紧凑头像，任何单一 `clamp()` 都会改变 600–960px 宽度下的头像大小。
+   - **C9**：卡片表面（border、radius、surface）以分组选择器统一声明，覆盖 8 类卡片；头像边框、`object-fit` 与首字母 fallback 也合并为分组规则。全部在 CSS 内完成，没有新增模板 class。
+   - **C10**：删除与 Tailwind preflight 重复的 `box-sizing`、`body` margin 和表单 `font: inherit`，以及扫描 Python 文件的 `@source`（项目没有 utility class 写在 Python 中）。
+   - **C11**：7 处 `overflow-wrap: anywhere` 合并为一条分组规则，作用元素不变。没有提升到 base 层的全部标题或 `dd`：`anywhere` 会改变 min-content 尺寸，可能影响其他 flex/grid 布局。
+   - **C12**：`.site-nav .nav-disclosure > .nav-menu` 等 3 处去掉多余限定，改为 `.nav-menu`、`.nav-disclosure[open] > .nav-menu`。
+   - T2/C5（断点单一来源）仍属第 6 批。
 6. **第 6 批：中风险/需决策项（逐项单独评审）**：C4、C5、T12、T8、T4/T5、A8、A15、A16、E5、E7、E8、E9、A6、A19。每项先确认方案，再单独实施。N1 由项目负责人修订文档；N2、N3a 属于文档同步，可随第 1 批的 `architecture.md`/`design_document.md` 修订一并提交审批。

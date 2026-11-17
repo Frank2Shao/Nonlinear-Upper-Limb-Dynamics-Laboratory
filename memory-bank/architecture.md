@@ -548,6 +548,17 @@ ASGI / WSGI ───────────→ config.settings.production
 - README 测试只确认每个阶段的验收脚本及其门禁脚本命令存在；文档措辞由人工审阅，不再由测试固定。
 - 已通过 Ruff lint/format、Django system check、`makemigrations --check` 与 `npm run static:check`；完整 pytest（含浏览器场景）通过；4 个 Development server smoke 对真实 runserver 通过；重构后的 `scripts/accept_phase_4.py` 在临时全新环境中完整通过，共享门禁 branch coverage 为 95%。
 
+### 3.47 代码清理第 5 批
+
+- 依据 `memory-bank/cleanup_audit.md` 第 5 批清单整理 `static_src/css/site.css`，验收标准是视觉不变。批次中用临时 Playwright 脚本在 desktop 1440×900 与 mobile 390×844 下为 26 个页面状态截取 51 张全页截图，并逐像素比较改动前后结果：除 Chrome 原生校验气泡淡出时机这一基线自身的抖动外，完全一致。
+- 全部具体颜色集中在 `@theme`：新增 divider、border、border-strong、separator、input、header、overlay，以及 warning、error、CTA 三种 surface token。组件规则只引用 `var(--color-*)`，不再出现 hex 或 `rgb()` 字面量，满足 `design_document.md` 9.2 对 Design Tokens 集中管理的要求。
+- 卡片表面（border、radius、surface）、头像边框与 `object-fit`、首字母 fallback，以及 `overflow-wrap: anywhere` 断行，分别由一条分组选择器统一声明，各组件只保留自己的间距与布局；模板 class 不变。
+- 文本输入框选择器以 `:where()` 降低优先级，`.field [aria-invalid="true"]` 不再依赖 `!important`；现在仅 reduced-motion 规则使用 `!important`。导航选择器去掉多余的祖先限定。
+- About 的大号 Join 使用 `.button--hero` 修饰类，并声明在 `.button` 各变体之后；Home Hero 在 mobile 下由 `:last-child:nth-child(odd)` 决定是否让最后一个操作独占一行，与按钮数量无关；Home 卡片标题使用 rem 字号。
+- 删除与 Tailwind preflight 重复的 `box-sizing`、`body` margin、表单 `font: inherit`、对 Python 文件的 `@source` 扫描，以及 `.content-card` 的 `height: 100%` 与 `.event-card` 撤销补丁。
+- Members 卡片保留 desktop `clamp()` 与 mobile 固定 `5.5rem` 的阶梯头像尺寸；断点的单一来源（与 Header JavaScript 共享）仍待第 6 批决策。
+- 已通过 Ruff lint/format 与 `npm run static:check`；完整 pytest（含全部浏览器场景）`385 passed`。构建产物由 21,532 bytes 降至 21,304 bytes。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -570,7 +581,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、颜色与字体 tokens、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、集中管理的全部颜色、字体与圆角 tokens、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/Logo_without_USYD.png` | 保存获准 Home Logo 的未改动 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -608,7 +619,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
-| `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA。 |
+| `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA；Anonymous Join 使用 `.button--hero` 大号按钮。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
 | `apps/core/context_processors.py` | 将当前请求解析到的 view name 或 Events namespace 映射为 `nav_section`，供 Header 统一输出 `aria-current="page"`。 |
 | `apps/core/templates/core/errors/_error_page.html` | 三个错误页共用的基模板，提供 status code、标题、说明与 Return Home 操作的固定结构。 |
