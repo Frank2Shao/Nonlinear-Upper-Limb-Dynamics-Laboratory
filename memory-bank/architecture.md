@@ -525,6 +525,7 @@ ASGI / WSGI ───────────→ config.settings.production
 
 | 文件 | 当前作用 |
 | --- | --- |
+| `.gitattributes` | 无论各机器的 `core.autocrlf` 如何设置，都让文本文件统一以 LF 签出，并把图片、字体与 PDF 标记为 binary；保证 manifest 中带 hash 校验的 vendor 文件与 license 在全新 clone 中字节一致。 |
 | `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、本地 `media/` 上传目录、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example` 与 `uv.lock`。 |
 | `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值，供开发者复制为未跟踪的 `.env`。 |
 | `AGENTS.md` | 定义仓库级开发约束，包括编码前必读文档、架构变更审批、计划目录、测试原则、命名规范和敏感数据限制。 |
