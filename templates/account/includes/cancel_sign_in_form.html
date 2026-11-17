@@ -1,0 +1,6 @@
+{% comment %}Abandon a pending code stage by logging out and returning to login.{% endcomment %}
+<form method="post" action="{% url 'account_logout' %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{% url 'account_login' %}">
+  <button class="button button--quiet" type="submit">Cancel</button>
+</form>

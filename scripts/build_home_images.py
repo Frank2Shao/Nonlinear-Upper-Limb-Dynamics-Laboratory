@@ -28,13 +28,15 @@ def render_variant(source: Image.Image, width: int) -> bytes:
     height = round(source.height * width / source.width)
     resized = source.resize((width, height), Image.Resampling.LANCZOS)
     output = BytesIO()
+    # The transparent source dominates file size through its alpha channel, so
+    # alpha is compressed separately; method 6 is the slowest, smallest encoder.
     resized.save(
         output,
         format="WEBP",
-        quality=84,
-        method=4,
+        quality=75,
+        alpha_quality=70,
+        method=6,
         lossless=False,
-        exact=True,
         exif=b"",
         xmp=b"",
     )

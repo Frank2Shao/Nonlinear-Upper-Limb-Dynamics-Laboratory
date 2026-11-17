@@ -1,33 +1,30 @@
-{% extends "core/base.html" %}
+{% extends "account/_page.html" %}
 
 {% block title %}Join the Club | NULDL Armwrestling Club{% endblock %}
+{% block eyebrow %}Membership{% endblock %}
+{% block heading %}Join the Club{% endblock %}
+{% block intro %}<p class="lede">Create an account, then verify your email to become a member.</p>{% endblock %}
 
-{% block content %}
-  <section class="content-narrow" aria-labelledby="signup-title">
-    <p class="eyebrow">Membership</p>
-    <h1 id="signup-title">Join the Club</h1>
-    <p class="lede">Create an account, then verify your email to become a member.</p>
+{% block body %}
+  <div class="panel">
+    <form
+      class="stack"
+      method="post"
+      action="{% url 'account_signup' %}"
+      x-data="{ isUsyd: {{ form.is_usyd_student.value|yesno:'true,false' }} }"
+      x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
+    >
+      {% csrf_token %}
+      {% include "includes/forms/form_errors.html" with form=form %}
+      {% include "includes/forms/field.html" with field=form.username %}
+      {% include "includes/forms/field.html" with field=form.email %}
+      {% include "includes/forms/field.html" with field=form.password1 %}
+      {% include "includes/forms/field.html" with field=form.password2 %}
+      {% include "accounts/includes/usyd_fields.html" with form=form %}
+      {{ redirect_field }}
+      <button class="button" type="submit">Create account</button>
+    </form>
+  </div>
 
-    <div class="panel">
-      <form
-        class="stack"
-        method="post"
-        action="{% url 'account_signup' %}"
-        x-data="{ isUsyd: {{ form.is_usyd_student.value|yesno:'true,false' }} }"
-        x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
-      >
-        {% csrf_token %}
-        {% include "includes/forms/form_errors.html" with form=form %}
-        {% include "includes/forms/field.html" with field=form.username %}
-        {% include "includes/forms/field.html" with field=form.email %}
-        {% include "includes/forms/field.html" with field=form.password1 %}
-        {% include "includes/forms/field.html" with field=form.password2 %}
-        {% include "accounts/includes/usyd_fields.html" with form=form %}
-        {{ redirect_field }}
-        <button class="button" type="submit">Create account</button>
-      </form>
-    </div>
-
-    <p>Already have an account? <a href="{{ login_url }}">Log in</a>.</p>
-  </section>
+  <p>Already have an account? <a href="{{ login_url }}">Log in</a>.</p>
 {% endblock %}

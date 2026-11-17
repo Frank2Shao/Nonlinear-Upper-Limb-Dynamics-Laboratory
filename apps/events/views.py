@@ -37,12 +37,16 @@ def _registration_context(
     registration=_UNSET,
     registration_form=None,
     registration_error="",
-    open_dialog=False,
     cancellation_form=None,
     cancellation_error="",
-    open_cancel_dialog=False,
+    open_dialog="",
+    focus_status=False,
 ):
-    """Build the panel context; pass ``notice``/``registration`` when known."""
+    """Build the panel context; pass ``notice``/``registration`` when known.
+
+    ``open_dialog`` names the dialog x-ref to re-open after a failed submission;
+    ``focus_status`` moves focus to the panel status after an HTMX update.
+    """
     if notice is _UNSET:
         notice = current_risk_notice()
     if registration is _UNSET:
@@ -67,15 +71,20 @@ def _registration_context(
         "notice_text": notice.body.strip() if notice is not None else "",
         "registration_form": registration_form,
         "registration_error": registration_error,
-        "open_dialog": open_dialog,
         "cancellation_form": cancellation_form,
         "cancellation_error": cancellation_error,
-        "open_cancel_dialog": open_cancel_dialog,
+        "open_dialog": open_dialog,
+        "focus_status": focus_status,
     }
 
 
 def _render_panel(request, event):
-    return render(request, PANEL_TEMPLATE, _registration_context(request, event))
+    """HTMX success response: the refreshed panel takes focus for its new status."""
+    return render(
+        request,
+        PANEL_TEMPLATE,
+        _registration_context(request, event, focus_status=True),
+    )
 
 
 def _render_invalid(request, context, *, page_template):
@@ -167,7 +176,7 @@ def event_register(request, slug):
         notice=notice,
         registration_form=form,
         registration_error=error,
-        open_dialog=True,
+        open_dialog="registrationDialog",
     )
     return _render_invalid(
         request, context, page_template="events/event_registration_confirm.html"
@@ -211,7 +220,7 @@ def event_cancel(request, slug):
         event,
         cancellation_form=form,
         cancellation_error=error,
-        open_cancel_dialog=True,
+        open_dialog="cancellationDialog",
     )
     return _render_invalid(
         request, context, page_template="events/event_cancellation_confirm.html"

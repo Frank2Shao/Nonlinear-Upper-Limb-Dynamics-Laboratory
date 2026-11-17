@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+{% comment %}
+Shared skeleton for the project allauth pages: eyebrow, the page's only H1,
+an optional intro (usually a lede paragraph) and the page-specific body.
+{% endcomment %}
+
+{% block content %}
+  <section class="content-narrow" aria-labelledby="page-title">
+    <p class="eyebrow">{% block eyebrow %}{% endblock %}</p>
+    <h1 id="page-title">{% block heading %}{% endblock %}</h1>
+    {% block intro %}{% endblock %}
+    {% block body %}{% endblock %}
+  </section>
+{% endblock %}

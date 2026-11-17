@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
@@ -143,8 +144,8 @@ def test_event_views_provide_empty_states_and_without_map(client):
     public = event("no-map", timezone.now() + timedelta(days=1))
     response = client.get(reverse("events:detail", args=[public.slug]))
     assert "View location in map" not in response.content.decode()
-    assert (
-        '<p class="event-status">Registration unavailable</p>'
-        in response.content.decode()
+    assert re.search(
+        r'<p class="event-status" role="status"[^>]*>Registration unavailable</p>',
+        response.content.decode(),
     )
     assert client.post(reverse("events:detail", args=[public.slug])).status_code == 405

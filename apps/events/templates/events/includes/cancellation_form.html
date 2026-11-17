@@ -10,11 +10,11 @@
 <form
   method="post"
   action="{% url 'events:cancel' event.slug %}"
-  {% if htmx_cancellation %}hx-post="{% url 'events:cancel' event.slug %}" hx-target="#event-registration" hx-swap="outerHTML"{% endif %}
+  {% if mode == "dialog" %}hx-post="{% url 'events:cancel' event.slug %}" hx-target="#event-registration" hx-swap="outerHTML"{% endif %}
 >
   {% csrf_token %}
   <div class="button-row event-registration__actions">
     <button class="button" type="submit" name="confirmed" value="true">Confirm cancellation</button>
-    {% if cancellation_dialog %}<button class="button button--secondary" type="button" @click="$refs.cancellationDialog.close()">Keep registration</button>{% endif %}
+    {% if mode == "dialog" %}<button class="button button--secondary" type="button" @click="$refs.cancellationDialog.close()">Keep registration</button>{% endif %}
   </div>
 </form>

@@ -41,6 +41,20 @@ async function assertDialogCentered(dialog, label) {
   );
 }
 
+// Design 7.3: after an HTMX update the replaced panel must take focus, so the
+// new status is announced instead of focus falling back to <body>.
+async function assertFocusOnStatus(page, label, expectedText) {
+  await page.waitForFunction(
+    () => document.activeElement?.closest("#event-registration") !== null,
+  );
+  const focused = await page.evaluate(() => ({
+    role: document.activeElement.getAttribute("role"),
+    tag: document.activeElement.tagName,
+    text: document.activeElement.textContent.trim(),
+  }));
+  assert.equal(focused.text, expectedText, `${label}: ${JSON.stringify(focused)}`);
+}
+
 try {
   const context = await createLocalContext(browser, baseUrl, {}, externalRequests);
   await addSessionCookie(context, baseUrl, jsSession);
@@ -65,12 +79,14 @@ try {
   await dialog.getByRole("button", { name: "Confirm registration" }).click();
   await page.getByText("Registered", { exact: true }).waitFor();
   assert.equal(await page.getByRole("dialog").count(), 0);
+  await assertFocusOnStatus(page, "After HTMX registration", "Registered");
   await page.getByRole("link", { name: "Cancel registration", exact: true }).click();
   const cancellationDialog = page.getByRole("dialog", { name: "Cancel registration" });
   await cancellationDialog.waitFor();
   await assertDialogCentered(cancellationDialog, "Cancel registration dialog");
   await cancellationDialog.getByRole("button", { name: "Confirm cancellation" }).click();
   await page.getByRole("link", { name: "Register", exact: true }).waitFor();
+  await assertFocusOnStatus(page, "After HTMX cancellation", "Register");
   await page.getByRole("link", { name: "Register", exact: true }).click();
   const repeatDialog = page.getByRole("dialog", { name: "Confirm registration" });
   await repeatDialog.waitFor();

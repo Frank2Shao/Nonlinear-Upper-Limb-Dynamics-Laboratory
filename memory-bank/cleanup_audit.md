@@ -210,4 +210,48 @@
    - **C11**：7 处 `overflow-wrap: anywhere` 合并为一条分组规则，作用元素不变。没有提升到 base 层的全部标题或 `dd`：`anywhere` 会改变 min-content 尺寸，可能影响其他 flex/grid 布局。
    - **C12**：`.site-nav .nav-disclosure > .nav-menu` 等 3 处去掉多余限定，改为 `.nav-menu`、`.nav-disclosure[open] > .nav-menu`。
    - T2/C5（断点单一来源）仍属第 6 批。
-6. **第 6 批：中风险/需决策项（逐项单独评审）**：C4、C5、T12、T8、T4/T5、A8、A15、A16、E5、E7、E8、E9、A6、A19。每项先确认方案，再单独实施。N1 由项目负责人修订文档；N2、N3a 属于文档同步，可随第 1 批的 `architecture.md`/`design_document.md` 修订一并提交审批。
+6. **第 6 批：中风险/需决策项（逐项单独评审）**：C4、C5、T12、T8、T4/T5、A8、A15、A16、E5、E7、E8、E9、A6、A19。每项先确认方案，再单独实施。N1 由项目负责人修订文档；N2、N3a 属于文档同步，可随第 1 批的 `architecture.md`/`design_document.md` 修订一并提交审批。**状态（2026-11-17）：项目负责人批准逐项方案后，实施了 E7、T8、T12、C4、C5（含第 3 批推迟的 T2）；Logo 体积（E3）按项目负责人选择保留透明度并调整编码；其余项按下文理由关闭；`architecture.md` 3.20、3.48 与文件职责表已同步。E8 已于此前单独完成。**
+
+   **验证**
+   - 完整 pytest（含浏览器场景）`385 passed`；Ruff、Django check、`makemigrations --check`、`static:check` 均通过。
+   - T8 在改动前后渲染全部 14 个 allauth 模板（含分支，共 17 种情况），除下述 heading id 外完全一致。
+   - C4/C5/T2 用第 5 批的截图脚本重拍 51 张截图，与第 5 批改动前的基线比较：只有 2 张注册页不同，差异是 Chrome 原生 email 校验气泡的淡出时机，其余全部一致。
+
+   **已实施**
+   - **E7**：`.env.example` 删除未被读取的 `POSTGRES_HOST`，并用注释说明：Compose 使用 `POSTGRES_DB/USER/PASSWORD/PORT`，Django 只读 `DATABASE_URL`（必须与前者一致），测试库名来自 `POSTGRES_TEST_DB`。同时修正 `architecture.md` 2.4。本地 `.env` 中残留的 `POSTGRES_HOST` 无害，可自行删除。
+   - **T8**：
+     - 新增 `templates/account/_page.html`（eyebrow、唯一 H1、intro、body 四个 block），14 个 allauth 模板改为继承它。
+     - 新增 `account/includes/panel_form.html`（单按钮表单，6 个页面共用）、`code_form.html`（两个验证码页共用）和 `cancel_sign_in_form.html`（放弃验证码阶段的登出表单）。
+     - **唯一输出变化**：各页 `aria-labelledby` 与 H1 的 id 统一为 `page-title`。同一个 block 不能输出两次，没有测试或样式依赖原 id。
+   - **T12**：
+     - 报名区约定改为：服务端写 `data-open-dialog`（取值 `registrationDialog` 或 `cancellationDialog`）或 `data-focus-status`；Alpine 只根据这两个属性打开对应 dialog 或移动焦点；HTMX 只负责提交和整体替换。
+     - 两个表单片段原来的 4 个布尔开关合并为一个 `mode="dialog"` 参数。
+     - `aria-live` 从包住 dialog 的整个 section 移除，状态文字本身加 `role="status"`。
+     - HTMX 成功后焦点移到新的状态元素（Registered 或 Register），不再因 dialog 被移除而落回 `<body>`，满足 design 7.3“返回片段需要更新状态消息和焦点”。
+     - `event-registration.mjs` 新增两处焦点断言；`test_event_pages.py` 的状态断言改为允许新增属性的正则。
+   - **C4 + C5 + T2**：
+     - `@theme` 新增 `--breakpoint-hero: 54rem` 与 `--breakpoint-nav: 60rem` 作为唯一断点来源。
+     - 两个层级外的 `@media` 块移入 `@layer components` 末尾，改用 `@variant hero`（`width >= 54rem`）和 `@variant max-nav`（`width < 60rem`）；`@layer` 之外只剩 reduced-motion 规则。
+     - Header 的 Alpine 初始化不再自带 `matchMedia('(max-width: 60rem)')`，改为判断 Menu `summary` 是否显示，由 CSS 单独决定。
+     - **偏差**：
+       - 没有把 mobile 规则全部改写成 mobile-first，因为改写面大、收益小，仍是 desktop-first 的 `max-nav` 区块，只是断点来自 token。
+       - 导航断点从包含 60rem 的 `max-width: 60rem` 变为不包含的 `width < 60rem`，只在视口恰好 960px 时显示桌面导航；JS 读取 CSS，两者保持一致。
+       - Home Logo `sizes` 中的 54rem 无法引用 CSS，已加模板注释说明它对应 `--breakpoint-hero`。
+     - Tailwind 的 `.container` 工具类原本就会被生成（未使用），现在也包含两个自定义断点，没有视觉影响。
+
+   **Logo 体积（E3/E4）：项目负责人选择保留透明度**
+   - 实测 4 倍增长完全来自透明通道：把同一源图合成到页面底色 `#090909` 后按 q80 编码，三个尺寸为 32.5/66.7/111.5 KB，与换源图前一致。保留透明度只调编码参数（q75、method 6、alpha_quality 70）为 68.5/153.0/273.1 KB，约减少 42%，但 2 倍放大下金色高光略有色块。
+   - 项目负责人选择保留透明度：`scripts/build_home_images.py` 改为 quality 75、alpha_quality 70、method 6（去掉 `exact=True`），生成物由 119,388/270,636/507,662 bytes 降至 70,114/156,624/279,676 bytes（减少 41–45%），`images:check` 可重复，`test_home_images.py` 的 RGBA 与透明断言无需修改。
+   - `08_Metal_gold_Black.png` 与 `Logo_without_USYD.png` 是否删除，随 design_document 9.6 的修订一起决定。
+
+   **复核后关闭（不实施）**
+   - **A6**：`is_superuser` 不检查账户是否启用，直接调用这些方法时 `is_active` 是唯一保护，不是冗余。
+   - **A19**：合并 4 个权限方法只省几行，可读性没有提升。
+   - **A8**：Event → User → Notice 的加锁顺序是并发安全的关键，在两个服务中显式写出比抽成函数更不易出错。
+   - **A15**：会改变 architecture 3.28 记录的保存语义，目前没有性能问题。
+   - **A16**：删除需要新增一条 migration，收益只是少一行代码。
+   - **T4/T5**：Django block 不能默认等于另一个 block，消除重复需要把标题移入 view，并改动已批准的 metadata 写法。
+   - **T15**：为 3 行脚本新建手写 JS 和静态资源流程，收益过低。
+   - **E9**：精简 `.gitignore` 收益低，且有误删关键忽略项的风险。
+   - **E5**：生成物是否继续提交属于部署架构决策，留到 Phase 6。
+   - N1 由项目负责人自行修订；N3a 建议随 design_document 修订一并补录。

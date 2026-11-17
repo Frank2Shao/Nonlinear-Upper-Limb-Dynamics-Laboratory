@@ -1,20 +1,11 @@
-{% extends "core/base.html" %}
+{% extends "account/_page.html" %}
 
 {% block title %}Confirm password | NULDL Armwrestling Club{% endblock %}
+{% block eyebrow %}Account security{% endblock %}
+{% block heading %}Confirm your password{% endblock %}
+{% block intro %}<p class="lede">Enter your password to continue.</p>{% endblock %}
 
-{% block content %}
-  <section class="content-narrow" aria-labelledby="reauthenticate-title">
-    <p class="eyebrow">Account security</p>
-    <h1 id="reauthenticate-title">Confirm your password</h1>
-    <p class="lede">Enter your password to continue.</p>
-
-    <div class="panel">
-      <form class="stack" method="post" action="{% url 'account_reauthenticate' %}">
-        {% csrf_token %}
-        {% include "includes/forms/form_fields.html" with form=form %}
-        {{ redirect_field }}
-        <button class="button" type="submit">Confirm</button>
-      </form>
-    </div>
-  </section>
+{% block body %}
+  {% url 'account_reauthenticate' as form_action %}
+  {% include "account/includes/panel_form.html" with action=form_action form=form submit_label="Confirm" %}
 {% endblock %}

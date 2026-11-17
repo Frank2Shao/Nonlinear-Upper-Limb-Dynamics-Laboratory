@@ -5,7 +5,7 @@
       class="nav-disclosure"
       open
       x-data
-      x-init="if (window.matchMedia('(max-width: 60rem)').matches) $el.removeAttribute('open')"
+      x-init="if (getComputedStyle($el.querySelector('summary')).display !== 'none') $el.removeAttribute('open')"
     >
       <summary class="nav-toggle">Menu</summary>
       <div class="nav-menu">

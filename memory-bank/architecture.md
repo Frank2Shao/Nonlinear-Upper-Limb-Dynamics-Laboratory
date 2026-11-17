@@ -61,7 +61,7 @@ Phase 4 已建立 Risk Notice 合成版本、Event 与 EventRegistration 事务�
 
 - Django 在 Windows 主机的 `uv` 环境运行，数据库在 Docker Linux container 中运行。
 - Compose 使用 `postgres:18.6-alpine`，主机端口由 `POSTGRES_PORT` 映射到容器 `5432`。
-- Django PostgreSQL backend 从 `POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_HOST` 和 `POSTGRES_PORT` 读取全部连接值。
+- Compose 从 `POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD` 和 `POSTGRES_PORT` 建立本地数据库；Django 只通过 `DATABASE_URL` 连接，Test settings 另从 `POSTGRES_TEST_DB` 读取测试数据库名。`.env.example` 注明 `DATABASE_URL` 必须与这些值一致（代码清理第 6 批前此处误记为 Django 直接读取 `POSTGRES_*`，未使用的 `POSTGRES_HOST` 已删除）。
 - 缺少必填数据库变量时 settings 会明确失败，不提供 SQLite 或其他回退。
 - PostgreSQL 通过 `pg_isready` 提供容器健康检查。
 - 数据存储在 Docker named volume `postgres_data`，挂载到 PostgreSQL 18 镜像使用的 `/var/lib/postgresql`；删除并重建容器不会删除该 volume。
@@ -293,8 +293,8 @@ ASGI / WSGI ───────────→ config.settings.production
 - Home 继续由 `apps.core` 的既有根路径 view 服务，不新增 Model、migration 或业务 API。模板使用 `design_document.md` 已确认的英文 Hero、新手说明、训练内容、参与资格、Metadata 和 Open Graph 文案。
 - Hero 与 Upcoming Session 的主要操作按认证状态在服务端分支：Anonymous 使用 `Join the Club` 进入 Signup，authenticated member 使用 `Account` 进入本人账户页；`New to Armwrestling?` 是普通页内锚点，全部操作在禁用 JavaScript 时仍可用。
 - Phase 2 建立的静态 Upcoming Session 已在 Step 40 被动态活动预览取代。Home view 现查询最多三条已发布 Upcoming Event，模板复用 Events card，并提供详情和列表入口；无数据时使用明确 empty state。
-- 已批准的 `Logo_without_USYD.png` 以原始字节保存在 `static_src/images/brand/`，尺寸为 1254 × 1254、大小为 1,776,890 bytes，SHA-256 为 `1bc738b3a7af5719a296bc0aecc67f2ea943d1acf7eadb499c3dd28592308944`。源文件不直接作为页面下载资产，且图形内容未被重新设计。
-- `scripts/build_home_images.py` 使用锁定版 Pillow 从受 hash、格式、尺寸和色彩模式保护的源图确定性生成 480、800、1200px 方形 WebP。生成物分别为 32,364、69,400、125,860 bytes；`package.json` 将生成与漂移检查接入现有 `static:build` 和 `static:check`。
+- 当前 Home Logo 源图为透明背景的 `nuldl-club-logo-transparent.png`，以原始字节保存在 `static_src/images/brand/`：1254 × 1254 RGBA、1,580,788 bytes，SHA-256 为 `65114bdc25ca376408b3c715a02b100fa979ca1eba182c9f5baf87911eaa89d1`。它在 Phase 4 期间由项目负责人替换了原先获准的 `Logo_without_USYD.png`（1,776,890 bytes，SHA-256 `1bc738b3…8944`）。旧文件仍在仓库中但已无引用，是否删除随 `design_document.md` 9.6 的修订一并决定。源文件不直接作为页面下载资产，且图形内容未被重新设计。
+- `scripts/build_home_images.py` 使用锁定版 Pillow 从受 hash、格式、尺寸和透明通道保护的源图确定性生成 480、800、1200px 方形透明 WebP（quality 75、alpha_quality 70、method 6）。生成物分别为 70,114、156,624、279,676 bytes：透明通道是体积的主要来源，同一源图合成到页面底色后约为 33/67/112 KB；项目负责人在代码清理第 6 批选择保留透明度；`package.json` 将生成与漂移检查接入现有 `static:build` 和 `static:check`。
 - Home `<picture>` 通过 width descriptor 与 `sizes` 选择响应式 Logo，`img` 保留明确宽高、方形 aspect ratio、非空替代文本和 `object-fit: contain`。Header 继续只使用文字品牌，没有缩放完整 Logo，也没有加入 University Branding。
 - Phase 2 建立时的 Home 内容、Metadata、CTA、Logo 完整性与响应式图片构建仍由原测试保护；Step 40 另以 Event 页面和 Home 回归固定动态 Upcoming 预览、最多三条、详情/列表链接及 empty state。Playwright 继续验证 desktop、mobile 和禁用 JavaScript 时的 Logo、布局、Events 导航与同源网络边界。
 
@@ -556,8 +556,24 @@ ASGI / WSGI ───────────→ config.settings.production
 - 文本输入框选择器以 `:where()` 降低优先级，`.field [aria-invalid="true"]` 不再依赖 `!important`；现在仅 reduced-motion 规则使用 `!important`。导航选择器去掉多余的祖先限定。
 - About 的大号 Join 使用 `.button--hero` 修饰类，并声明在 `.button` 各变体之后；Home Hero 在 mobile 下由 `:last-child:nth-child(odd)` 决定是否让最后一个操作独占一行，与按钮数量无关；Home 卡片标题使用 rem 字号。
 - 删除与 Tailwind preflight 重复的 `box-sizing`、`body` margin、表单 `font: inherit`、对 Python 文件的 `@source` 扫描，以及 `.content-card` 的 `height: 100%` 与 `.event-card` 撤销补丁。
-- Members 卡片保留 desktop `clamp()` 与 mobile 固定 `5.5rem` 的阶梯头像尺寸；断点的单一来源（与 Header JavaScript 共享）仍待第 6 批决策。
+- Members 卡片保留 desktop `clamp()` 与 mobile 固定 `5.5rem` 的阶梯头像尺寸；断点的单一来源（与 Header JavaScript 共享）由第 6 批完成（见 3.48）。
 - 已通过 Ruff lint/format 与 `npm run static:check`；完整 pytest（含全部浏览器场景）`385 passed`。构建产物由 21,532 bytes 降至 21,304 bytes。
+
+### 3.48 代码清理第 6 批
+
+- 第 6 批中风险项逐项经项目负责人确认方案后实施 E7、T8、T12、C4/C5/T2 与 Logo 编码；A6、A8、A15、A16、A19、T4/T5、T15、E5、E9 复核后关闭，理由记录在 `memory-bank/cleanup_audit.md`。
+- 本地环境变量：`.env.example` 只保留实际使用的数据库变量，并说明 Compose 的 `POSTGRES_*` 与 Django 读取的 `DATABASE_URL` 必须一致（见 2.4）。
+- allauth 页面统一继承 `templates/account/_page.html`，由 eyebrow、唯一 H1、intro 与 body 四个 block 组成，并复用 `account/includes/` 中的单按钮表单、验证码表单和放弃验证码阶段的登出表单。各页 H1 统一使用 `page-title` 作为 `aria-labelledby` 目标。
+- Event 报名区约定如下：
+  - 服务端只写 `data-open-dialog`（失败提交后重新打开的 dialog x-ref）或 `data-focus-status`（HTMX 成功后需要聚焦）；
+  - Alpine 只根据这两个属性打开 dialog 或把焦点移到 `x-ref="status"`；
+  - HTMX 只负责提交 dialog 表单并整体替换 `#event-registration`；
+  - 状态文字自身带 `role="status"`，dialog 不再位于 live region 中；
+  - 报名与取消表单片段由单一 `mode="dialog"` 参数区分 dialog 与整页回退。
+- HTMX 报名或取消成功后，焦点移到新的状态元素，不再随被移除的 dialog 落回 `<body>`，由 `event-registration.mjs` 断言覆盖。
+- 布局断点只在 `@theme` 中定义：`--breakpoint-hero: 54rem` 与 `--breakpoint-nav: 60rem`。响应式规则通过 `@variant hero`（`width >= 54rem`）和 `@variant max-nav`（`width < 60rem`）位于 `@layer components` 末尾，`@layer` 之外只保留 reduced-motion 规则。Header 不再在 JavaScript 中重复断点，而是根据 Menu `summary` 是否显示决定初始收起。Home Logo `sizes` 中的 54rem 以模板注释标明与 `--breakpoint-hero` 对应。
+- Home Logo 保留透明度，并改用 quality 75、alpha_quality 70、method 6 编码，三个生成物合计由约 898 KB 降至约 506 KB（见 3.20）。
+- 已通过 Ruff lint/format、Django system check、`makemigrations --check` 与 `npm run static:check`；完整 pytest（含浏览器场景）通过。T8 的 17 种 allauth 渲染情况除 heading id 外完全一致；C4/C5/T2 后的 51 张 desktop/mobile 截图与第 5 批前基线一致（仅 Chrome 原生校验气泡的淡出时机不同）。
 
 ## 四、当前文件职责
 
@@ -573,7 +589,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `package.json` | 定义锁定的浏览器 library、字体与前端开发工具，并提供 vendor copy/check、Home 图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
 | `package-lock.json` | 记录完整 npm 依赖树、下载来源和完整性信息，供 `npm ci` 可重复安装；不手工编辑。 |
 | `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
-| `scripts/build_home_images.py` | 校验获准 Home Logo 源文件的 SHA-256、格式、尺寸与模式，并以锁定 Pillow 确定性生成或检查三个响应式 WebP 版本。 |
+| `scripts/build_home_images.py` | 校验 Home Logo 透明源文件的 SHA-256、格式、尺寸与透明通道，并以锁定 Pillow 和固定编码参数确定性生成或检查三个响应式透明 WebP 版本。 |
 | `scripts/check-css-watch.mjs` | 在临时目录启动 Tailwind `--watch=always`，确认首次 watch build 完成后终止进程并清理临时输出。 |
 | `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
 | `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
@@ -583,7 +599,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
 | `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、集中管理的全部颜色、字体与圆角 tokens、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
-| `static_src/images/brand/Logo_without_USYD.png` | 保存获准 Home Logo 的未改动 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
+| `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
+| `static_src/images/brand/Logo_without_USYD.png` | 原获准 Home Logo 的 PNG 源文件，Phase 4 起已无引用；待 `design_document.md` 9.6 修订时决定是否删除。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
 | `static/images/brand/nuldl-club-logo-800.webp` | 从获准源图生成的 800 × 800 WebP，并作为 Home Logo 默认 `img` fallback。 |
 | `static/images/brand/nuldl-club-logo-1200.webp` | 从获准源图生成的 1200 × 1200 WebP，供较高像素密度或较宽 Hero 使用。 |
@@ -621,6 +638,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA；Anonymous Join 使用 `.button--hero` 大号按钮。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
+| `templates/account/_page.html` | allauth 页面共用骨架：eyebrow、唯一 H1（`page-title`）、可选 intro 与页面主体。 |
+| `templates/account/includes/panel_form.html` | 输出带全部字段、CSRF、redirect 字段和单个提交按钮的 panel 表单，供登录、重置、设置/确认密码与验证码请求页复用。 |
+| `templates/account/includes/code_form.html` | Email verification 与 Magic Code 共用的一次性 code 输入、确认与重发按钮。 |
+| `templates/account/includes/cancel_sign_in_form.html` | 以 POST logout 放弃当前 code 阶段并返回登录页。 |
 | `apps/core/context_processors.py` | 将当前请求解析到的 view name 或 Events namespace 映射为 `nav_section`，供 Header 统一输出 `aria-current="page"`。 |
 | `apps/core/templates/core/errors/_error_page.html` | 三个错误页共用的基模板，提供 status code、标题、说明与 Return Home 操作的固定结构。 |
 | `apps/core/templates/core/errors/403.html` | 继承错误页基模板，使用共享页面壳呈现中性 Access Denied 状态和 Return Home 操作，保持 HTTP 403。 |
@@ -699,7 +720,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/events/templates/events/event_cancellation_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整取消确认页，并保留返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/confirm_page.html` | 两张整页确认模板共用的正文结构，按传入的标题、heading id 与表单 include 呈现，并提供返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/cancellation_form.html` | 集中取消说明、错误、CSRF 与确认按钮，供 cancellation dialog 和完整确认页复用。 |
-| `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，并包含报名/取消 Alpine dialogs 与 HTMX target。 |
+| `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，包含报名/取消 Alpine dialogs 与 HTMX target；服务端通过 `data-open-dialog`/`data-focus-status` 声明需要打开的 dialog 或聚焦的状态元素。 |
 | `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的活动标题、以 Sydney 时区显示的起止时间、地点和 Upcoming/Past 状态，并根据共享当前 Notice 可用性显示一致的报名状态。 |
 | `apps/events/migrations/__init__.py` | 将 `events.migrations` 标记为 migration package。 |
 | `apps/events/migrations/0001_initial.py` | 创建 Event 表及其数据库约束。 |

@@ -14,12 +14,12 @@
 <form
   method="post"
   action="{% url 'events:register' event.slug %}"
-  {% if htmx_registration %}hx-post="{% url 'events:register' event.slug %}" hx-target="#event-registration" hx-swap="outerHTML"{% endif %}
+  {% if mode == "dialog" %}hx-post="{% url 'events:register' event.slug %}" hx-target="#event-registration" hx-swap="outerHTML"{% endif %}
 >
   {% csrf_token %}
   {{ registration_form.risk_notice_id }}
   <div class="button-row event-registration__actions">
     <button class="button" type="submit" name="accepted" value="true">Confirm registration</button>
-    {% if registration_dialog %}<button class="button button--secondary" type="button" @click="$refs.registrationDialog.close()">Close</button>{% endif %}
+    {% if mode == "dialog" %}<button class="button button--secondary" type="button" @click="$refs.registrationDialog.close()">Close</button>{% endif %}
   </div>
 </form>
