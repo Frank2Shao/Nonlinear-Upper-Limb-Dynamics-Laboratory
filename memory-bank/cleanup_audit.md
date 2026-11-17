@@ -242,7 +242,7 @@
    **Logo 体积（E3/E4）：项目负责人选择保留透明度**
    - 实测 4 倍增长完全来自透明通道：把同一源图合成到页面底色 `#090909` 后按 q80 编码，三个尺寸为 32.5/66.7/111.5 KB，与换源图前一致。保留透明度只调编码参数（q75、method 6、alpha_quality 70）为 68.5/153.0/273.1 KB，约减少 42%，但 2 倍放大下金色高光略有色块。
    - 项目负责人选择保留透明度：`scripts/build_home_images.py` 改为 quality 75、alpha_quality 70、method 6（去掉 `exact=True`），生成物由 119,388/270,636/507,662 bytes 降至 70,114/156,624/279,676 bytes（减少 41–45%），`images:check` 可重复，`test_home_images.py` 的 RGBA 与透明断言无需修改。
-   - `08_Metal_gold_Black.png` 与 `Logo_without_USYD.png` 是否删除，随 design_document 9.6 的修订一起决定。
+   - **E4（项目负责人确认删除）**：未跟踪且无引用的 `08_Metal_gold_Black.png` 已从工作区删除；已无引用的 `Logo_without_USYD.png` 已从仓库删除，可从 Git 历史恢复。`design_document.md` 9.6 已按项目负责人要求改为当前透明源图，并说明旧文件的替换与删除。
 
    **复核后关闭（不实施）**
    - **A6**：`is_superuser` 不检查账户是否启用，直接调用这些方法时 `is_active` 是唯一保护，不是冗余。
@@ -254,4 +254,4 @@
    - **T15**：为 3 行脚本新建手写 JS 和静态资源流程，收益过低。
    - **E9**：精简 `.gitignore` 收益低，且有误删关键忽略项的风险。
    - **E5**：生成物是否继续提交属于部署架构决策，留到 Phase 6。
-   - N1 由项目负责人自行修订；N3a 建议随 design_document 修订一并补录。
+   - N1 由项目负责人自行修订。**N3a 已完成（2026-11-17，项目负责人要求）**：`design_document.md` 7.4 补充了 `Join on USU` 的目标 URL、显示条件（Anonymous 与会员都显示）、按钮顺序、不同步 USU 数据和不使用 USU/USYD 视觉资产的边界；7.7 Home 基线新增 External action，并注明已登录会员仍显示该链接。内容与 `test_home_page.py`、`home-page.mjs` 的现有断言一致。

@@ -293,7 +293,7 @@ ASGI / WSGI ───────────→ config.settings.production
 - Home 继续由 `apps.core` 的既有根路径 view 服务，不新增 Model、migration 或业务 API。模板使用 `design_document.md` 已确认的英文 Hero、新手说明、训练内容、参与资格、Metadata 和 Open Graph 文案。
 - Hero 与 Upcoming Session 的主要操作按认证状态在服务端分支：Anonymous 使用 `Join the Club` 进入 Signup，authenticated member 使用 `Account` 进入本人账户页；`New to Armwrestling?` 是普通页内锚点，全部操作在禁用 JavaScript 时仍可用。
 - Phase 2 建立的静态 Upcoming Session 已在 Step 40 被动态活动预览取代。Home view 现查询最多三条已发布 Upcoming Event，模板复用 Events card，并提供详情和列表入口；无数据时使用明确 empty state。
-- 当前 Home Logo 源图为透明背景的 `nuldl-club-logo-transparent.png`，以原始字节保存在 `static_src/images/brand/`：1254 × 1254 RGBA、1,580,788 bytes，SHA-256 为 `65114bdc25ca376408b3c715a02b100fa979ca1eba182c9f5baf87911eaa89d1`。它在 Phase 4 期间由项目负责人替换了原先获准的 `Logo_without_USYD.png`（1,776,890 bytes，SHA-256 `1bc738b3…8944`）。旧文件仍在仓库中但已无引用，是否删除随 `design_document.md` 9.6 的修订一并决定。源文件不直接作为页面下载资产，且图形内容未被重新设计。
+- 当前 Home Logo 源图为透明背景的 `nuldl-club-logo-transparent.png`，以原始字节保存在 `static_src/images/brand/`：1254 × 1254 RGBA、1,580,788 bytes，SHA-256 为 `65114bdc25ca376408b3c715a02b100fa979ca1eba182c9f5baf87911eaa89d1`。它在 Phase 4 期间由项目负责人替换了原先获准的 `Logo_without_USYD.png`（1,776,890 bytes，SHA-256 `1bc738b3…8944`）。旧文件已无引用，经项目负责人确认后于代码清理收尾时删除，可从 Git 历史恢复。源文件不直接作为页面下载资产，且图形内容未被重新设计。
 - `scripts/build_home_images.py` 使用锁定版 Pillow 从受 hash、格式、尺寸和透明通道保护的源图确定性生成 480、800、1200px 方形透明 WebP（quality 75、alpha_quality 70、method 6）。生成物分别为 70,114、156,624、279,676 bytes：透明通道是体积的主要来源，同一源图合成到页面底色后约为 33/67/112 KB；项目负责人在代码清理第 6 批选择保留透明度；`package.json` 将生成与漂移检查接入现有 `static:build` 和 `static:check`。
 - Home `<picture>` 通过 width descriptor 与 `sizes` 选择响应式 Logo，`img` 保留明确宽高、方形 aspect ratio、非空替代文本和 `object-fit: contain`。Header 继续只使用文字品牌，没有缩放完整 Logo，也没有加入 University Branding。
 - Phase 2 建立时的 Home 内容、Metadata、CTA、Logo 完整性与响应式图片构建仍由原测试保护；Step 40 另以 Event 页面和 Home 回归固定动态 Upcoming 预览、最多三条、详情/列表链接及 empty state。Playwright 继续验证 desktop、mobile 和禁用 JavaScript 时的 Logo、布局、Events 导航与同源网络边界。
@@ -600,7 +600,6 @@ ASGI / WSGI ───────────→ config.settings.production
 | `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、集中管理的全部颜色、字体与圆角 tokens、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
-| `static_src/images/brand/Logo_without_USYD.png` | 原获准 Home Logo 的 PNG 源文件，Phase 4 起已无引用；待 `design_document.md` 9.6 修订时决定是否删除。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
 | `static/images/brand/nuldl-club-logo-800.webp` | 从获准源图生成的 800 × 800 WebP，并作为 Home Logo 默认 `img` fallback。 |
 | `static/images/brand/nuldl-club-logo-1200.webp` | 从获准源图生成的 1200 × 1200 WebP，供较高像素密度或较宽 Hero 使用。 |

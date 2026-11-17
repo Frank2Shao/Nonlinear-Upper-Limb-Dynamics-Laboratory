@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 14 日
+**最后更新：** 2026 年 11 月 17 日
 
 ## 一、文档边界
 
@@ -395,6 +395,8 @@ Registered Member 选择 Cancel registration
 
 - Hero 以强视觉建立品牌识别，核心操作为 `Join the Club`；
 - Hero 次级操作为 `New to Armwrestling?`；完整 Events 入口位于近期活动区的 `View all events`；
+- Hero 另提供 `Join on USU` 外部链接，指向 USU 平台上的社团页面 `https://usu.edu.au/clubs/armwrestling/`。Anonymous 与已登录会员都显示该链接，顺序为 `Join the Club`（仅 Anonymous）、`Join on USU`、`New to Armwrestling?`；使用普通链接打开，禁用 JavaScript 时同样可用；
+- `Join on USU` 只是指向 USU 页面的文字链接：网站不读取、提交或同步 USU 数据，也不据此改变网站会员身份或报名资格；链接不使用 USU 或 USYD 的 Logo、校徽或其他视觉资产，符合 9.6 的 Branding 限制；
 - Hero 下方直接展示独立的 `New to Armwrestling?` 板块，说明无需经验、基本训练方式、安全原则和加入路径；
 - 首页 `Upcoming Events` 区从数据库读取最多三条已发布的 Upcoming Event，与 Events 列表共用活动卡片；没有近期活动时显示 `No upcoming events are currently available.`；该区始终提供 `View all events` 入口；
 - Phase 2 的静态日程卡已被上述动态预览取代，首场 Training Session 由管理员在 Admin 录入；
@@ -426,6 +428,7 @@ Registered Member 选择 Cancel registration
 - Hero heading：`Nonlinear Upper Limb Dynamics Laboratory`
 - Hero introduction：`NULDL Armwrestling Club is an armwrestling community based near Sydney’s CBD, welcoming people of all experience levels. Learn the fundamentals, develop your technique and practise with purpose in a supervised environment.`
 - Primary action：`Join the Club`
+- External action：`Join on USU`，链接 `https://usu.edu.au/clubs/armwrestling/`，Anonymous 与 authenticated member 都显示
 - Secondary action：`New to Armwrestling?`
 
 `New to Armwrestling?`
@@ -445,7 +448,7 @@ Registered Member 选择 Cancel registration
 - `Training Session`
 - `Further attendance details will be published before the session.`
 - Anonymous session action：`Join`
-- Authenticated member：不显示 Hero 或 Session 招新按钮
+- Authenticated member：不显示 Hero 或 Session 招新按钮；`Join on USU` 外部链接仍然显示
 
 #### About
 
@@ -631,10 +634,10 @@ Registered Member 选择 Cancel registration
 
 ### 9.6 Logo 与图像资产
 
-- Phase 2 使用仓库根目录外 `../../Logo_without_USYD.png` 作为已确认的主视觉 Logo 源文件；
-- 源文件为方形黑底完整组合图，适合 Home Hero 或较大的品牌展示区域；
+- 主视觉 Logo 源文件为仓库内的 `static_src/images/brand/nuldl-club-logo-transparent.png`。它由项目负责人在 Phase 4 期间确认，替换了 Phase 2 使用的黑底版本 `Logo_without_USYD.png`；旧文件已从仓库删除，可从 Git 历史恢复；
+- 源文件为 1254 × 1254 透明背景的方形完整组合图，适合 Home Hero 或较大的品牌展示区域；
 - Header 使用文字 `NULDL Armwrestling Club`，不在小尺寸导航中缩放完整 Logo；
-- 实现阶段从源文件生成响应式尺寸和压缩的网页版本，不改变图形内容，并保留原始源文件；
+- 实现阶段从源文件生成保留透明度的响应式压缩网页版本，不改变图形内容，并保留原始源文件；
 - 未获得书面批准前，不使用 USYD 名称、Logo、校徽或视觉规范；
 - 首期以黑金抽象图形、线条、波形和简单静态结构作为主要视觉素材；
 - 肌肉、骨骼、关节轴线和受力轨迹等复杂插画在基础框架与功能稳定后统一设计；
