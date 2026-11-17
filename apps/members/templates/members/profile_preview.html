@@ -14,11 +14,7 @@
     <div class="button-row">
       <a class="button button--secondary" href="{% url 'account' %}">Back to Account</a>
       <a class="button button--secondary" href="{% url 'members:profile_edit' %}">Edit profile</a>
-      {% if profile.is_published %}
-        <a class="button button--quiet" href="{% url 'members:profile_unpublish' %}">Unpublish profile</a>
-      {% else %}
-        <a class="button" href="{% url 'members:profile_publish' %}">Publish profile</a>
-      {% endif %}
+      {% include "members/includes/profile_publication_action.html" with profile=profile %}
     </div>
   </section>
 {% endblock %}

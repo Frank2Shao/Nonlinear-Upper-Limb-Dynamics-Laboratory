@@ -241,7 +241,7 @@ ASGI / WSGI ───────────→ config.settings.production
 ### 3.15 认证模板、错误反馈与渐进增强边界
 
 - 项目将根级 `templates/` 加入 Django template search path，并通过 `templates/account/` 覆盖当前启用的 allauth 页面。认证业务状态、URL 与 POST 处理仍由 allauth 负责，项目模板只统一呈现层和可访问性结构。
-- `templates/account/includes/` 集中输出 form-level error、field 和完整 fields。字段继续使用 Django `as_field_group` 生成稳定的 error ID、`aria-invalid` 与 `aria-describedby`；非字段错误使用可聚焦的 `role="alert"` summary。
+- `templates/includes/forms/`（代码清理第 3 批前位于 `templates/account/includes/`）集中输出 form-level error、field 和完整 fields。字段继续使用 Django `as_field_group` 生成稳定的 error ID、`aria-invalid` 与 `aria-describedby`；非字段错误使用可聚焦的 `role="alert"` summary。
 - `core/base.html` 加载本地 CSS 与 deferred Alpine.js，并在初始化后聚焦第一个无效字段或 error summary。skip link、普通 link、原生 form、CSRF 和服务端 validation 均不依赖 JavaScript。
 - Signup 与 Account 使用同一 Alpine state 处理 USYD 声明：选中时显示 USU ID，取消时清空输入；服务端返回 USU ID 错误时强制保持显示。未使用 `x-cloak`，因此 JavaScript 被禁用或加载失败时字段仍可见。
 - `AccountIdentityForm` 与 `SignupForm` 只增加 Alpine attributes，没有改变服务端字段白名单或 `update_usu_identity` 边界。审核状态仍只能通过既有受控 service 和 Admin workflow 修改。
@@ -521,6 +521,17 @@ ASGI / WSGI ───────────→ config.settings.production
 - MemberProfile 新增 `public_experience_level` 与 `public_preferred_arm`，未指定时返回 `None`，公开模板不再硬编码 `not_spec`；`__str__` 复用 `resolved_display_name`，Publish 确认页的公开路径改用 `reverse()`。
 - 已通过 Ruff lint/format、Django system check 与 `makemigrations --check`；在本地 Docker PostgreSQL 上以全新 test database 运行完整 pytest，`380 passed`，未修改任何测试。
 
+### 3.45 代码清理第 3 批
+
+- 依据 `memory-bank/cleanup_audit.md` 第 3 批清单合并重复的模板片段，验收标准是渲染输出不变。批次中用临时脚本在改动前后渲染 39 个页面状态，比较空白规范化后的 HTML：除下述 Avatar fallback 外完全一致。本批未修改 view、URL、Model、CSS、JavaScript 或 migration。
+- Header 的当前页判断改由 `apps.core.context_processors.navigation_section` 提供：按 resolved `view_name` 映射到导航 section，Events 按 namespace 映射；`header.html` 只比较 `nav_section`。无法解析的请求（例如 404）不标记任何项。
+- 通用表单片段由 `templates/account/includes/` 迁至 `templates/includes/forms/`，表明它们同时服务于 allauth、Account 与 Profile 编辑，而不只属于 allauth 覆盖目录。
+- 新增共享片段：`accounts/includes/usyd_fields.html`（USYD 声明与条件 USU ID，Alpine state 仍由外层 form 声明，以保持 DOM 与间距不变）、`members/includes/profile_publication_action.html`（Publish/Unpublish 分支）、`members/includes/public_avatar.html`（Members 卡片与公开 detail/Preview 的 Avatar 或首字母 fallback）、`events/includes/confirm_page.html`（无 JavaScript 报名/取消确认页正文），以及 `core/errors/_error_page.html`（三个错误页的基模板）。原页面模板名全部保留。
+- 公开 detail 与 Preview 的 Avatar fallback 改为与 Members 列表一致的 `aria-hidden="true"`；原无 role `div` 上的 `aria-label` 不会被辅助技术读出，公开名称始终在相邻标题中呈现。这是本批唯一的输出变化。
+- Sydney 时区包裹移入 `event_card.html`，卡片可独立复用；Home 与 Events 列表不再包裹 `{% timezone %}`，详情页保持自身包裹。
+- Header JavaScript 断点与 CSS 断点的单一来源（T2）、`<body>` 错误聚焦脚本外置（T15）推迟到 CSS 断点统一时一并决策。
+- 已通过 Ruff lint/format、Django system check、`makemigrations --check` 与 `npm run static:check`；在本地 Docker PostgreSQL 上以全新 test database 运行完整 pytest（含浏览器场景），`380 passed`，未修改任何测试。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -564,7 +575,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `manage.py` | 本地运行 Django management command 的命令行入口，默认加载 `config.settings.development`。 |
 | `config/__init__.py` | 将 `config` 标记为 Python package。 |
 | `config/settings/__init__.py` | 将 `config.settings` 标记为环境配置 package，不隐式选择具体环境。 |
-| `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware、默认关闭的 Draft 开关与 Safety context processor，以及严格的环境变量与 PostgreSQL URL 解析函数。 |
+| `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware、默认关闭的 Draft 开关、Safety 与导航 section context processors，以及严格的环境变量与 PostgreSQL URL 解析函数。 |
 | `config/settings/development.py` | 定义本地 Debug、Console Email、`/media/` local media、环境变量驱动的 PostgreSQL 配置，并明确开启 Draft Risk Notice。 |
 | `config/settings/test.py` | 定义关闭 Debug 的自动化测试环境、独立 PostgreSQL test database、in-memory Email、快速 Password hasher 及默认关闭的 Draft Risk Notice。 |
 | `config/settings/preview.py` | 继承 Production 安全配置并要求显式的 Draft Risk Notice Boolean 开关；缺少变量时拒绝加载。 |
@@ -582,11 +593,13 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
-| `apps/core/templates/core/errors/403.html` | 使用共享页面壳呈现中性 Access Denied 状态和 Return Home 操作，保持 HTTP 403。 |
-| `apps/core/templates/core/errors/404.html` | 使用共享页面壳呈现中性 Page Not Found 状态和 Return Home 操作，保持 HTTP 404。 |
-| `apps/core/templates/core/errors/500.html` | 使用共享页面壳呈现中性 Something Went Wrong 状态和 Return Home 操作，保持 HTTP 500。 |
+| `apps/core/context_processors.py` | 将当前请求解析到的 view name 或 Events namespace 映射为 `nav_section`，供 Header 统一输出 `aria-current="page"`。 |
+| `apps/core/templates/core/errors/_error_page.html` | 三个错误页共用的基模板，提供 status code、标题、说明与 Return Home 操作的固定结构。 |
+| `apps/core/templates/core/errors/403.html` | 继承错误页基模板，使用共享页面壳呈现中性 Access Denied 状态和 Return Home 操作，保持 HTTP 403。 |
+| `apps/core/templates/core/errors/404.html` | 继承错误页基模板，使用共享页面壳呈现中性 Page Not Found 状态和 Return Home 操作，保持 HTTP 404。 |
+| `apps/core/templates/core/errors/500.html` | 继承错误页基模板，使用共享页面壳呈现中性 Something Went Wrong 状态和 Return Home 操作，保持 HTTP 500。 |
 | `apps/core/templates/core/sitemap.xml` | 输出符合 sitemap XML namespace 的公开 URL 列表；内容只来自 view 的显式 Production 公开页面 allowlist。 |
-| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，为所有访问者提供 Home、About、Beginners & Safety 和 Members，根据认证状态提供 Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；Members 列表与 detail 共用当前页标识，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航。 |
+| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，为所有访问者提供 Home、About、Beginners & Safety 和 Members，根据认证状态提供 Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；当前页标识统一读取 `nav_section`，Members 列表与 detail 共用同一标识，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航。 |
 | `apps/core/templates/core/includes/messages.html` | 将 Django messages 输出到 polite live region，并为错误和非错误反馈提供相应 ARIA role。 |
 | `apps/core/templates/core/includes/footer.html` | 提供完整 `NULDL Armwrestling Club` 名称、动态年份和已批准的 Instagram HTTPS 链接；不公开联系邮箱或未经授权的大学品牌资产。 |
 | `apps/core/migrations/__init__.py` | 将 `core.migrations` 标记为 migration package；当前没有 migration。 |
@@ -599,9 +612,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/accounts/views.py` | 提供登录保护的 Account GET/POST view，固定使用当前 User，查询本人 Email verification status 与 MemberProfile 摘要，并在成功更新后执行 redirect-after-POST。 |
 | `apps/accounts/urls.py` | 将项目 Account view 暴露为命名路由 `account`，路径为 `/account/`。 |
 | `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，使用三个主卡片显示只读账户、Profile 摘要与发布操作、USYD/USU form、Password change 和 POST logout；使用 Alpine 条件显示 USU ID并保留无 JavaScript 普通 POST。 |
-| `templates/account/includes/form_errors.html` | 输出 form 非字段错误的可聚焦 alert summary，供所有项目认证模板复用。 |
-| `templates/account/includes/field.html` | 通过 Django `as_field_group` 输出单个字段及其 label、help text、error 与 ARIA 关联。 |
-| `templates/account/includes/form_fields.html` | 组合 form-level error 与全部 visible/hidden fields，减少认证模板间的字段呈现差异。 |
+| `templates/includes/forms/form_errors.html` | 输出 form 非字段错误的可聚焦 alert summary，供认证、Account 与 Profile 编辑模板复用。 |
+| `templates/includes/forms/field.html` | 通过 Django `as_field_group` 输出单个字段及其 label、help text、error 与 ARIA 关联。 |
+| `templates/includes/forms/form_fields.html` | 组合 form-level error 与全部 visible/hidden fields，减少认证模板间的字段呈现差异。 |
+| `apps/accounts/templates/accounts/includes/usyd_fields.html` | 输出 Signup 与 Account 共用的 USYD checkbox 和条件显示的 USU ID 字段；Alpine state 由外层 form 声明。 |
 | `templates/account/signup.html` | 呈现项目 Signup 页面，并用 Alpine 渐进增强 USYD/USU ID 条件输入，保留服务端 POST 回退。 |
 | `templates/account/login.html` | 呈现 Username/Password 登录与 Magic Code、Password reset、Signup 入口。 |
 | `templates/account/request_login_code.html` | 呈现 Magic Code Email 请求 form，并维持 allauth enumeration-prevention 流程。 |
@@ -635,6 +649,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/members/templates/members/profile_preview.html` | 呈现仅本人可见的公开效果 Preview、当前隐藏提示及 Edit、Publish 或 Unpublish 操作入口。 |
 | `apps/members/templates/members/profile_publish_confirm.html` | 列出全部公开字段、Username detail path、名称回退和 Avatar metadata 风险，并通过 CSRF POST 确认 Publish。 |
 | `apps/members/templates/members/profile_unpublish_confirm.html` | 说明 Unpublish 影响并通过 CSRF POST 确认取消发布，不删除已保存资料。 |
+| `apps/members/templates/members/includes/public_avatar.html` | 按调用方 BEM block 输出公开 Avatar 或装饰性首字母 fallback，供 Members 卡片与公开字段组件复用。 |
+| `apps/members/templates/members/includes/profile_publication_action.html` | 根据本人 Profile 发布状态输出 Publish 或 Unpublish 入口，供 Account 与 Preview 复用。 |
 | `apps/members/templates/members/includes/profile_public_fields.html` | 集中公开字段顺序和展示边界，供本人 Preview 与公开 detail 复用，并按页面语义分别输出 H2 或唯一 H1。 |
 | `apps/members/templates/members/includes/profile_hidden_notice.html` | 在本人资料流程中输出不泄露管理员或后台信息的中性隐藏提示。 |
 | `apps/members/admin.py` | 注册 MemberProfile 后台模型，依赖标准 change 权限提供列表、筛选和搜索；change form 只允许维护隐藏状态与 Executive role，会员自述、User、发布状态和时间戳只读，并关闭新增与删除入口。 |
@@ -653,9 +669,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/events/templates/events/event_registration_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整 Risk Notice 确认页，并保留返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/registration_form.html` | 直接呈现当前 Risk Notice 的完整正文及版本，并集中错误、CSRF 与确认按钮，供 dialog 和完整确认页复用；不添加重复正文 banner。 |
 | `apps/events/templates/events/event_cancellation_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整取消确认页，并保留返回 Event 的普通链接。 |
+| `apps/events/templates/events/includes/confirm_page.html` | 两张整页确认模板共用的正文结构，按传入的标题、heading id 与表单 include 呈现，并提供返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/cancellation_form.html` | 集中取消说明、错误、CSRF 与确认按钮，供 cancellation dialog 和完整确认页复用。 |
 | `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，并包含报名/取消 Alpine dialogs 与 HTMX target。 |
-| `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的活动标题、起止时间、地点和 Upcoming/Past 状态，并根据共享当前 Notice 可用性显示一致的报名状态。 |
+| `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的活动标题、以 Sydney 时区显示的起止时间、地点和 Upcoming/Past 状态，并根据共享当前 Notice 可用性显示一致的报名状态。 |
 | `apps/events/migrations/__init__.py` | 将 `events.migrations` 标记为 migration package。 |
 | `apps/events/migrations/0001_initial.py` | 创建 Event 表及其数据库约束。 |
 | `apps/events/migrations/0002_eventregistration.py` | 创建 EventRegistration 表、关系和数据库约束。 |

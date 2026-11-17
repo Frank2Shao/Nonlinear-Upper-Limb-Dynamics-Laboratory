@@ -9,19 +9,7 @@
     <p class="profile-public-card__username">@{{ profile.user.username }}</p>
   </header>
 
-  {% if profile.avatar %}
-    <img
-      class="profile-public-card__avatar"
-      src="{{ profile.avatar.url }}"
-      alt="Avatar for {{ profile.resolved_display_name }}"
-      width="480"
-      height="480"
-    >
-  {% else %}
-    <div class="profile-public-card__avatar-fallback" aria-label="No avatar provided">
-      {{ profile.resolved_display_name|first|upper }}
-    </div>
-  {% endif %}
+  {% include "members/includes/public_avatar.html" with profile=profile block_class="profile-public-card" %}
 
   {% if profile.public_experience_level or profile.public_preferred_arm %}
     <dl class="definition-list">

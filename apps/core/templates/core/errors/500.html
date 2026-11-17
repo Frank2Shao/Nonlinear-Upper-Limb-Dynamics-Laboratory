@@ -1,19 +1,10 @@
-{% extends "core/base.html" %}
+{% extends "core/errors/_error_page.html" %}
 
 {% block title %}Something Went Wrong | NULDL Armwrestling Club{% endblock %}
 {% block meta_description %}The page could not be completed. Please try again later.{% endblock %}
 {% block open_graph_title %}Something Went Wrong | NULDL Armwrestling Club{% endblock %}
 {% block open_graph_description %}The page could not be completed. Please try again later.{% endblock %}
 
-{% block content %}
-  <article class="public-page public-page--content">
-    <header class="public-section__header">
-      <p class="eyebrow">500</p>
-      <h1>Something Went Wrong</h1>
-      <p class="lede">The page could not be completed. Please try again later.</p>
-    </header>
-    <div class="cta-panel public-page__action">
-      <a class="button" href="{% url 'home' %}">Return Home</a>
-    </div>
-  </article>
-{% endblock %}
+{% block error_code %}500{% endblock %}
+{% block error_heading %}Something Went Wrong{% endblock %}
+{% block error_message %}The page could not be completed. Please try again later.{% endblock %}

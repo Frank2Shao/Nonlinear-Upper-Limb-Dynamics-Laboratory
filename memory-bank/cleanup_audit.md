@@ -155,7 +155,17 @@
    - **A12**：新增 `apps/core/validators.py`（`validate_https_url`、`normalize_https_scheme`），members 与 events 改为 import，迁移文件中的旧引用路径继续可解析。**行为微调**：`http://` URL 现在先报 “Use an HTTPS URL.”，而不是 URLValidator 的 “Enter a valid URL.”；测试只断言有错误，不受影响。
    - **A13**：删除三条空值检查，并把 normalize 移到 `clean_fields()` 开头，使只含空白的字段在单独调用 `full_clean()` 时仍被字段级 blank 检查拒绝。
    - **A14**：新增 `sydney_midnight_today()`。**A17**、**A18**、**T11** 按建议完成（`public_experience_level`/`public_preferred_arm`）。
-3. **第 3 批：模板去重**：T1、T2、T3、T6、T7、T9、T10、T13、T14、T15。以渲染输出不变为验收标准，必要时先补快照式比较。
+3. **第 3 批：模板去重**：T1、T2、T3、T6、T7、T9、T10、T13、T14、T15。以渲染输出不变为验收标准，必要时先补快照式比较。**状态（2026-11-17）：已完成 T1、T3、T6、T7、T9、T10、T13、T14；T2、T15 推迟；`architecture.md` 3.45 与文件职责表已同步。** 验证方式：在临时脚本中渲染 39 个页面状态（Anonymous/会员、表单错误、HTMX 片段、报名/取消确认、403/404/500），比较改动前后经空白规范化的 HTML。除 T10 的有意修改外，全部一致；Ruff、Django check、`makemigrations --check`、`static:check` 均通过，完整 pytest（含浏览器场景）`380 passed`，没有修改任何测试。实施说明与偏差：
+   - **T1**：新增 `apps/core/context_processors.py::navigation_section`，按 `view_name` 映射 section，Events 按 namespace 映射；Header 统一判断 `nav_section`，输出与原来一致。
+   - **T3**：新增 `core/errors/_error_page.html` 基模板，三个错误页只覆盖 metadata 和 code/heading/message 三个 block，保留原模板名。title 与 og 的重复属于 T4，本批不处理。
+   - **T6**：新增 `accounts/includes/usyd_fields.html`，承载 USYD checkbox 和条件 USU ID。Alpine 的 `x-data`/`x-init` 仍留在各自 `<form>` 上：若改由 include 包一层 `div`，`.stack` 的字段间距和 DOM 结构都会变化。
+   - **T7**：`templates/account/includes/*` 迁至 `templates/includes/forms/`，更新 13 个模板文件中的全部引用。
+   - **T9**：只抽出 Publish/Unpublish 分支（`members/includes/profile_publication_action.html`）。Account 与 Preview 的其余按钮组成不同（Preview profile 对比 Back to Account），因此不强行合并。
+   - **T10**：新增 `members/includes/public_avatar.html`，供 Members 卡片与公开 detail/Preview 共用。**唯一的输出变化**：detail/Preview 的 fallback 由无 role `div` 上的 `aria-label="No avatar provided"`（辅助技术不会读出）改为与列表一致的 `aria-hidden="true"`。公开名称就在旁边，信息不丢失。Account 摘要与编辑页的 Avatar 结构（alt 文案、`figure`、“Not provided”）不同，保持原样。
+   - **T13**：Sydney `{% timezone %}` 移入 `event_card.html`，Home 与 Events 列表不再包裹，卡片可以单独复用；详情页自身的时间显示保持原包裹。
+   - **T14**：新增 `events/includes/confirm_page.html`，两张整页确认模板只传 heading、heading_id 与表单 include；保留原模板名和元素 id。
+   - **T2 推迟**：`tests/test_global_templates.py:93` 固定断言 `matchMedia('(max-width: 60rem)')` 字符串，而且 CSS media query 无法读取自定义属性，单一来源需与 C5 的断点统一一起设计。
+   - **T15 推迟**：属于可选项，需要新增手写静态 JS 并决定其构建与 manifest 归属，会改变 `<body>` 输出，与本批“输出不变”的标准冲突。
 4. **第 4 批：测试与脚本收敛（只改 tests/ 与 scripts/）**：D1、D2、D3、E2 + D4、D6、D7、D8、D9、D10。D5 先征求项目负责人意见。
 5. **第 5 批：CSS Token 与去补丁**：C2、C3、C6、C7、C9、C10、C11、C12。浏览器全量回归并逐页截图对比。
 6. **第 6 批：中风险/需决策项（逐项单独评审）**：C4、C5、T12、T8、T4/T5、A8、A15、A16、E5、E7、E8、E9、A6、A19。每项先确认方案，再单独实施。N1 由项目负责人修订文档；N2、N3a 属于文档同步，可随第 1 批的 `architecture.md`/`design_document.md` 修订一并提交审批。

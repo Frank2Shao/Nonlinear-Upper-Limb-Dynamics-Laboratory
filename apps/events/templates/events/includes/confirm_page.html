@@ -1,0 +1,13 @@
+{% comment %}
+No-JavaScript confirmation page body shared by registration and cancellation.
+Parameters: heading, heading_id and form_template (the form include to render).
+{% endcomment %}
+<div class="public-page public-page--content">
+  <section class="public-section" aria-labelledby="{{ heading_id }}">
+    <p class="eyebrow">Event registration</p>
+    <h1 id="{{ heading_id }}">{{ heading }}</h1>
+    <p><strong>Event:</strong> {{ event.title }}</p>
+    {% include form_template %}
+    <p class="event-detail-actions"><a class="button button--secondary" href="{% url 'events:detail' event.slug %}">Back to event</a></p>
+  </section>
+</div>

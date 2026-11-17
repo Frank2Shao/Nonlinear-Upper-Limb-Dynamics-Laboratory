@@ -1,0 +1,5 @@
+{% if profile.is_published %}
+  <a class="button button--quiet" href="{% url 'members:profile_unpublish' %}">Unpublish profile</a>
+{% else %}
+  <a class="button" href="{% url 'members:profile_publish' %}">Publish profile</a>
+{% endif %}

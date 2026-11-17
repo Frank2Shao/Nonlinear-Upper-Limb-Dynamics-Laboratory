@@ -11,7 +11,7 @@
     <div class="panel">
       <form class="stack" method="post" action="{% url 'account_email_verification_sent' %}">
         {% csrf_token %}
-        {% include "account/includes/form_fields.html" with form=verify_form %}
+        {% include "includes/forms/form_fields.html" with form=verify_form %}
         {{ redirect_field }}
         <div class="button-row">
           <button class="button" type="submit" name="action" value="verify">Verify email</button>
@@ -27,7 +27,7 @@
         <summary>Use a different email address</summary>
         <form class="stack" method="post" action="{% url 'account_email_verification_sent' %}">
           {% csrf_token %}
-          {% include "account/includes/form_fields.html" with form=change_form %}
+          {% include "includes/forms/form_fields.html" with form=change_form %}
           {{ redirect_field }}
           <button class="button button--secondary" type="submit" name="action" value="change">Change email</button>
         </form>

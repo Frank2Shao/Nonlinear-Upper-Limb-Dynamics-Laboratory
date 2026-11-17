@@ -1,5 +1,5 @@
 {% extends "core/base.html" %}
-{% load static tz %}
+{% load static %}
 
 {% block title %}NULDL Armwrestling Club | Training and Community{% endblock %}
 {% block meta_description %}Learn armwrestling technique, practise under supervision and join a welcoming strength-sport community. Beginners are welcome.{% endblock %}
@@ -69,13 +69,11 @@
     <section class="public-section session-card" aria-labelledby="upcoming-session-title">
       <p class="eyebrow">Club activities</p>
       <h2 id="upcoming-session-title">Upcoming Events</h2>
-      {% timezone "Australia/Sydney" %}
-        {% for event in upcoming_events %}
-          {% include "events/includes/event_card.html" %}
-        {% empty %}
-          <p>No upcoming events are currently available.</p>
-        {% endfor %}
-      {% endtimezone %}
+      {% for event in upcoming_events %}
+        {% include "events/includes/event_card.html" %}
+      {% empty %}
+        <p>No upcoming events are currently available.</p>
+      {% endfor %}
       <a class="button button--secondary home-events-action" href="{% url 'events:list' %}">View all events</a>
     </section>
   </div>

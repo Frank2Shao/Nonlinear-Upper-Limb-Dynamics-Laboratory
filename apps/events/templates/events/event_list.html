@@ -1,5 +1,4 @@
 {% extends "core/base.html" %}
-{% load tz %}
 {% block title %}Events | NULDL Armwrestling Club{% endblock %}
 {% block content %}
   <div class="public-page">
@@ -13,13 +12,11 @@
         <a class="button button--secondary" href="{% url 'events:list' %}?view=past"{% if selected == 'past' %} aria-current="page"{% endif %}>Past</a>
       </nav>
       <div class="card-grid event-list">
-        {% timezone "Australia/Sydney" %}
-          {% for event in events %}
-            {% include "events/includes/event_card.html" %}
-          {% empty %}
-            <p>No events found.</p>
-          {% endfor %}
-        {% endtimezone %}
+        {% for event in events %}
+          {% include "events/includes/event_card.html" %}
+        {% empty %}
+          <p>No events found.</p>
+        {% endfor %}
       </div>
     </section>
   </div>

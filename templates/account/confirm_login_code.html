@@ -11,7 +11,7 @@
     <div class="panel">
       <form class="stack" method="post" action="{% url 'account_confirm_login_code' %}">
         {% csrf_token %}
-        {% include "account/includes/form_fields.html" with form=verify_form %}
+        {% include "includes/forms/form_fields.html" with form=verify_form %}
         {{ redirect_field }}
         <div class="button-row">
           <button class="button" type="submit" name="action" value="verify">Confirm code</button>

@@ -1,0 +1,9 @@
+{% comment %}
+USYD declaration and conditional USU ID, shared by Signup and Account.
+The enclosing form owns the Alpine state: x-data="{ isUsyd: ... }" and an
+x-init watcher that clears $refs.usuId when the box is unticked.
+{% endcomment %}
+{% include "includes/forms/field.html" with field=form.is_usyd_student %}
+<div x-show="isUsyd || {{ form.usu_id.errors|yesno:'true,false' }}">
+  {% include "includes/forms/field.html" with field=form.usu_id %}
+</div>

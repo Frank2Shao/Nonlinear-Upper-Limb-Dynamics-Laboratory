@@ -17,15 +17,12 @@
         x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
       >
         {% csrf_token %}
-        {% include "account/includes/form_errors.html" with form=form %}
-        {% include "account/includes/field.html" with field=form.username %}
-        {% include "account/includes/field.html" with field=form.email %}
-        {% include "account/includes/field.html" with field=form.password1 %}
-        {% include "account/includes/field.html" with field=form.password2 %}
-        {% include "account/includes/field.html" with field=form.is_usyd_student %}
-        <div x-show="isUsyd || {{ form.usu_id.errors|yesno:'true,false' }}">
-          {% include "account/includes/field.html" with field=form.usu_id %}
-        </div>
+        {% include "includes/forms/form_errors.html" with form=form %}
+        {% include "includes/forms/field.html" with field=form.username %}
+        {% include "includes/forms/field.html" with field=form.email %}
+        {% include "includes/forms/field.html" with field=form.password1 %}
+        {% include "includes/forms/field.html" with field=form.password2 %}
+        {% include "accounts/includes/usyd_fields.html" with form=form %}
         {{ redirect_field }}
         <button class="button" type="submit">Create account</button>
       </form>

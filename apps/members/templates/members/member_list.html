@@ -17,19 +17,7 @@
       <div class="member-directory" aria-label="Public member profiles">
         {% for profile in profiles %}
           <article class="member-card" aria-labelledby="member-name-{{ profile.pk }}">
-            {% if profile.avatar %}
-              <img
-                class="member-card__avatar"
-                src="{{ profile.avatar.url }}"
-                alt="Avatar for {{ profile.resolved_display_name }}"
-                width="480"
-                height="480"
-              >
-            {% else %}
-              <div class="member-card__avatar-fallback" aria-hidden="true">
-                {{ profile.resolved_display_name|first|upper }}
-              </div>
-            {% endif %}
+            {% include "members/includes/public_avatar.html" with profile=profile block_class="member-card" %}
 
             <div class="member-card__content">
               <h2 id="member-name-{{ profile.pk }}">

@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+  <article class="public-page public-page--content">
+    <header class="public-section__header">
+      <p class="eyebrow">{% block error_code %}{% endblock %}</p>
+      <h1>{% block error_heading %}{% endblock %}</h1>
+      <p class="lede">{% block error_message %}{% endblock %}</p>
+    </header>
+    <div class="cta-panel public-page__action">
+      <a class="button" href="{% url 'home' %}">Return Home</a>
+    </div>
+  </article>
+{% endblock %}

@@ -1,13 +1,5 @@
 {% extends "core/base.html" %}
 {% block title %}Confirm registration | NULDL Armwrestling Club{% endblock %}
 {% block content %}
-  <div class="public-page public-page--content">
-    <section class="public-section" aria-labelledby="registration-title">
-      <p class="eyebrow">Event registration</p>
-      <h1 id="registration-title">Confirm registration</h1>
-      <p><strong>Event:</strong> {{ event.title }}</p>
-      {% include "events/includes/registration_form.html" %}
-      <p class="event-detail-actions"><a class="button button--secondary" href="{% url 'events:detail' event.slug %}">Back to event</a></p>
-    </section>
-  </div>
+  {% include "events/includes/confirm_page.html" with heading="Confirm registration" heading_id="registration-title" form_template="events/includes/registration_form.html" %}
 {% endblock %}

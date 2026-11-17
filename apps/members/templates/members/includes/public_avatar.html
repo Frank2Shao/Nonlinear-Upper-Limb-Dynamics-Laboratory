@@ -1,0 +1,18 @@
+{% comment %}
+Public avatar or initial fallback. `block_class` is the BEM block of the
+caller (member-card or profile-public-card). The fallback is decorative:
+the public name is always rendered next to it.
+{% endcomment %}
+{% if profile.avatar %}
+  <img
+    class="{{ block_class }}__avatar"
+    src="{{ profile.avatar.url }}"
+    alt="Avatar for {{ profile.resolved_display_name }}"
+    width="480"
+    height="480"
+  >
+{% else %}
+  <div class="{{ block_class }}__avatar-fallback" aria-hidden="true">
+    {{ profile.resolved_display_name|first|upper }}
+  </div>
+{% endif %}

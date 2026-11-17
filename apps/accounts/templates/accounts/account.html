@@ -67,11 +67,7 @@
           <div class="button-row">
             <a class="button button--secondary" href="{% url 'members:profile_edit' %}">Edit profile</a>
             <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Preview profile</a>
-            {% if member_profile.is_published %}
-              <a class="button button--quiet" href="{% url 'members:profile_unpublish' %}">Unpublish profile</a>
-            {% else %}
-              <a class="button" href="{% url 'members:profile_publish' %}">Publish profile</a>
-            {% endif %}
+            {% include "members/includes/profile_publication_action.html" with profile=member_profile %}
           </div>
         </section>
       {% endif %}
@@ -86,11 +82,8 @@
         x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
       >
         {% csrf_token %}
-        {% include "account/includes/form_errors.html" with form=form %}
-        {% include "account/includes/field.html" with field=form.is_usyd_student %}
-        <div x-show="isUsyd || {{ form.usu_id.errors|yesno:'true,false' }}">
-          {% include "account/includes/field.html" with field=form.usu_id %}
-        </div>
+        {% include "includes/forms/form_errors.html" with form=form %}
+        {% include "accounts/includes/usyd_fields.html" with form=form %}
         <button class="button" type="submit">Update account</button>
       </form>
     </div>

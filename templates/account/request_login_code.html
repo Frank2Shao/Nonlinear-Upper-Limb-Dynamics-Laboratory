@@ -11,7 +11,7 @@
     <div class="panel">
       <form class="stack" method="post" action="{{ request_login_code_url }}">
         {% csrf_token %}
-        {% include "account/includes/form_fields.html" with form=form %}
+        {% include "includes/forms/form_fields.html" with form=form %}
         {{ redirect_field }}
         <button class="button" type="submit">Request code</button>
       </form>
