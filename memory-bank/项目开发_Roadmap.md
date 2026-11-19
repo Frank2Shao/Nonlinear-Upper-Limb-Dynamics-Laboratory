@@ -3,8 +3,8 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **候选域名：** `nuldl.com`  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Phase 6 尚未开始
-**最后更新：** 2026 年 11 月 14 日
+**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中，Phase 6 尚未开始
+**最后更新：** 2026 年 11 月 19 日
 
 ## 一、文档体系
 
@@ -57,7 +57,8 @@
 | 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Complete` |
 | 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Complete` |
 | 5 | 地点与地图 | — | `Cancelled` |
-| 6 | 正式环境准备与上线 | Phase 1–4、Provider 与外部审批 | `Not started` |
+| VR | Visual Refresh 视觉优化 | Phase 1–4、代码清理 | `In progress` |
+| 6 | 正式环境准备与上线 | Phase 1–4、Visual Refresh、Provider 与外部审批 | `Not started` |
 | 7 | Training Records & Leaderboards | Phase 6 已上线；动作与成绩规则已确认 | `Not started` |
 
 ## 五、Phase 1：项目基础、账户与 USU ID 审核
@@ -199,7 +200,7 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 ### 主要交付物
 
 - Event 和 RiskNoticeVersion 后台管理；
-- Events 列表和 Event detail，由 Home 提供入口，活动详情支持管理员填写的 Google Maps 链接；
+- Events 列表和 Event detail，由 Header 导航和 Home 近期活动区提供入口，活动详情支持管理员填写的 Google Maps 链接；
 - 管理员手动开启或关闭报名；
 - 会员报名和取消；
 - Risk Notice 版本和确认时间记录；
@@ -233,6 +234,29 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 ## 九、Phase 5：地点与地图
 
 `Cancelled`。项目负责人确认，Phase 4 已交付的活动地点文字和可选 Google Maps 链接满足首期需求。独立 Locations 页面、Location 模型与站内交互地图移出交付范围。
+
+## 九点五、Visual Refresh：视觉优化
+
+### 目标
+
+在正式上线前统一全站黑金视觉、金色材质与页面氛围，不改变既有功能与业务规则。
+
+### 主要交付物
+
+- 全站视觉 Tokens、本地字体与图片资产管线；
+- 共用组件：金色质感文字、材质按钮、描边按钮、分隔线、等宽标签、网格背景、Header 与 Footer；
+- 按页面逐一完成的设计与实施：Home → Events → About、Beginners & Safety → Members → 认证与 Account → 错误页。
+
+### 退出门槛
+
+- 每个页面的设计已由项目负责人确认并记录在 `design_document.md`；
+- 既有测试、Accessibility、无 JavaScript、reduced motion 与 desktop/mobile smoke 全部通过；
+- 没有新增业务功能、migration、第三方 CDN 或未经批准的 Branding；
+- 项目负责人完成全站人工走查。
+
+### 阶段状态
+
+`In progress`。具体步骤见 `implementation.md` 第九点五节。
 
 ## 十、Phase 6：正式环境准备与上线
 

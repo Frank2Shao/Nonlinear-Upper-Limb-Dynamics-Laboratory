@@ -4,7 +4,7 @@
 **文档职责：** 为 AI 开发者提供可验证、可逐步执行的开发指令  
 **实施根目录：** `../`  
 **文档状态：** Progressive  
-**最后更新：** 2026 年 11 月 12 日
+**最后更新：** 2026 年 11 月 19 日
 
 ## 一、输入与优先级
 
@@ -497,7 +497,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | 37 | 建立 `RiskNoticeVersion` 和 Admin 切换流程。验证唯一当前版本、原版本保留和环境隔离。 |
 | 38 | 建立 `Event` 和 Admin。验证公开状态、报名开关、起止时间及可选 Google Maps HTTPS URL。 |
 | 39 | 建立 `EventRegistration` 和事务服务。验证单一有效报名约束、Risk Notice 版本引用、时间记录和并发一致性。 |
-| 40 | 从 Home 接入 Events 列表及详情。支持 Upcoming、Past 和 All，按悉尼时间在活动结束日期过后的首个本地午夜自动归档。Home 改用数据库近期活动，支持空状态。由管理员录入已确认的 12 月 1 日日程。活动详情在提供地图 URL 时显示 `View location in map`。验证日期边界、公开范围、地图链接和普通链接回退。 |
+| 40 | 从 Home 接入 Events 列表及详情（Step 45 另在 Header 增加 Events 导航）。仅支持 Upcoming 和 Past（无效参数回退到 Upcoming），按悉尼时间在活动结束日期过后的首个本地午夜自动归档。Home 改用数据库近期活动，支持空状态。由管理员录入已确认的 12 月 1 日日程。活动详情在提供地图 URL 时显示 `View location in map`。验证日期边界、公开范围、地图链接和普通链接回退。 |
 | 41 | 实现已验证会员报名，主动确认当前 Risk Notice。验证过期版本重提、关闭及 Past 时拒绝报名、Production 门禁、普通 POST 与 HTMX。 |
 | 42 | 实现幂等取消和重新报名。验证关闭及 Past 时拒绝取消、保留取消记录及重新确认当前版本。 |
 | 43 | 建立 Admin 报名名单。验证最小权限及报名和 Risk Notice 历史只向获授权管理员开放。 |
@@ -509,6 +509,26 @@ AI 开发者一次只执行一个步骤。每一步必须：
 ## 九、Phase 5：地点与地图（已取消）
 
 项目负责人确认，以 Phase 4 的 Event 地点文字和可选 Google Maps HTTPS 链接满足首期地点展示需求。Phase 5 状态为 `Cancelled`，保留阶段编号。
+
+## 九点五、Visual Refresh：视觉优化（Phase 6 前置）
+
+**展开条件：** Phase 1–4 已验收，代码清理已完成。设计以 Design canvas `NULDL Home hero concepts` 为视觉参考，以 `design_document.md` 7.4、7.7、9.2–9.6 为权威规则。
+
+**推进方式：** 一次设计确认一个页面，再实施该页面；第一轮同时建立全站共用的视觉基础。每个页面完成后更新 `design_document.md`（若有新决定）与 `progress.md`。
+
+**关键约束：** 不改变业务逻辑、权限、URL、表单字段或 migration；不新增第三方 CDN，字体与图片均为本地静态资产；保持 WCAG 2.2 AA、键盘、200% 放大、禁用 JavaScript 与 `prefers-reduced-motion` 门禁；画布中的固定像素尺寸不得照搬，必须改为流式布局。
+
+| 步骤 | 实施与验收 |
+| --- | --- |
+| V1 | 视觉 Tokens 与资产管线。更新 `static_src/css/site.css` 的 `@theme`：暖黑页面底色、金色材质色阶（暗部、主色、亮部）、正文与次要文字色、网格线色、等宽字体族；以 npm 锁定方式加入 JetBrains Mono 本地字体并纳入现有静态资产流程；扩展图片构建脚本，从 `static_src/images/brand/gold-texture-source.png` 与 `static_src/images/home/hero-specimen-source.png` 生成带校验的 WebP 变体，并纳入 `images:check`。验证 `static:check`、静态资产测试及对比度。 |
+| V2 | 全站共用组件。实现金色质感文字、金色材质填充、切角主按钮（悬停一次性高光，尊重 reduced motion）、金色渐变描边次要按钮、金色分隔线、等宽金色标签、坐标网格页面背景，以及使用这些组件的 Header 与 Footer。替换现有按钮样式时检查所有页面不回退。验证完整测试、全部页面 Accessibility 浏览器门禁（对比度、Focus、24px 触控目标、重排）及人工截图走查。 |
+| V3 | Home Hero 布局。按 7.4 的单一栏宽方案重建 Hero：三行金色标题、标签与 eyebrow、介绍、三个等宽按钮（`Join the Club` 仅 Anonymous、`Join on USU`、`New to Armwrestling?`）、右侧 Logo、底部图纸标题栏；窄屏时 Logo 移至标题下方。更新 Home 页面测试中依赖旧结构与旧文案的断言。验证 Anonymous 与 authenticated member 的按钮集合与顺序、desktop/mobile 布局和无 JavaScript 场景。 |
+| V4 | Hero 信息表。Home view 从既有 `public().upcoming()` 查询提供最近一场 Event，模板按 7.7 输出 `Next trial`、`Location`、`Subjects`，没有 Upcoming Event 时不渲染该表；时间统一以 `Australia/Sydney` 显示。验证有活动、无活动、地点为空、未发布活动不泄露及 Past 活动不显示。 |
+| V5 | Hero 背景彩蛋。照片与受力标注层仅在宽屏且支持悬停的媒体条件下渲染，照片通过 CSS 背景加载，窄屏和触屏设备不下载该图片；指针移动只更新 CSS 自定义属性驱动遮罩，不持续动画；整层对辅助技术隐藏且不拦截指针事件。验证 desktop 光照可见、mobile 无该图片网络请求、无 page error、文字与按钮可点击性不受影响。 |
+| V6 | Home 其余区块（`New to Armwrestling?` 卡片与 `Upcoming Events`）。先在设计画布确认样式，再以 V2 组件实施；活动卡片样式同时作用于 Events 列表。 |
+| V7 | 第一轮质量门禁。完整测试、Ruff、`static:check`、Django checks、Phase 2–4 desktop/mobile smoke 与 Accessibility 门禁全部通过；提交 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后再更新 `architecture.md`。 |
+
+后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。
 
 ## 十、Phase 6 概要：上线与运维
 

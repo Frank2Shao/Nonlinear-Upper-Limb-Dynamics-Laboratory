@@ -1536,3 +1536,144 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 
 - 项目负责人确认取消原定的地点与地图阶段，保留编号，状态为 `Cancelled`。活动地点继续由管理员在 Event 中录入，在详情页显示地点文字和可选 Google Maps 链接。
 - Phase 6 衔接已验收的 Phase 4，移除独立地点模型、站内地图、地点坐标和地图瓦片供应商相关的阶段依赖。仓库仍保留既有的 `locations` App 骨架及未加载的 MapLibre 资产。
+
+## Visual Refresh Step V1 — 视觉 Tokens 与资产管线
+
+### 前置条件检查
+
+- Phase 1–4 为 `Complete`，代码清理第 1–6 批已提交（`e156ce3`），Phase 5 已取消；`implementation.md` 九点五节 V1 的展开条件满足。
+- `AGENTS.md`、`architecture.md`、`design_document.md`（7.4、7.7、9.2–9.6）与 `implementation.md` 九点五节已完整阅读，彼此不冲突。
+- 两张源图存在且可读：`static_src/images/brand/gold-texture-source.png`（1600 × 640 RGB PNG）与 `static_src/images/home/hero-specimen-source.png`（1122 × 1402 RGBA PNG，含透明通道）；两者都不含 EXIF、XMP 或文本 metadata。
+- Docker PostgreSQL healthy；Token 取值以 Design canvas `NULDL Home hero concepts` 的 `E · Aligned · three-line title` 与 `design_document.md` 9.2 为准。
+
+### 已完成
+
+- `static_src/css/site.css` 的 `@theme`：
+  - 页面底色 `--color-ink` 改为暖黑 `#0a0908`，正文 `--color-cream` 改为 `#ece4d3`，次要文字 `--color-muted` 改为 `#c9c0ae`（均取自设计稿）；这三项是全站生效的唯一可见变化。
+  - 新增金色材质色阶 `--color-gold-shadow: #7e5015`、`--color-gold-metal: #bf8933`、`--color-gold-highlight: #f2bf5a`（9.2 规定值），网格线色 `--color-grid: rgb(226 176 74 / 4.5%)`，以及等宽字体族 `--font-mono`。
+  - 平面金色 `--color-gold` / `--color-gold-bright` 保持不变，继续用于链接、Focus 与现有主要按钮。
+- 以 `--save-exact` 加入 `@fontsource/jetbrains-mono@5.3.0`（2026-07-19 发布，OFL-1.1，无传递依赖）；`build-static-assets.mjs` 复制 Latin 400/500 两个字重与 license，并写入 vendor manifest；`site.css` 增加对应 `@font-face`。
+- `scripts/build_home_images.py` 改为按源图清单构建，每个源图都校验 SHA-256、格式、尺寸、mode 与透明通道，并以 method 6、去除 EXIF/XMP 的固定参数确定性生成 WebP：
+  - Logo：参数与输出不变（480/800/1200，字节一致）。
+  - 金色材质：`static/images/brand/gold-texture-800.webp`（29,098 bytes）与 `-1600.webp`（92,904 bytes），quality 80。
+  - Hero 背景照片：`static/images/home/hero-specimen-560.webp`（75,100 bytes）与 `-1120.webp`（224,692 bytes），保留透明度，quality 78、alpha_quality 80。
+  - 新资产已由 `images:build` / `images:check` 覆盖；脚本名与 npm scripts 保持不变。
+- 测试：
+  - `tests/test_home_images.py` 参数化覆盖三张源图的完整性，以及全部变体的尺寸、格式、mode、透明度和无 metadata。
+  - `tests/test_static_assets.py` 新增 JetBrains Mono 构建检查、四组 token 对比度（muted/surface-raised、ink/gold-metal、ink/gold-highlight、gold-metal/ink），以及金色材质图作为大号展示文字时最暗 1% 像素对页面底色 ≥ 3:1 的检查。
+
+### 验证结果
+
+- `npm run static:check`（vendor assets、images、Tailwind build）通过。
+- `tests/test_static_assets.py` 与 `tests/test_home_images.py` 共 `21 passed`。
+- 完整 pytest（含全部 Playwright 浏览器与 Accessibility 门禁）在全新 test database 上 `394 passed`。
+- Ruff lint `All checks passed!`，format check `138 files already formatted`；Django system check 无问题；`makemigrations --check --dry-run` 报告 `No changes detected`；`git diff --check` 无问题。
+- 对比度实测（WCAG）：cream/ink 15.7、muted/ink 11.0、muted/surface 9.9、ink/gold-metal 6.5、ink/gold-highlight 11.7、gold-metal/ink 6.5、gold-bright/ink 13.8。
+
+### 遗留与需要项目负责人决定的事项
+
+- **材质按钮小字对比度（V2 前需决定）：** 金色材质图深色斑块较多。按像素统计，深色文字（`#1a1000`）对材质图的对比度在 5% 分位约 4.0、1% 分位约 3.3，低于正常字号所需的 4.5:1；设计稿的底部暗化叠层还会进一步降低该值。22px、字重 600 的按钮文字不属于 WCAG 大号文字。可选方案：V2 生成提亮暗部的按钮专用材质变体，或减小材质对按钮底色的贡献（以 `--color-gold-metal` 为主、叠加低透明度纹理）。主标题等大号金色文字（≥ 3:1）不受影响，已由测试固定。
+- **平面金色取值：** 设计稿链接与标签文字使用 `#e2b04a`，当前平面金色 token 仍为 `#d9ad50` / `#ffd166`。V1 未改动，是否统一由 V2 决定。
+- **Tailwind 输出：** Tailwind v4 只输出被使用的 theme 变量，新增材质与网格颜色要到 V2 组件引用后才出现在 `static/css/site.css`；构建产物目前只增加 JetBrains Mono `@font-face` 与新色值（21,469 → 21,847 bytes）。
+- **npm audit：** 报告 2 个 high（`picomatch` ReDoS，经 Tailwind CLI 的 `@parcel/watcher` 引入，仅开发工具链）。本步 lockfile 只新增 `@fontsource/jetbrains-mono`，该告警为既有依赖的新公告，本步未处理。
+- 本步没有修改模板、业务逻辑、URL、表单或 migration。
+
+### 验收与文档
+
+- 项目负责人已确认 V1，并批准更新 `architecture.md`：新增 3.49 节，补充新 token、JetBrains Mono、图片构建清单及相关文件职责。
+- 上述两项 V2 前决策（材质按钮小字对比度、平面金色取值）仍待项目负责人决定。V2 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V2 — 全站共用组件、Header 与 Footer
+
+### 项目负责人决定
+
+- 材质按钮小字对比度：采用提亮暗部的按钮专用材质贴图。
+- 平面金色：链接、标签与小号金色文字改用设计稿 `#e2b04a`，悬停 `#f3d58a`；Focus 指示继续使用更亮的 `#ffd166`。两项决定已写入 `design_document.md` 9.2。
+
+### 已完成
+
+- 图片构建清单新增 `static/images/brand/gold-texture-button-800.webp`（16,372 bytes）：从同一材质源图按像素暗度向 `--color-gold-highlight` 混合（强度 0.7），实测最暗像素对 `--color-on-gold` 为 5.3:1，纹理保持可见。
+- 新增 token：`--color-gold-pale`、`--color-gold-glint`、`--color-gold-sheen`、`--color-gold-edge`、`--color-gold-depth`、`--color-on-gold`、`--color-gold-wash`；`--color-gold` 改为 `#e2b04a`，Header 背景改为 88% 暖黑，删除不再使用的 `--color-divider`。组件规则继续只引用 `var(--color-*)`，半透明效果使用 `color-mix()`。
+- 共用组件（`static_src/css/site.css`）：
+  - `.button`：金色材质填充、切角、顶部内高光与底部内暗边、近黑文字；悬停时一次性扫过高光（不循环，reduced motion 下即时完成），按下轻微下移。填充与高光画在带 `clip-path` 的 `::before`/`::after` 上，切角不会裁掉元素自身的 Focus outline。
+  - `.button--secondary`：金色渐变描边切角按钮，内部底色读取所在表面的 `--button-ground`（页面、卡片、dialog、安全提示与 CTA 面板各自声明），悬停与 `aria-current` 使用 `--color-gold-wash`；当前项另以下划线标识，不只依赖颜色。
+  - `.button--quiet` 关闭材质层；`.button--compact` 供 Header 使用较小切角。
+  - `.gold-text`：材质贴图裁切到文字，每个行片段上亮下暗，顶部亮边、底部暗边与柔和投影；只用于大号展示文字，forced colors 与不支持 `background-clip: text` 时回退为普通文字。
+  - `.gold-rule` 金色分隔线、`.label-mono` 等宽金色标签、`.gold-tag` 材质等宽标签。
+  - `body` 使用暖黑底色叠加 2.5rem 极淡金色坐标网格。
+- Header：品牌改为大写 Barlow Condensed；导航链接为次要文字色，悬停浅金，当前页金色文字加 2px 金色下划线；`Join the Club` 改用 `.button .button--compact`；底部使用金色分隔线。
+- Footer：顶部金色分隔线，版权行使用等宽大写小字，Instagram 链接使用平面金色；宽屏左右分布，窄屏换行。
+- `.gold-text`、`.label-mono`、`.gold-tag` 已定义但尚无页面使用，由 V3 Hero 首先使用；本步用临时注入的样例截图确认渲染。
+- 测试：
+  - 静态资产测试新增按钮材质每个像素对 `--color-on-gold` ≥ 4.5:1、七组平面金色/浅金/近黑文字对比度，以及构建 CSS 引用的图片均存在。
+  - 图片测试加入按钮材质变体。
+  - `phase2-accessibility.mjs` 的对比度计算在元素自身背景透明时读取其 `::after`/`::before` 背景，并增加 `main .button--secondary` 与 `.site-header .button`；必需内容检查与 `home-page.mjs` 的裁切检查限定在 `main`，避免把 mobile 收起菜单中的 Header 按钮当作页面内容。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright、Phase 2–4 Accessibility 门禁：对比度、Focus、24px 触控目标、200% 重排、无 JavaScript、reduced motion）在全新 test database 上 `405 passed`。
+- `npm run static:check`、Ruff lint/format（`138 files already formatted`）、Django check、`makemigrations --check`（`No changes detected`）、`git diff --check` 均通过。
+- Production settings 下 `collectstatic` 通过，manifest CSS 中三处材质图片 URL 均被替换为带 hash 的文件名。
+- 人工截图走查：在 Development server 上以 1440×900 与 390×844 截取 Home、About、Beginners & Safety、Events、Members、Log in、Sign up、Draft Risk Notice、404 的全页截图，以及组件样例、悬停、Focus 和 mobile 展开菜单。按钮、描边按钮、卡片内按钮、安全提示内按钮、Header、Footer 与网格背景均正常，无重叠或溢出；悬停高光按预期单次扫过。走查发现 Events 的 Upcoming/Past 筛选没有当前项样式（V2 之前即如此），已补充当前项底色与下划线。
+
+### 当前边界与下一步门槛
+
+- 本步没有修改业务逻辑、权限、URL、表单字段或 migration；模板变更只限 Header 的 `Join the Club` class 与 Footer 版权行 class。
+- `architecture.md` 尚未更新，需要项目负责人批准。V3 尚未开始，需要项目负责人明确授权。
+
+### V2 修订（项目负责人参考截图）
+
+- 项目负责人提供最终 Home 视觉截图后，Header 改为截图布局：页面导航紧跟品牌（不再推到右侧），`Log in` 与 `Join the Club` 位于最右；导航文字 0.875rem、字重 400，当前页下划线与文字等宽；品牌 1.25rem。
+- Header、messages、页面主体与 Footer 共用 `min(80rem, 100% - 4rem)` 内容宽度（窄于 `--breakpoint-nav` 时为 `100% - 2rem`），原为 88rem；`home-page.mjs` 的宽度断言相应改为 80rem。
+- 按钮字重按设计稿调整：主要按钮 600、描边按钮 500；Header 的 `Join the Club` 为 0.875rem。
+- 截图中的 Hero（三行金色标题、等宽按钮、信息表、背景照片、Logo 布局）属于 V3–V5，本修订未实施。
+- 验证：完整 pytest `405 passed`，`static:check`、Ruff lint/format、`git diff --check` 通过；desktop 1440×900 与 mobile 390×844 截图走查 Header、mobile 展开菜单、Beginners & Safety 与组件样例均正常。
+
+### 文档补充（项目负责人提供）
+
+- 另一个 Claude 桌面会话对 memory-bank 的补充修改未写入本仓库文件夹（排查：无 OneDrive 覆盖、无 git worktree/reset、无其他副本；02:22 之后 memory-bank 的磁盘写入只来自本会话）。项目负责人改为直接提供文本，已逐字写入 `design_document.md`：7.4 背景彩蛋参数与 Logo 外发光、7.7 彩蛋标注文案、9.2 表面与文字基准值及 Header 金色分隔线、9.3 等宽字体用途与 Hero 字号、9.4 切角尺寸、导航当前页、次要按钮与信息表样式。
+- 已实施的 V2 与新增规则逐项核对一致（网格 2.5rem/4.5%、Header 半透明暖黑与金色渐变线、导航当前页 2px 下划线、主/次按钮切角 10px 与 Header 8px、次要按钮 1px 渐变描边与深金褐悬停）。
+- 按 9.2 新增 token：`--color-subtle: #9c9483`（表格标签与低优先级文字，对页面底色 6.9:1）与 `--color-gold-line`（30% `#e2b04a` 细边框），供 V3/V4 使用；静态资产测试新增 subtle 对页面底色与卡片表面的 4.5:1 检查。`static:check`、Ruff 与静态/图片测试（`34 passed`）通过。
+
+### 验收与文档
+
+- 项目负责人已确认 V2（含 Header 修订与文档补充），并批准更新 `architecture.md`：新增 3.50 节，更新按钮层结构、共享内容宽度、新 token、按钮材质贴图及相关文件职责。V3 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V3 — Home Hero 布局
+
+### 前置条件检查
+
+- V1、V2 已由项目负责人确认，`architecture.md` 已记录至 3.50；`design_document.md` 7.4、7.7、9.2–9.4 已包含项目负责人补充的 Hero 参数。V3 不包含信息表（V4）与背景彩蛋（V5）。
+
+### 已完成
+
+- `apps/core/templates/core/home.html` 重建 Hero：
+  - `Research Field` 材质标签 + 等宽金色 eyebrow；
+  - 唯一 H1 由三个行块组成（`Nonlinear` / `Upper Limb Dynamics` / `Laboratory`），每行内是 `.gold-text`，可访问名称仍为 `Nonlinear Upper Limb Dynamics Laboratory`；
+  - 介绍文字、操作按钮（`Join the Club` 仅 Anonymous、`Join on USU`、`New to Armwrestling?`，顺序与 href 不变）；
+  - 右侧响应式 Logo（`sizes` 改为桌面 31.25rem、窄屏 34rem）；
+  - Hero 底部图纸标题栏：`Specimen 001 is kept in the dark. Bring a light.` 与 `<dl>` 形式的 `Dwg no. NULDL-001`、`Scale 1:1`、`Est. 2026`，对辅助技术可读。
+- `static_src/css/site.css`：
+  - 宽于 `--breakpoint-hero`（54rem）时，文字栏与 Logo 作为一组 flex 居中，栏间距 3.5rem；文字栏 `width: min-content`，标题行 `nowrap`，因此由第二行决定栏宽，标签、介绍、按钮行全部对齐该栏宽；主标题 `clamp(3rem, 6vw, 5.5rem)`、行高 0.92。
+  - 按钮在一行内等宽等高（`grid-auto-flow: column` + `align-self: stretch`），文字 `clamp(1rem, 1.5vw, 1.375rem)`（1440px 时约 22px）；会员只有两个按钮时同样平分一行。窄于 54rem 时为两列、奇数最后一个占满整行。
+  - Logo 在 18.75–31.25rem（300–500px）之间随剩余空间伸缩，带 12% 金色 40px 外发光；窄屏移到标题下方。
+  - 窄屏标题行允许换行，避免 320–390px 视口溢出。
+  - 原 `.home-hero__content h1` 的任意断行规则删除（标题改由行块控制换行）。
+- 测试：
+  - `tests/test_home_page.py` 以去除标签后的文本校验 H1、三行标题、标签与 eyebrow、图纸标题栏文字，并确认标题栏未对辅助技术隐藏。
+  - `tests/browser/home-page.mjs` 新增：desktop 三个按钮同一行等宽等高、标题三行互不重叠、第二行宽度等于文字栏宽度、Logo 位于文字右侧且 300–500px、标题栏可见；mobile Logo 位于标题下方。
+  - `phase2-accessibility.mjs` 的对比度检查由已不存在的 `.lede` 改为 `.home-hero__intro`，并新增材质标签、eyebrow、标题栏说明、`dt`、`dd`。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `408 passed`；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过。
+- Development server 截图走查 1920、1440、1100、900、800 与 390px：均无横向溢出；≥ 900px 时标题三行、按钮等宽、Logo 在右侧（1440px：文字栏 702px、Logo 500px；900px：Logo 373px）；800 与 390px 时 Logo 移至标题下方，按钮两列、第三个占满整行。
+
+### 当前边界与下一步门槛
+
+- 未实施 V4 信息表与 V5 背景彩蛋；Hero 内容宽度沿用 V2 的 80rem 共享宽度（设计稿约 1360px）。会员视图的两按钮布局由 Django 测试校验顺序，未做浏览器截图。
+- 没有修改 view、URL、业务逻辑或 migration。`architecture.md` 尚未更新，需要项目负责人批准；V4 尚未开始。
+
+### 项目负责人确认
+
+- 项目负责人已确认 V3，并批准更新 `architecture.md`：新增 3.51 节，更新 Home 模板、样式源及 Home/Accessibility 测试的文件职责。V4 尚未开始，需要项目负责人明确授权。

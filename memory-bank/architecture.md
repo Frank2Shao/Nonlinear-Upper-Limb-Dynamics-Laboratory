@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 11 月 17 日
-**对应进度：** Phase 4, Step 45
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Phase 6 尚未开始
+**最后更新：** 2026 年 11 月 19 日
+**对应进度：** Visual Refresh, Step V3
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（V1–V3 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -575,6 +575,44 @@ ASGI / WSGI ───────────→ config.settings.production
 - Home Logo 保留透明度，并改用 quality 75、alpha_quality 70、method 6 编码，三个生成物合计由约 898 KB 降至约 506 KB（见 3.20）。
 - 已通过 Ruff lint/format、Django system check、`makemigrations --check` 与 `npm run static:check`；完整 pytest（含浏览器场景）通过。T8 的 17 种 allauth 渲染情况除 heading id 外完全一致；C4/C5/T2 后的 51 张 desktop/mobile 截图与第 5 批前基线一致（仅 Chrome 原生校验气泡的淡出时机不同）。
 
+### 3.49 Visual Refresh V1：视觉 Tokens 与资产管线
+
+- Token 取值来自 Design canvas `NULDL Home hero concepts` 的 `E · Aligned · three-line title` 与 `design_document.md` 9.2，仍全部集中在 `static_src/css/site.css` 的 `@theme`。
+- 既有 token 改为设计稿暖色系：`--color-ink` `#0a0908`（页面底色）、`--color-cream` `#ece4d3`（正文）、`--color-muted` `#c9c0ae`（次要文字）。这是 V1 唯一的全站可见变化。
+- 新增金色材质色阶 `--color-gold-shadow` `#7e5015`、`--color-gold-metal` `#bf8933`、`--color-gold-highlight` `#f2bf5a`，装饰网格线 `--color-grid`（4.5% 金色），以及 `--font-mono`（JetBrains Mono）。平面金色 `--color-gold` / `--color-gold-bright` 不变，继续承担链接、Focus 与现有按钮；材质色阶留给 V2 组件。
+- Tailwind v4 只输出被引用的 theme 变量，因此材质与网格颜色在 V2 组件使用前不会出现在构建产物中；`@font-face` 声明始终输出。
+- JetBrains Mono 以精确版本 `@fontsource/jetbrains-mono@5.3.0` 加入运行依赖，`build-static-assets.mjs` 复制 Latin 400/500 字重与 OFL license，并写入 vendor manifest；运行页面仍不访问第三方 CDN。
+- `scripts/build_home_images.py` 从单一 Logo 扩展为源图清单。每个源图声明 SHA-256、尺寸、mode、输出路径、宽度和编码参数；构建前校验完整性与透明通道，输出 method 6、去除 EXIF/XMP 的确定性 WebP，`images:check` 检测漂移。Logo 参数与输出字节不变。
+- 新源图与生成物：
+  - 金色材质 `static_src/images/brand/gold-texture-source.png` → `static/images/brand/gold-texture-{800,1600}.webp`（RGB，quality 80），供材质填充与金色展示文字使用。
+  - Hero 背景照片 `static_src/images/home/hero-specimen-source.png` → `static/images/home/hero-specimen-{560,1120}.webp`（保留透明度，quality 78、alpha_quality 80），只供 V5 宽屏背景层使用。
+- 对比度门禁从 `@theme` 读取 token，新增 muted/surface-raised、ink/gold-metal、ink/gold-highlight 与 gold-metal/ink；另以材质图最暗 1% 像素对页面底色 ≥ 3:1 固定大号金色展示文字的下限。材质图作为小字号深色文字背景时局部低于 4.5:1，处理方式在 V2 决定。
+- 本步没有修改模板、业务逻辑、URL、表单、settings 或 migration。已通过 `npm run static:check`、Ruff lint/format、Django check、`makemigrations --check`，完整 pytest（含浏览器与 Accessibility 门禁）`394 passed`。
+
+### 3.50 Visual Refresh V2：全站共用组件、Header 与 Footer
+
+- 项目负责人决定（已写入 `design_document.md` 9.2）：材质承载小号深色文字时使用提亮暗部的按钮专用贴图；链接与小号金色文字使用平面金 `#e2b04a`（悬停 `#f3d58a`），Focus 指示继续使用 `#ffd166`。
+- 图片构建清单增加 `gold-texture-button-800.webp`：同一材质源图按像素暗度向 `--color-gold-highlight` 混合（`lift_darks=0.7`），最暗像素对 `--color-on-gold` 为 5.3:1；测试以每个像素 ≥ 4.5:1 固定该下限。
+- 新增 token：`--color-gold-pale`、`--color-gold-glint`、`--color-gold-sheen`、`--color-gold-edge`、`--color-gold-depth`、`--color-on-gold`、`--color-gold-wash`，以及按 9.2 基准值补充的 `--color-subtle`（表格标签与低优先级文字）和 `--color-gold-line`（30% 金色细边框）；删除不再使用的 `--color-divider`。组件只引用 `var(--color-*)`，半透明效果使用 `color-mix()`。
+- 按钮结构：`.button` 自身背景透明，材质填充与一次性悬停高光分别画在带同一切角 `clip-path` 的 `::before` 与 `::after` 上，文字在 `isolation: isolate` 建立的层叠上下文中位于其上。切角因此不会裁掉元素自身的 Focus outline。高光通过 `background-position` 过渡移动，不随元素平移超出切角；只在 `:hover` 声明过渡，离开时直接复位，reduced motion 下即时完成。
+- `.button--secondary` 以 `::before` 绘制渐变描边、`::after` 内缩 1px 绘制内芯（切角补偿 0.6px 以保持斜边等宽）；内芯颜色读取所在表面声明的 `--button-ground`（共享卡片表面、报名 dialog、安全提示与 CTA 面板），悬停与 `aria-current` 使用 `--color-gold-wash`，当前项另加下划线。`.button--quiet` 关闭两层；`.button--compact` 为 Header 使用 8px 切角与 0.875rem 文字。
+- 其他共用组件：`.gold-text`（材质贴图以 `background-clip: text` 裁切到文字，`box-decoration-break: clone` 使每个行片段上亮下暗，forced colors 或不支持文字裁切时回退为普通文字）、`.gold-rule` 与 Header/Footer 伪元素共用的金色渐变线、`.label-mono` 与 `.gold-tag` 等宽标签、`body` 的 2.5rem 金色坐标网格背景。`.gold-text`、`.label-mono`、`.gold-tag` 尚无页面使用，由 V3 Hero 首先使用。
+- Header 按设计稿重排：品牌后紧跟页面导航，账户操作在最右；导航为次要文字色，当前页金色文字加 2px 下划线；`Join the Club` 改用 `.button .button--compact`。Footer 顶部金色渐变线、等宽大写版权行。
+- Header、messages、页面主体与 Footer 共用 `min(80rem, 100% - 4rem)` 内容宽度（`max-nav` 下为 `100% - 2rem`），取代原 88rem。
+- 浏览器门禁调整：`phase2-accessibility.mjs` 的对比度计算在元素背景透明时读取其 `::after`/`::before` 背景，并覆盖主按钮、描边按钮与 Header 按钮；必需内容与 Home 裁切检查限定在 `main`，避免把 mobile 收起菜单中的 Header 按钮计入；Home 宽度断言改为 80rem。
+- 本步没有修改业务逻辑、权限、URL、表单字段或 migration；模板变更仅限 Header `Join the Club` 的 class 与 Footer 版权行 class。完整 pytest（含 Phase 2–4 浏览器与 Accessibility 门禁）`405 passed`；`static:check`、Ruff、Django check、`makemigrations --check` 与 Production `collectstatic`（材质图片 URL 均替换为带 hash 文件名）通过；desktop/mobile 截图走查经项目负责人确认。
+
+### 3.51 Visual Refresh V3：Home Hero 布局
+
+- Hero 由 `.home-hero__main`（文字栏 + Logo）与 `.home-hero__titleblock`（装饰说明 + 图纸标题栏）两部分组成。文字栏依次为 `Research Field` 材质标签与等宽 eyebrow、唯一 H1、介绍文字和操作按钮；V2 定义的 `.gold-text`、`.label-mono`、`.gold-tag` 由此首次在页面使用。
+- H1 由三个 `display: block` 行块组成（`Nonlinear` / `Upper Limb Dynamics` / `Laboratory`），每行内为 `.gold-text`；可访问名称仍为完整的 `Nonlinear Upper Limb Dynamics Laboratory`。标题换行由行块控制，原 `.home-hero__content h1` 的任意断行规则删除。
+- 宽于 `--breakpoint-hero`（54rem）时，文字栏与 Logo 作为一组 flex 居中（栏间距 3.5rem）。文字栏 `width: min-content` 且标题行 `nowrap`，因此由最长的第二行决定栏宽，标签、介绍与按钮行全部对齐该宽度；主标题 `clamp(3rem, 6vw, 5.5rem)`、行高 0.92。窄于 54rem 时 Logo 移到文字栏下方，标题行允许换行以避免 320–390px 溢出。
+- Hero 按钮以 `grid-auto-flow: column` 与 `grid-auto-columns: minmax(0, 1fr)` 在一行内平分宽度，`align-self: stretch` 覆盖 `.button-row` 的居中对齐以保持等高，因此会员视图只有两个按钮时同样平分一行；文字 `clamp(1rem, 1.5vw, 1.375rem)`。窄于 54rem 时为两列，奇数个时最后一个占满整行。按钮顺序、href 与认证状态分支不变。
+- Logo 以 flex 在 18.75–31.25rem（300–500px）之间随剩余空间伸缩，`sizes` 相应改为桌面 31.25rem；带 12% 金色、40px 半径的 `drop-shadow` 外发光，仅用于与暗底分离。
+- 图纸标题栏使用 `<dl>`（`Dwg no.`、`Scale`、`Est.`），装饰说明为普通段落，均对辅助技术可读；标签为 `--color-subtle`、数值为 `--color-cream`，边框为 `--color-gold-line`。
+- Hero 内容宽度沿用 V2 的 80rem 共享宽度，未采用设计稿约 1360px 的宽度。信息表（V4）与背景彩蛋（V5）未实施。
+- 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest（含全部 Playwright 与 Accessibility 门禁）`408 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；1920–390px 截图走查经项目负责人确认。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -586,10 +624,10 @@ ASGI / WSGI ───────────→ config.settings.production
 | `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、安全数据边界和目录职责；明确中性 NULDL Branding。 |
 | `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
-| `package.json` | 定义锁定的浏览器 library、字体与前端开发工具，并提供 vendor copy/check、Home 图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
+| `package.json` | 定义锁定的浏览器 library、字体（Inter、Barlow Condensed、JetBrains Mono）与前端开发工具，并提供 vendor copy/check、图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
 | `package-lock.json` | 记录完整 npm 依赖树、下载来源和完整性信息，供 `npm ci` 可重复安装；不手工编辑。 |
-| `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
-| `scripts/build_home_images.py` | 校验 Home Logo 透明源文件的 SHA-256、格式、尺寸与透明通道，并以锁定 Pillow 和固定编码参数确定性生成或检查三个响应式透明 WebP 版本。 |
+| `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、Inter/Barlow Condensed/JetBrains Mono 字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
+| `scripts/build_home_images.py` | 按源图清单校验 Home Logo、金色材质与 Hero 背景照片源文件的 SHA-256、格式、尺寸、mode 与透明通道，并以锁定 Pillow 和逐源固定编码参数确定性生成或检查去除 metadata 的响应式 WebP 版本；按钮材质变体先将暗部向金色亮部提亮。 |
 | `scripts/check-css-watch.mjs` | 在临时目录启动 Tailwind `--watch=always`，确认首次 watch build 完成后终止进程并清理临时输出。 |
 | `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
 | `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
@@ -597,22 +635,32 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts、集中管理的全部颜色、字体与圆角 tokens、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行与图纸标题栏）、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
 | `static/images/brand/nuldl-club-logo-800.webp` | 从获准源图生成的 800 × 800 WebP，并作为 Home Logo 默认 `img` fallback。 |
 | `static/images/brand/nuldl-club-logo-1200.webp` | 从获准源图生成的 1200 × 1200 WebP，供较高像素密度或较宽 Hero 使用。 |
+| `static_src/images/brand/gold-texture-source.png` | 金色锤纹材质的 1600 × 640 RGB PNG 源文件；由固定 SHA-256 保护，不直接作为页面资产。 |
+| `static/images/brand/gold-texture-800.webp` | 从材质源图生成的 800 × 320 WebP，供 1x 材质填充与金色展示文字使用。 |
+| `static/images/brand/gold-texture-1600.webp` | 从材质源图生成的 1600 × 640 WebP，供 2x 材质填充与金色展示文字使用。 |
+| `static/images/brand/gold-texture-button-800.webp` | 从材质源图提亮暗部后生成的 800 × 320 WebP，供主按钮与材质标签使用，每个像素对 `--color-on-gold` 至少 4.5:1。 |
+| `static_src/images/home/hero-specimen-source.png` | Home Hero 背景彩蛋照片的 1122 × 1402 透明 PNG 源文件（项目负责人本人照片，已调色并虚化对手）；由固定 SHA-256 保护。 |
+| `static/images/home/hero-specimen-560.webp` | 从照片源图生成的 560 × 700 透明 WebP，供宽屏 Hero 背景层 1x 使用。 |
+| `static/images/home/hero-specimen-1120.webp` | 从照片源图生成的 1120 × 1400 透明 WebP，供宽屏 Hero 背景层 2x 使用。 |
 | `static/fonts/inter-latin-400-normal.woff2` | 本地 Inter Latin 400 字重文件，供正文常规文本使用。 |
 | `static/fonts/inter-latin-500-normal.woff2` | 本地 Inter Latin 500 字重文件，供中等强调文本使用。 |
 | `static/fonts/inter-latin-600-normal.woff2` | 本地 Inter Latin 600 字重文件，供按钮、导航与加重正文使用。 |
 | `static/fonts/barlow-condensed-latin-600-normal.woff2` | 本地 Barlow Condensed Latin 600 字重文件，供次级标题使用。 |
 | `static/fonts/barlow-condensed-latin-700-normal.woff2` | 本地 Barlow Condensed Latin 700 字重文件，供主要标题使用。 |
 | `static/fonts/barlow-condensed-latin-800-normal.woff2` | 本地 Barlow Condensed Latin 800 字重文件，供高强调标题使用。 |
+| `static/fonts/jetbrains-mono-latin-400-normal.woff2` | 本地 JetBrains Mono Latin 400 字重文件，供等宽标签、信息表与图纸标题栏使用。 |
+| `static/fonts/jetbrains-mono-latin-500-normal.woff2` | 本地 JetBrains Mono Latin 500 字重文件，供等宽文字强调使用。 |
 | `static/vendor/alpine/alpine.min.js` | 从锁定 Alpine.js package 复制的本地 minified runtime，负责当前 USYD 条件界面与错误焦点增强。 |
 | `static/vendor/htmx/htmx.min.js` | 从锁定 HTMX package 复制的本地 minified runtime；只由 Event detail 页面加载，负责报名与取消区域的局部更新。 |
 | `static/vendor/licenses/inter.txt` | 保存本地分发 Inter 字体对应 package 的 license 文本。 |
 | `static/vendor/licenses/barlow-condensed.txt` | 保存本地分发 Barlow Condensed 字体对应 package 的 license 文本。 |
+| `static/vendor/licenses/jetbrains-mono.txt` | 保存本地分发 JetBrains Mono 字体对应 package 的 OFL license 文本。 |
 | `static/vendor/licenses/htmx.txt` | 保存本地分发 HTMX 对应 package 的 license 文本。 |
 | `static/vendor/manifest.json` | 记录全部脚本管理 vendor/font 输出的 package、精确版本、源路径与 SHA-256，供 `assets:check` 检测漂移。 |
 | `compose.yaml` | 定义本地 PostgreSQL 18.6 service、端口映射、健康检查、重启策略和持久化 named volume。 |
@@ -634,7 +682,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/validators.py` | 提供 Members 与 Events 共用的 HTTPS URL validator（先给出明确的 HTTPS 提示，再执行 `URLValidator`）和 `https://` scheme 小写规范化函数。 |
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
-| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、响应式 Logo、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
+| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、Hero（材质标签与等宽 eyebrow、三行金色 H1、介绍、等宽按钮行、右侧响应式 Logo、图纸标题栏）、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA；Anonymous Join 使用 `.button--hero` 大号按钮。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
 | `templates/account/_page.html` | allauth 页面共用骨架：eyebrow、唯一 H1（`page-title`）、可选 intro 与页面主体。 |
@@ -647,9 +695,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/templates/core/errors/404.html` | 继承错误页基模板，使用共享页面壳呈现中性 Page Not Found 状态和 Return Home 操作，保持 HTTP 404。 |
 | `apps/core/templates/core/errors/500.html` | 继承错误页基模板，使用共享页面壳呈现中性 Something Went Wrong 状态和 Return Home 操作，保持 HTTP 500。 |
 | `apps/core/templates/core/sitemap.xml` | 输出符合 sitemap XML namespace 的公开 URL 列表；内容只来自 view 的显式 Production 公开页面 allowlist。 |
-| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，为所有访问者提供 Home、About、Beginners & Safety 和 Members，根据认证状态提供 Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；当前页标识统一读取 `nav_section`，Members 列表与 detail 共用同一标识，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航。 |
+| `apps/core/templates/core/includes/header.html` | 输出完整文字品牌，为所有访问者提供 Home、About、Beginners & Safety 和 Members，根据认证状态提供 Login、Signup 或 Account，并仅在环境允许时加入 Draft Risk Notice；当前页标识统一读取 `nav_section`，Members 列表与 detail 共用同一标识，以原生 disclosure 和最小 Alpine 初始化实现 desktop/mobile、键盘及无 JavaScript 导航；页面导航紧跟品牌，Anonymous 的 `Join the Club` 使用紧凑金色材质按钮。 |
 | `apps/core/templates/core/includes/messages.html` | 将 Django messages 输出到 polite live region，并为错误和非错误反馈提供相应 ARIA role。 |
-| `apps/core/templates/core/includes/footer.html` | 提供完整 `NULDL Armwrestling Club` 名称、动态年份和已批准的 Instagram HTTPS 链接；不公开联系邮箱或未经授权的大学品牌资产。 |
+| `apps/core/templates/core/includes/footer.html` | 提供等宽大写版权行（完整 `NULDL Armwrestling Club` 名称与动态年份）和已批准的 Instagram HTTPS 链接；不公开联系邮箱或未经授权的大学品牌资产。 |
 | `apps/core/migrations/__init__.py` | 将 `core.migrations` 标记为 migration package；当前没有 migration。 |
 | `apps/accounts/__init__.py` | 将 `accounts` 标记为 Python package。 |
 | `apps/accounts/apps.py` | 定义 `AccountsConfig`，将 `apps.accounts` 注册为 Django App。 |
@@ -774,8 +822,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_user_admin.py` | 验证 UserAdmin 配置、四类角色权限差异、Verify/Reject、直接编辑防护、重新提交、审核人停用及前台敏感信息边界。 |
 | `tests/test_global_templates.py` | 验证全局页面壳、metadata/head blocks、完整品牌、Anonymous/Member Header、当前导航、已实施公开页面链接、无失效链接、skip link、landmarks、唯一 H1/title、消息播报、本地 Alpine 和普通导航/form 基线。 |
 | `tests/test_public_foundation_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 21 公开页面 Playwright scenario。 |
-| `tests/test_home_page.py` | 验证 Home 获准英文内容与 Metadata、动态 Upcoming Events 区域、empty state、Events 列表入口、无报名表单、响应式 Logo 引用、受限 Branding 边界及 Anonymous/Member CTA。 |
-| `tests/test_home_images.py` | 验证获准 Logo 源文件的精确 hash、大小、格式、尺寸与模式，以及 WebP 生成物的尺寸、格式、压缩和可重复性。 |
+| `tests/test_home_page.py` | 验证 Home 获准英文内容与 Metadata、Hero 三行标题、标签与 eyebrow、图纸标题栏、动态 Upcoming Events 区域、empty state、Events 列表入口、无报名表单、响应式 Logo 引用、受限 Branding 边界及 Anonymous/Member CTA。 |
+| `tests/test_home_images.py` | 参数化验证 Logo、金色材质（含按钮变体）与 Hero 照片源文件的精确 hash、格式、尺寸与模式，以及全部 WebP 生成物的尺寸、格式、透明度、无 metadata、压缩和可重复性。 |
 | `tests/test_home_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 22 Home Playwright scenario。 |
 | `tests/test_public_information_pages.py` | 验证 About 与 Beginners & Safety 的 URL、模板、Metadata、获准文案、受限内容、Header 当前页、Anonymous/Member CTA 和未实施功能边界。 |
 | `tests/test_public_information_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 23 公开信息页 Playwright scenario。 |
@@ -787,7 +835,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_phase2_accessibility_browser.py` | 在 `DEBUG=False` 下开启 Draft 并复用隔离错误 URLConf，以真实静态 live server 调用 Step 27 统一 accessibility Playwright scenario。 |
 | `tests/test_public_metadata_sitemap_footer.py` | 验证三个正式宣传页的准确 Metadata/Open Graph、环境派生 URL、无硬编码 canonical host、含 Members 列表且排除个人 detail 与 Draft 的 sitemap XML 精确 allowlist，以及 Footer 的获准 Instagram 与禁止内容边界。 |
 | `tests/test_authentication_templates.py` | 验证项目认证模板覆盖、共享页面壳、Alpine/no-JavaScript 边界、ARIA error 关联、数字 code attributes 及 Password/code 不回显。 |
-| `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 与 `package.json` 运行依赖一致及 SHA-256、无第三方 CDN、构建产物中的 design tokens 与 focus/reduced-motion，以及从 `@theme` 读取的关键颜色 contrast。 |
+| `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 与 `package.json` 运行依赖一致及 SHA-256、无第三方 CDN、构建产物中的 design tokens、本地字体与 focus/reduced-motion、从 `@theme` 读取的关键颜色与金色材质 contrast，材质图作为大号展示文字时的最暗像素 contrast、按钮材质每个像素对近黑文字的 contrast，以及构建 CSS 引用的图片均存在。 |
 | `tests/test_authentication_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Node Playwright；显式按 UTF-8 捕获输出，失败时保留真实浏览器诊断。 |
 | `tests/test_phase1_browser_flows.py` | 编排 Phase 1 Signup/verification、Password login/Account update、Magic Code 和 Admin USU review 浏览器流程，并从隔离的 Playwright storage state 读取服务端 Session code 以继续真实流程。 |
 | `tests/test_acceptance.py` | 以参数化方式验证四个阶段验收入口的完整命令序列、smoke 失败时输出 server log 并停止 server、缺少 uv 时失败、terminate/kill 清理、脚本直接执行时的导入，以及 README 列出各阶段验收与门禁命令。 |
@@ -803,11 +851,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/browser/phase4-development-smoke.mjs` | 对真实 Development server 执行 Phase 4 desktop/tablet/mobile Home、Events、详情、导航、报名状态、CSS、布局、page error 和同源请求 smoke checks。 |
 | `scripts/accept_phase_4.py` | Step 45 验收入口：以共享项目门禁依次运行 Phase 2–4 Development smoke。 |
 | `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
-| `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、文字可见性、无水平溢出和同源网络边界。 |
+| `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、主内容内标题与按钮可见性、desktop Hero 按钮等宽等高、标题三行且第二行决定栏宽、Logo 在右侧且 300–500px、mobile Logo 位于标题下方、Header/页面/Footer 共享 80rem 宽度、无水平溢出和同源网络边界。 |
 | `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/draft-risk-notice.mjs` | 在 Chromium 中验证 Step 24 Draft Risk Notice 的条件入口、banner、robots、desktop/mobile、键盘、无 JavaScript、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/error-pages.mjs` | 在 Chromium 中验证 Step 25 三个错误状态的正确响应、desktop/mobile、项目 CSS、键盘 Focus、无 JavaScript、无水平溢出和同源网络边界。 |
-| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口。 |
+| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口；按钮对比度读取 `::after`/`::before` 填充层，覆盖主按钮、描边按钮与 Header 按钮；Home 对比度覆盖 Hero 介绍、材质标签、eyebrow 与图纸标题栏。 |
 | `tests/browser/avatar-edit.mjs` | 在 Chromium desktop/mobile 中验证当前 Avatar 加载、方形裁切、metadata 提示、删除控件、键盘 Focus、上传错误保持及同源网络边界。 |
 | `tests/browser/member-directory.mjs` | 在 Chromium desktop/mobile/no-JavaScript 场景验证公开 Members cards、左侧紧凑 Avatar、右侧摘要、稳定顺序、详情导航、robots、安全外链、Focus、无溢出、page error 和同源网络边界。 |
 | `tests/browser/phase3-accessibility.mjs` | 在 Chromium 中统一验证 Account/Profile/Members 全流程的 desktop/mobile、200% content zoom、键盘 Focus、24px 触控目标、表单错误关联、连续长内容重排、禁用 JavaScript 提交与返回 Account、reduced motion、page error 和同源网络边界。 |

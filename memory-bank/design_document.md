@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 17 日
+**最后更新：** 2026 年 11 月 19 日
 
 ## 一、文档边界
 
@@ -400,7 +400,17 @@ Registered Member 选择 Cancel registration
 - Hero 下方直接展示独立的 `New to Armwrestling?` 板块，说明无需经验、基本训练方式、安全原则和加入路径；
 - 首页 `Upcoming Events` 区从数据库读取最多三条已发布的 Upcoming Event，与 Events 列表共用活动卡片；没有近期活动时显示 `No upcoming events are currently available.`；该区始终提供 `View all events` 入口；
 - Phase 2 的静态日程卡已被上述动态预览取代，首场 Training Session 由管理员在 Admin 录入；
-- 首期 Hero 使用抽象线条、波形和简单静态图形，复杂人体结构与受力轨迹后置。
+- Hero 视觉采用"实验报告"方向（设计稿：Design canvas `NULDL Home hero concepts` 的 `D · Refined`）：
+  - 页面背景为深黑底叠加极淡的金色坐标网格；
+  - 左侧依次为 `Research Field` 金色标签与 Hero eyebrow、金色质感主标题、介绍文字、操作按钮，以及等宽字体的近期活动信息表（数据取自最近一场已发布的 Upcoming Event，没有近期活动时不显示该表）；
+  - 左栏采用单一栏宽（设计稿 `E · Aligned · three-line title`）：主标题固定三行 `Nonlinear` / `Upper Limb Dynamics` / `Laboratory`，桌面约 86px（`clamp(3rem, 6vw, 5.5rem)`），由第二行决定左栏宽度；标签与 eyebrow、介绍文字、按钮行和信息表全部对齐该栏宽，三个按钮等宽平分一行，按钮文字约 22px；
+  - 左栏与 Logo 作为一组在 Hero 内居中，栏间距约 56px，Hero 内容最大宽度约 1360px；Logo 随剩余空间在 300–500px 之间伸缩；
+  - 右侧展示完整透明背景 Logo（见 9.6）；
+  - 页面底部以等宽字体显示图纸式标题栏（`Dwg no.`、`Scale`、`Est. 2026`）作为装饰；
+- Hero 背景彩蛋：项目负责人本人对抗照片经黑金调色、对手虚化处理后，置于文字与 Logo 之间偏下的背景层，可被文字和 Logo 遮挡，不为其单独预留布局空间；平时仅显示极淡轮廓，指针经过 Hero 时以跟随指针的圆形光照局部显现照片及受力标注；照片与标注均为装饰性内容，对辅助技术隐藏；
+- 当视口变窄、Logo 移至标题下方时，背景彩蛋整体不渲染，窄屏和手机布局不受其影响；无指针悬停能力的设备同样不显示光照效果；
+- 背景彩蛋参数：照片位于 Hero 横向约 36% 处、底边对齐、高约 80%；常态透明度约 7%；光照为半径约 200px 的柔边圆形，指针离开 Hero 后熄灭；受力标注只在光照范围内出现，包括握点处的金色虚线圆与圆点、两条带箭头的发力方向线（其中一条为弯曲路径，表达非线性方向）、两条细引线和两个等宽文字标签（文案见 7.7）；
+- Logo 带极轻微的金色外发光（半径约 40px、不透明度约 12%），仅用于让透明背景 Logo 与暗底分离，不属于大范围发光；
 
 ### 7.5 Events
 
@@ -430,6 +440,10 @@ Registered Member 选择 Cancel registration
 - Primary action：`Join the Club`
 - External action：`Join on USU`，链接 `https://usu.edu.au/clubs/armwrestling/`，Anonymous 与 authenticated member 都显示
 - Secondary action：`New to Armwrestling?`
+- Hero tag：`Research Field`（位于 eyebrow 前的金色标签）
+- Hero 信息表：`Next trial` 显示最近一场已发布 Upcoming Event 的日期与时间（悉尼时间）；`Location` 显示该 Event 的地点文字，未填写时显示 `Venue details to be confirmed`；`Subjects` 固定为 `All experience levels`；没有 Upcoming Event 时整张表不显示
+- 背景彩蛋标注文案：`Fig. 01` / `Contact point`；`F = ?` / `Direction: nonlinear`（对辅助技术隐藏）
+- 装饰文字：`Specimen 001 is kept in the dark. Bring a light.`；图纸标题栏 `Dwg no. NULDL-001`、`Scale 1:1`、`Est. 2026`。二者对辅助技术可读但不承载功能
 
 `New to Armwrestling?`
 
@@ -440,15 +454,13 @@ Registered Member 选择 Cancel registration
 - `Technique and Rules`：`Build a clearer understanding of movement, leverage, match rules and training methods.`
 - `Community and Competition`：`Take part in social training sessions, workshops and internal competitions.`
 
-`Upcoming Session`
+`Upcoming Events`
 
-- `1 December 2026`
-- `3:00–7:00 pm`
-- `Venue details to be confirmed`
-- `Training Session`
-- `Further attendance details will be published before the session.`
-- Anonymous session action：`Join`
-- Authenticated member：不显示 Hero 或 Session 招新按钮；`Join on USU` 外部链接仍然显示
+- Eyebrow：`Club activities`
+- 内容：由管理员在 Django Admin 录入并发布的 Event 动态生成，最多三张 Upcoming Event 卡片（见 7.4、7.5）；不在模板中写死活动日期、时间或地点
+- Empty state：`No upcoming events are currently available.`
+- Section action：`View all events`
+- Authenticated member：不显示 Hero 的 `Join the Club`；`Join on USU` 外部链接仍然显示
 
 #### About
 
@@ -601,9 +613,13 @@ Registered Member 选择 Cancel registration
 - 深黑用于页面背景，炭灰和深灰用于卡片、表单及分层表面；
 - 暖白主要用于正文和高优先级文字，不作为大面积页面背景；
 - 金色承担品牌强调、主要操作、Focus 状态和少量结构装饰；
-- 金属渐变和微弱拉丝质感仅用于 Hero、品牌标志、主标题或分隔装饰；
-- 按钮、链接、表单状态和高频界面元素使用稳定的平面金色；
+- 金色以"材质"而非单一色值表达：参考废案 Logo，以偏橙的饱和金（约 `#BF8933`）为主色，亮部约 `#F2BF5A`、暗部约 `#7E5015`，叠加细微锤纹材质贴图，避免大面积发白高光或条纹式渐变；
+- 金色质感文字（Hero 主标题等展示标题）使用材质贴图裁切到文字，每行上亮下暗，并以顶部细亮边、底部暗边和柔和投影形成浮雕感；
+- 主要按钮和金色标签使用同一金色材质，配合顶部内高光与底部内暗边；次要按钮使用金色渐变描边；材质承载小号深色文字时使用提亮暗部的材质贴图变体，使文字在每个像素上都达到 4.5:1；
+- 链接、Focus、表单状态和其他高频小尺寸元素继续使用稳定的平面金色，保证可读性与对比度：链接与小号金色文字使用 `#E2B04A`（悬停 `#F3D58A`），Focus 指示使用更亮的 `#FFD166`；
 - 不使用大范围发光、持续闪烁或降低文字对比度的金属效果；
+- 表面与文字基准值（设计稿取值，实施时集中为 Tokens）：页面底色为暖黑 `#0A0908`，叠加 40px 间距、约 4.5% 不透明度的金色坐标网格线；主要文字 `#ECE4D3`，次要正文 `#C9C0AE`，表格标签和低优先级文字 `#9C9483`；金色细边框使用约 30% 不透明度的 `#E2B04A`；
+- Header 使用半透明暖黑底，下边缘为一条两端渐隐、中间提亮的金色渐变细线（暗金 → 亮金 → 暗金），与 Logo 下方分隔线呼应；该分隔线样式也可用于页面内的区块分隔；
 - 所有具体 Design Tokens 集中管理，并在实现阶段通过 WCAG 2.2 AA 对比度验证。
 
 ### 9.3 字体与排版
@@ -613,13 +629,18 @@ Registered Member 选择 Cancel registration
 - 正文、导航、表单和其他界面文字使用 `Inter`，字重范围为 `400–600`；
 - 活动日期、时间和状态可使用 `Barlow Condensed 600–700` 强化竞技节奏；
 - 正文不得使用压缩字体，长段内容以可读性优先；
+- 等宽字体 `JetBrains Mono`（`400–500`）用于"实验报告"语气的小号元素：Hero 标签与 eyebrow、信息表、背景彩蛋标注、图纸标题栏和装饰说明；统一大写，字号约 `11–12px`，字距约 `0.08–0.14em`；不用于正文、导航或按钮；
+- Home Hero 主标题桌面约 `86px`，行高约 `0.92`；Hero 按钮文字约 `22px`（Inter，主按钮 `600`、次要按钮 `500`）；
 - 字号、行高和间距通过 Design Tokens 统一管理。
 
 ### 9.4 组件外观
 
 - 卡片采用约 `4–8px` 小圆角；
-- 按钮、状态标签和局部边框可以使用克制的切角细节；
-- 主要按钮为实心金色配黑色文字；
+- 按钮、状态标签和局部边框可以使用克制的切角细节：主按钮与次要按钮均切去左上角和右下角，Hero 按钮约 `10px`，Header 按钮约 `8px`；
+- 导航当前页使用金色文字加 `2px` 金色下划线；其他导航项为次要正文色；
+- 次要按钮为 `1px` 金色渐变描边包裹暖黑内芯，悬停时内芯变为深金褐色；
+- 信息表与图纸标题栏使用 `1px` 半透明金色边框、等宽字体，标签列为低优先级文字色、数值列为主要文字色；
+- 主要按钮为金色材质填充配近黑文字，悬停时一次性扫过高光（不循环，遵守 `prefers-reduced-motion`）；
 - 次要按钮使用金色描边，低优先级操作使用文字链接或中性样式；
 - Hover 和 Pressed 状态以短促的亮度、边框或轻微位移反馈表达，不使用大范围发光；
 - 表单以清晰易用为主，不为追求竞技外观牺牲 Label、错误提示和 Focus 状态；
@@ -627,7 +648,7 @@ Registered Member 选择 Cancel registration
 
 ### 9.5 动效
 
-- 使用克制动态，包括内容进入、按钮反馈和首屏抽象图形的轻微位移；
+- 使用克制动态，包括内容进入、按钮反馈，以及 Home Hero 由指针驱动的背景光照彩蛋（不自动运动）；
 - 动效应短促且服务于层级或状态变化；
 - 不使用持续运动背景、持续闪烁或影响阅读的视差效果；
 - 所有非必要动效尊重 `prefers-reduced-motion`。
@@ -643,7 +664,7 @@ Registered Member 选择 Cancel registration
 - 肌肉、骨骼、关节轴线和受力轨迹等复杂插画在基础框架与功能稳定后统一设计；
 - 不直接复制网上的知名选手、比赛或媒体照片；
 - 第三方图片必须具有适用于网站宣传用途的明确许可，并保存授权记录；
-- 社团自行拍摄的成员照片应在公开使用前取得适当同意；
+- 社团自行拍摄的成员照片应在公开使用前取得适当同意；Home Hero 背景彩蛋当前使用项目负责人本人照片，对手已虚化处理，第三方桌面贴纸已移除；照片正式版本后续统一处理；
 - 后续活动照片应逐步补充，且不得成为活动信息可用性的前置条件。
 
 ### 9.7 内容原则
