@@ -51,25 +51,63 @@
   src: url("../fonts/barlow-condensed-latin-800-normal.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --color-ink: #090909;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* Warm black page ground, warm white body text and warm grey secondary text. */
+  --color-ink: #0a0908;
   --color-surface: #171717;
   --color-surface-raised: #222222;
-  --color-cream: #f4f0e7;
-  --color-muted: #bdb5a7;
-  --color-gold: #d9ad50;
+  --color-cream: #ece4d3;
+  --color-muted: #c9c0ae;
+  /* Table labels and other low-priority text. */
+  --color-subtle: #9c9483;
+  /* Flat gold for links, labels and other small, high-frequency elements;
+     the brighter gold is kept for focus indicators. */
+  --color-gold: #e2b04a;
+  --color-gold-pale: #f3d58a;
   --color-gold-bright: #ffd166;
+  /* Gold material scale (shadow, base, highlight); the texture image sits on top. */
+  --color-gold-shadow: #7e5015;
+  --color-gold-metal: #bf8933;
+  --color-gold-highlight: #f2bf5a;
+  /* Material relief: top glint and sheen, bottom edge and embossed depth. */
+  --color-gold-glint: #f6dc8e;
+  --color-gold-sheen: #fff2c0;
+  --color-gold-edge: #6e440a;
+  --color-gold-depth: #2a1a04;
+  /* Near-black text on gold material, and the hover ground of outlined buttons. */
+  --color-on-gold: #1a1000;
+  --color-gold-wash: #1a1307;
+  /* Decorative coordinate grid over the page ground; carries no information. */
+  --color-grid: rgb(226 176 74 / 4.5%);
+  /* Thin gold borders of the info table and title block. */
+  --color-gold-line: rgb(226 176 74 / 30%);
   --color-success: #86d9aa;
   --color-warning: #f1c76c;
   --color-error: #ff938b;
-  --color-divider: #34302a;
   --color-border: #37332c;
   --color-border-strong: #706858;
   --color-separator: #4a4439;
   --color-input: #0e0e0e;
-  --color-header: rgb(9 9 9 / 94%);
+  --color-header: rgb(10 9 8 / 88%);
   --color-overlay: rgb(0 0 0 / 78%);
   --color-warning-surface: #2a2110;
   --color-error-surface: #291413;
@@ -90,7 +128,12 @@
     min-height: 100vh;
     display: grid;
     grid-template-rows: auto auto 1fr auto;
-    background: var(--color-ink);
+    background-color: var(--color-ink);
+    /* Decorative coordinate grid; the solid ground colour still sets contrast. */
+    background-image:
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size: 2.5rem 2.5rem;
     color: var(--color-cream);
     font-family: var(--font-sans);
     line-height: 1.6;
@@ -122,8 +165,12 @@
   }
 
   a {
-    color: var(--color-gold-bright);
+    color: var(--color-gold);
     text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    color: var(--color-gold-pale);
   }
 
   :focus-visible {
@@ -151,28 +198,38 @@
   }
 
   .site-header {
-    border-bottom: 1px solid var(--color-divider);
     background: var(--color-header);
   }
 
-  .site-nav {
-    width: min(88rem, 100% - 2rem);
+  /* Header, messages, page content and Footer share one content width. */
+  .site-nav,
+  .message-region,
+  .page-shell,
+  .site-footer__inner {
+    width: min(80rem, 100% - 4rem);
     margin-inline: auto;
-    padding-block: 1rem;
+  }
+
+  .site-nav {
+    padding-block: 0.75rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem 1.5rem;
+    gap: 0.75rem 2rem;
   }
 
   .brand {
-    margin-right: auto;
     color: var(--color-cream);
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .brand:hover {
+    color: var(--color-gold-pale);
   }
 
   .nav-disclosure {
@@ -194,13 +251,14 @@
   }
 
   .nav-toggle::marker {
-    color: var(--color-gold-bright);
+    color: var(--color-gold);
   }
 
+  /* Page links follow the brand; account actions sit at the far end. */
   .nav-menu {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 0.75rem 1.5rem;
   }
 
@@ -211,44 +269,35 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.25rem 1.375rem;
     list-style: none;
+  }
+
+  .nav-actions {
+    gap: 0.25rem 1rem;
   }
 
   .nav-link {
     min-height: 2.75rem;
     display: inline-flex;
     align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 0.25rem;
-    color: var(--color-cream);
-    font-weight: 600;
+    padding-block: 0.45rem;
+    border-bottom: 2px solid transparent;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    font-weight: 400;
     text-decoration: none;
   }
 
-  .nav-link:hover,
+  .nav-link:hover {
+    color: var(--color-gold-pale);
+  }
+
   .nav-link[aria-current="page"] {
-    background: var(--color-surface-raised);
-    color: var(--color-gold-bright);
+    border-bottom-color: var(--color-gold);
+    color: var(--color-gold);
   }
 
-  .nav-link--primary {
-    background: var(--color-gold);
-    color: var(--color-ink);
-  }
-
-  .nav-link--primary:hover,
-  .nav-link--primary[aria-current="page"] {
-    background: var(--color-gold-bright);
-    color: var(--color-ink);
-  }
-
-  .message-region,
-  .page-shell,
-  .site-footer__inner {
-    width: min(88rem, 100% - 2rem);
-    margin-inline: auto;
-  }
 
   .message-region {
     padding-top: 1rem;
@@ -291,7 +340,7 @@
 
   .eyebrow {
     margin-bottom: 0.5rem;
-    color: var(--color-gold-bright);
+    color: var(--color-gold);
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -313,6 +362,7 @@
   .profile-public-card,
   .member-card,
   .empty-state {
+    --button-ground: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
     background: var(--color-surface);
@@ -342,13 +392,12 @@
     display: grid;
     place-items: center;
     background: var(--color-surface-raised);
-    color: var(--color-gold-bright);
+    color: var(--color-gold);
     font-family: var(--font-display);
     font-weight: 800;
   }
 
   /* Long user-provided or headline text may break anywhere rather than overflow. */
-  .home-hero__content h1,
   .profile-public-card__header h1,
   .profile-public-card__header h2,
   .profile-public-card__username,
@@ -388,18 +437,63 @@
     justify-content: center;
   }
 
+  /* Home Hero: one text column whose width is set by the longest title line,
+     grouped with the logo; below --breakpoint-hero the logo moves under it. */
   .home-hero {
     display: grid;
-    align-items: center;
-    gap: clamp(2rem, 6vw, 4rem);
+    gap: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .home-hero__main {
+    display: grid;
+    gap: 2.5rem;
   }
 
   .home-hero__content {
     min-width: 0;
+    display: grid;
+    gap: 1.375rem;
   }
 
-  .home-hero__actions {
-    margin-top: 1.5rem;
+  .home-hero__content > * {
+    margin: 0;
+  }
+
+  .home-hero__tagline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.875rem;
+  }
+
+  .home-hero__tagline .label-mono {
+    padding-block: 0.2rem;
+  }
+
+  .home-hero__title {
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height: 0.92;
+    letter-spacing: normal;
+    text-wrap: wrap;
+  }
+
+  .home-hero__title-line {
+    display: block;
+  }
+
+  .home-hero__intro {
+    color: var(--color-muted);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    text-shadow: 0 1px 12px var(--color-ink);
+  }
+
+  /* Equal-height Hero actions, even when one label wraps. */
+  .home-hero__actions .button {
+    align-self: stretch;
+    min-height: 3.5rem;
+    padding: 0.875rem 0.625rem;
+    font-size: clamp(1rem, 1.5vw, 1.375rem);
   }
 
   .home-hero__media {
@@ -408,12 +502,56 @@
     display: block;
   }
 
+  /* A faint gold halo separates the transparent logo from the dark ground. */
   .home-hero__logo {
     width: 100%;
     height: auto;
     display: block;
     aspect-ratio: 1;
     object-fit: contain;
+    filter: drop-shadow(0 0 2.5rem color-mix(in srgb, var(--color-gold) 12%, transparent));
+  }
+
+  /* Drawing-style title block: decorative but readable by assistive technology. */
+  .home-hero__titleblock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .home-hero__note,
+  .drawing-block {
+    margin: 0;
+    color: var(--color-subtle);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .drawing-block {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid var(--color-gold-line);
+    background: var(--color-ink);
+  }
+
+  .drawing-block > div {
+    display: flex;
+    gap: 0.5em;
+    padding: 0.5rem 0.875rem;
+  }
+
+  .drawing-block > div + div {
+    border-left: 1px solid var(--color-gold-line);
+  }
+
+  .drawing-block dd {
+    margin: 0;
+    color: var(--color-cream);
   }
 
   .public-section {
@@ -467,6 +605,7 @@
     border-radius: var(--radius-card);
     background: var(--color-surface);
     color: var(--color-cream);
+    --button-ground: var(--color-surface);
   }
 
   .event-registration-dialog::backdrop {
@@ -537,7 +676,7 @@
     position: absolute;
     top: 0.85rem;
     left: 1rem;
-    color: var(--color-gold-bright);
+    color: var(--color-gold);
     font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 700;
@@ -552,6 +691,7 @@
   }
 
   .safety-panel {
+    --button-ground: var(--color-warning-surface);
     padding: clamp(1.5rem, 4vw, 2rem);
     border-left: 0.25rem solid var(--color-warning);
     border-radius: var(--radius-card);
@@ -563,6 +703,7 @@
   }
 
   .cta-panel {
+    --button-ground: var(--color-cta-surface);
     padding: clamp(1.5rem, 5vw, 3rem);
     border: 1px solid var(--color-gold);
     border-radius: var(--radius-card);
@@ -704,7 +845,7 @@
   }
 
   .member-card__name-link:hover {
-    color: var(--color-gold-bright);
+    color: var(--color-gold-pale);
   }
 
   .member-card__details {
@@ -813,37 +954,130 @@
     gap: 0.75rem;
   }
 
+  /* Buttons paint their fill on clipped pseudo-elements, so the chamfer never
+     clips the focus outline drawn around the element itself. */
   .button {
+    --button-cut: 0.625rem;
+    position: relative;
+    isolation: isolate;
     min-height: 2.75rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.6rem 1rem;
-    border: 1px solid var(--color-gold);
-    border-radius: 0.25rem;
-    background: var(--color-gold);
-    color: var(--color-ink);
-    font-weight: 700;
+    padding: 0.6rem 1.1rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-on-gold);
+    font: inherit;
+    font-weight: 600;
     line-height: 1.2;
+    text-align: center;
     text-decoration: none;
     cursor: pointer;
+    transition: transform 120ms ease-out;
   }
 
-  .button:hover {
-    background: var(--color-gold-bright);
-    border-color: var(--color-gold-bright);
+  .button::before,
+  .button::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    clip-path: polygon(
+      var(--button-cut) 0,
+      100% 0,
+      100% calc(100% - var(--button-cut)),
+      calc(100% - var(--button-cut)) 100%,
+      0 100%,
+      0 var(--button-cut)
+    );
   }
 
+  .button::before {
+    box-shadow:
+      inset 0 1px 0 var(--color-gold-sheen),
+      inset 0 -2px 0 var(--color-gold-edge);
+  }
+
+  /* One sweep of light per hover; leaving resets it without animating back. */
+  .button::after {
+    background-image: linear-gradient(
+      105deg,
+      transparent 35%,
+      color-mix(in srgb, var(--color-gold-sheen) 75%, transparent) 50%,
+      transparent 65%
+    );
+    background-repeat: no-repeat;
+    background-size: 300% 100%;
+    background-position: 100% 0;
+  }
+
+  .button:hover::after {
+    background-position: 0 0;
+    transition: background-position 700ms ease;
+  }
+
+  .button:active {
+    transform: translateY(1px);
+  }
+
+  /* Component colours override the base-layer link hover colour. */
   .button--secondary {
-    background: transparent;
-    color: var(--color-gold-bright);
+    color: var(--color-gold);
+    font-weight: 500;
+  }
+
+  .button--secondary::before {
+    background: linear-gradient(
+      160deg,
+      var(--color-gold-glint),
+      var(--color-gold-metal) 60%,
+      var(--color-gold-edge)
+    );
+    box-shadow: none;
+  }
+
+  /* The 1px inset keeps an even gradient border, including along the chamfer. */
+  .button--secondary::after {
+    inset: 1px;
+    background: var(--button-ground, var(--color-ink));
+    clip-path: polygon(
+      calc(var(--button-cut) - 0.6px) 0,
+      100% 0,
+      100% calc(100% - var(--button-cut) + 0.6px),
+      calc(100% - var(--button-cut) + 0.6px) 100%,
+      0 100%,
+      0 calc(var(--button-cut) - 0.6px)
+    );
+  }
+
+  .button--secondary:hover::after,
+  .button--secondary[aria-current="page"]::after {
+    background: var(--color-gold-wash);
+    transition: none;
+  }
+
+  /* The current filter is marked by an underline as well as its ground. */
+  .button--secondary[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
   }
 
   .button--quiet {
-    border-color: transparent;
-    background: transparent;
     color: var(--color-cream);
     text-decoration: underline;
+  }
+
+  .button--quiet::before,
+  .button--quiet::after {
+    content: none;
+  }
+
+  /* Compact primary action in the Header. */
+  .button--compact {
+    --button-cut: 0.5rem;
+    font-size: 0.875rem;
   }
 
   /* Oversized call to action; declared after .button so its sizing wins. */
@@ -852,6 +1086,105 @@
     min-height: 4.675rem;
     padding: 0.94rem 2.2rem;
     font-size: 2rem;
+  }
+
+  /* Gold material fill. The lightened texture keeps every pixel at 4.5:1 or
+     more behind --color-on-gold, so small text on it stays readable. */
+  .button::before,
+  .gold-tag {
+    background-color: var(--color-gold-metal);
+    background-image:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-gold-sheen) 30%, transparent) 0%,
+        transparent 42%
+      ),
+      url("../images/brand/gold-texture-button-800.webp");
+    background-size:
+      100% 100%,
+      32rem auto;
+    background-position:
+      0 0,
+      22% 30%;
+  }
+
+  /* Gold display text for large headings only (3:1 large-text threshold). Each
+     line fragment is lit from the top and darkened slightly towards its base. */
+  .gold-text {
+    background-color: var(--color-gold-metal);
+    background-image:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-gold-glint) 30%, transparent) 0%,
+        transparent 32%,
+        transparent 68%,
+        color-mix(in srgb, var(--color-gold-depth) 20%, transparent) 100%
+      ),
+      image-set(
+        url("../images/brand/gold-texture-800.webp") 1x,
+        url("../images/brand/gold-texture-1600.webp") 2x
+      );
+    background-size:
+      100% 100%,
+      56rem auto;
+    background-position:
+      0 0,
+      18% 40%;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 -1px 0 color-mix(in srgb, var(--color-gold-glint) 60%, transparent))
+      drop-shadow(0 3px 0 var(--color-gold-depth))
+      drop-shadow(0 10px 18px color-mix(in srgb, var(--color-ink) 55%, transparent));
+  }
+
+  .gold-rule,
+  .site-header::after,
+  .site-footer::before {
+    height: 1px;
+    display: block;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-gold-shadow) 12%,
+      var(--color-gold-glint) 50%,
+      var(--color-gold-shadow) 88%,
+      transparent
+    );
+  }
+
+  .gold-rule {
+    margin-block: 1.5rem;
+    border: 0;
+  }
+
+  .site-header::after,
+  .site-footer::before {
+    content: "";
+  }
+
+  /* Monospace label text and its gold-material tag variant. */
+  .label-mono,
+  .gold-tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .label-mono {
+    color: var(--color-gold);
+  }
+
+  .gold-tag {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    color: var(--color-on-gold);
   }
 
   .definition-list {
@@ -870,27 +1203,100 @@
   }
 
   .site-footer {
-    border-top: 1px solid var(--color-divider);
+    background: var(--color-ink);
     color: var(--color-muted);
   }
 
   .site-footer__inner {
     padding-block: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+  }
+
+  .site-footer__inner p {
+    margin: 0;
+  }
+
+  .site-footer__copyright {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
   /* Responsive rules live inside the components layer so the cascade stays
      predictable; they come last so they override the base component rules. */
   @variant hero {
-    .home-hero {
-      grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
+    .home-hero__main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5rem 3.5rem;
+    }
+
+    /* The second title line never wraps, so it sets the column width. */
+    .home-hero__content {
+      width: min-content;
+      max-width: 100%;
+    }
+
+    .home-hero__title-line {
+      white-space: nowrap;
+    }
+
+    .home-hero__actions {
+      display: grid;
+      grid-auto-columns: minmax(0, 1fr);
+      grid-auto-flow: column;
+      gap: 0.625rem;
+    }
+
+    .home-hero__media {
+      width: auto;
+      min-width: 18.75rem;
+      max-width: 31.25rem;
+      margin: 0;
+      flex: 1 1 18.75rem;
+    }
+  }
+
+  @variant max-hero {
+    .home-hero__actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-hero__actions > :last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
 
   @variant max-nav {
+    .site-nav,
+    .message-region,
+    .page-shell,
+    .site-footer__inner {
+      width: min(80rem, 100% - 2rem);
+    }
+
     .nav-disclosure,
     .nav-menu,
     .nav-list,
     .nav-actions {
       width: 100%;
+    }
+
+    .nav-list,
+    .nav-actions {
+      gap: 0.35rem;
+    }
+
+    .nav-link {
+      padding-inline: 0.75rem;
+      font-size: 1rem;
     }
 
     .brand {
@@ -928,15 +1334,6 @@
       display: grid;
     }
 
-    .home-hero__actions {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      text-align: center;
-    }
-
-    .home-hero__actions > :last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-    }
-
     .definition-list,
     .profile-public-card > .definition-list {
       grid-template-columns: 1fr;
@@ -954,6 +1351,24 @@
     .definition-list dd:not(:last-child) {
       margin-bottom: 0.75rem;
     }
+  }
+}
+
+/* Forced colours, or no text clipping: gold display text falls back to plain text. */
+@media (forced-colors: active) {
+  .gold-text {
+    background: none;
+    color: CanvasText;
+    -webkit-text-fill-color: currentcolor;
+    filter: none;
+  }
+}
+
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .gold-text {
+    background: none;
+    color: var(--color-gold);
+    -webkit-text-fill-color: currentcolor;
   }
 }
 

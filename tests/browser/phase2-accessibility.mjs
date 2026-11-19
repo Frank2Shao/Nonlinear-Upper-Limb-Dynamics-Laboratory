@@ -116,7 +116,7 @@ const assertSemanticStructure = async (page, label) => {
 const assertRequiredContent = async (page, definition) => {
   for (const selector of definition.required) {
     assert.equal(
-      await page.locator(selector).first().isVisible(),
+      await page.locator("main").locator(selector).first().isVisible(),
       true,
       `${definition.path} must expose ${selector}.`,
     );
@@ -165,9 +165,16 @@ const assertFocusVisibleAndInViewport = async (page, expectedName) => {
 const effectiveColours = async (locator) =>
   locator.evaluate((element) => {
     const foreground = getComputedStyle(element).color;
-    let current = element;
-    let background = "rgba(0, 0, 0, 0)";
-    while (current && /rgba?\(0, 0, 0, 0\)/.test(background)) {
+    const transparent = /rgba?\(0, 0, 0, 0\)/;
+    // Buttons paint their fill on ::after/::before layers behind the text.
+    let background = getComputedStyle(element).backgroundColor;
+    for (const pseudo of ["::after", "::before"]) {
+      if (transparent.test(background)) {
+        background = getComputedStyle(element, pseudo).backgroundColor;
+      }
+    }
+    let current = element.parentElement;
+    while (current && transparent.test(background)) {
       background = getComputedStyle(current).backgroundColor;
       current = current.parentElement;
     }
@@ -201,8 +208,15 @@ try {
 
   for (const [selector, minimum] of [
     ["body", 4.5],
-    [".lede", 4.5],
-    [".button", 4.5],
+    [".home-hero__intro", 4.5],
+    [".gold-tag", 4.5],
+    [".home-hero__tagline .label-mono", 4.5],
+    [".home-hero__note", 4.5],
+    [".drawing-block dt", 4.5],
+    [".drawing-block dd", 4.5],
+    ["main .button", 4.5],
+    ["main .button--secondary", 4.5],
+    [".site-header .button", 4.5],
   ]) {
     const colours = await effectiveColours(desktopPage.locator(selector).first());
     assert.ok(

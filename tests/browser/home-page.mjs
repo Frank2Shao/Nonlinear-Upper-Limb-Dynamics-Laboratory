@@ -40,7 +40,7 @@ const assertHomeLayout = async (page, label) => {
     `${label} Home must not overflow horizontally.`,
   );
 
-  const clippedElements = await page.locator("h1, h2, h3, .button").evaluateAll(
+  const clippedElements = await page.locator("main :is(h1, h2, h3, .button)").evaluateAll(
     (elements) =>
       elements
         .filter((element) => {
@@ -109,14 +109,42 @@ try {
     );
     assert.equal(signup.top, usu.top);
     assert.ok(signup.right < usu.left);
+    const hero = await page.evaluate(() => {
+      const box = (element) => element.getBoundingClientRect().toJSON();
+      return {
+        content: box(document.querySelector(".home-hero__content")),
+        logo: box(document.querySelector(".home-hero__logo")),
+        lines: [...document.querySelectorAll(".home-hero__title-line")].map(box),
+        titleBlock: document.querySelector(".drawing-block").checkVisibility(),
+      };
+    });
+    assert.equal(hero.titleBlock, true, `${label} Hero must show the drawing title block.`);
     if (label === "Mobile") {
       assert.ok(beginners.top > signup.bottom);
       assert.equal(beginners.left, signup.left);
+      assert.ok(hero.logo.top >= hero.content.bottom, "Mobile logo must sit below the title.");
     } else {
       assert.equal(beginners.top, signup.top);
+      assert.ok(
+        [usu, beginners].every((action) => Math.abs(action.width - signup.width) < 1),
+        "Desktop Hero actions must share one row at equal widths.",
+      );
+      assert.ok(
+        [usu, beginners].every((action) => Math.abs(action.height - signup.height) < 1),
+        "Desktop Hero actions must share one height.",
+      );
+      assert.equal(hero.lines.length, 3);
+      assert.ok(
+        hero.lines[0].bottom <= hero.lines[1].top + 1 && hero.lines[1].bottom <= hero.lines[2].top + 1,
+        "Desktop Hero title must stay on three separate lines.",
+      );
+      // The second title line is the widest and sets the column width.
+      assert.ok(Math.abs(hero.lines[1].width - hero.content.width) < 1);
+      assert.ok(hero.logo.left > hero.content.right, "Desktop logo must sit beside the title.");
+      assert.ok(hero.logo.width >= 300 && hero.logo.width <= 500);
       for (const selector of [".site-nav", ".page-shell", ".site-footer__inner"]) {
         const box = await page.locator(selector).boundingBox();
-        assert.equal(box.width, 88 * 16, `${selector} should use the wider layout.`);
+        assert.equal(box.width, 80 * 16, `${selector} should share the 80rem content width.`);
       }
     }
     await page.getByRole("link", { name: "View all events" }).waitFor();

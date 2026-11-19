@@ -41,7 +41,7 @@
               <a class="nav-link" href="{% url 'account_login' %}"{% if nav_section == "login" %} aria-current="page"{% endif %}>Log in</a>
             </li>
             <li>
-              <a class="nav-link nav-link--primary" href="{% url 'account_signup' %}"{% if nav_section == "signup" %} aria-current="page"{% endif %}>Join the Club</a>
+              <a class="button button--compact" href="{% url 'account_signup' %}"{% if nav_section == "signup" %} aria-current="page"{% endif %}>Join the Club</a>
             </li>
           {% endif %}
         </ul>

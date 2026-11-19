@@ -37,6 +37,14 @@ const assets = [
     "node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-800-normal.woff2",
     "static/fonts/barlow-condensed-latin-800-normal.woff2",
   ],
+  [
+    "node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2",
+    "static/fonts/jetbrains-mono-latin-400-normal.woff2",
+  ],
+  [
+    "node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2",
+    "static/fonts/jetbrains-mono-latin-500-normal.woff2",
+  ],
   ["node_modules/htmx.org/LICENSE", "static/vendor/licenses/htmx.txt"],
   [
     "node_modules/@fontsource/inter/LICENSE",
@@ -46,6 +54,10 @@ const assets = [
     "node_modules/@fontsource/barlow-condensed/LICENSE",
     "static/vendor/licenses/barlow-condensed.txt",
   ],
+  [
+    "node_modules/@fontsource/jetbrains-mono/LICENSE",
+    "static/vendor/licenses/jetbrains-mono.txt",
+  ],
 ];
 
 const sha256 = (buffer) => createHash("sha256").update(buffer).digest("hex");
@@ -54,6 +66,8 @@ const manifest = {
     "@fontsource/barlow-condensed":
       packageJson.dependencies["@fontsource/barlow-condensed"],
     "@fontsource/inter": packageJson.dependencies["@fontsource/inter"],
+    "@fontsource/jetbrains-mono":
+      packageJson.dependencies["@fontsource/jetbrains-mono"],
     alpinejs: packageJson.dependencies.alpinejs,
     "htmx.org": packageJson.dependencies["htmx.org"],
   },

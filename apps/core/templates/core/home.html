@@ -9,35 +9,52 @@
 {% block content %}
   <div class="public-page home-page">
     <section class="home-hero" aria-labelledby="home-title">
-      <div class="home-hero__content">
-        <p class="eyebrow">Studying chaotic upper-limb interactions since 2026.</p>
-        <h1 id="home-title">Nonlinear Upper Limb Dynamics Laboratory</h1>
-        <p class="lede">NULDL Armwrestling Club is an armwrestling community based near Sydney’s CBD, welcoming people of all experience levels. Learn the fundamentals, develop your technique and practise with purpose in a supervised environment.</p>
-        <div class="button-row home-hero__actions">
-          {% if not user.is_authenticated %}
-            <a class="button" data-home-primary href="{% url 'account_signup' %}">Join the Club</a>
-          {% endif %}
-          <a class="button button--secondary" href="https://usu.edu.au/clubs/armwrestling/">Join on USU</a>
-          <a class="button button--secondary" href="#new-to-armwrestling">New to Armwrestling?</a>
+      <div class="home-hero__main">
+        <div class="home-hero__content">
+          <p class="home-hero__tagline">
+            <span class="gold-tag">Research Field</span>
+            <span class="label-mono">Studying chaotic upper-limb interactions since 2026.</span>
+          </p>
+          <h1 class="home-hero__title" id="home-title">
+            <span class="home-hero__title-line"><span class="gold-text">Nonlinear</span></span>
+            <span class="home-hero__title-line"><span class="gold-text">Upper Limb Dynamics</span></span>
+            <span class="home-hero__title-line"><span class="gold-text">Laboratory</span></span>
+          </h1>
+          <p class="home-hero__intro">NULDL Armwrestling Club is an armwrestling community based near Sydney’s CBD, welcoming people of all experience levels. Learn the fundamentals, develop your technique and practise with purpose in a supervised environment.</p>
+          <div class="button-row home-hero__actions">
+            {% if not user.is_authenticated %}
+              <a class="button" data-home-primary href="{% url 'account_signup' %}">Join the Club</a>
+            {% endif %}
+            <a class="button button--secondary" href="https://usu.edu.au/clubs/armwrestling/">Join on USU</a>
+            <a class="button button--secondary" href="#new-to-armwrestling">New to Armwrestling?</a>
+          </div>
         </div>
+        {# sizes: 54rem is --breakpoint-hero in static_src/css/site.css; beside the title the logo is at most 31.25rem, and below it at most 34rem. #}
+        <picture class="home-hero__media">
+          <source
+            type="image/webp"
+            srcset="{% static 'images/brand/nuldl-club-logo-480.webp' %} 480w, {% static 'images/brand/nuldl-club-logo-800.webp' %} 800w, {% static 'images/brand/nuldl-club-logo-1200.webp' %} 1200w"
+            sizes="(min-width: 54rem) 31.25rem, (min-width: 36rem) 34rem, calc(100vw - 2rem)"
+          >
+          <img
+            class="home-hero__logo"
+            src="{% static 'images/brand/nuldl-club-logo-800.webp' %}"
+            width="800"
+            height="800"
+            alt="Nonlinear Upper Limb Dynamics Laboratory logo"
+            decoding="async"
+            fetchpriority="high"
+          >
+        </picture>
       </div>
-      {# sizes: 54rem is --breakpoint-hero in static_src/css/site.css; 78rem and 36rem are where the 34rem logo cap meets the column and viewport widths. #}
-      <picture class="home-hero__media">
-        <source
-          type="image/webp"
-          srcset="{% static 'images/brand/nuldl-club-logo-480.webp' %} 480w, {% static 'images/brand/nuldl-club-logo-800.webp' %} 800w, {% static 'images/brand/nuldl-club-logo-1200.webp' %} 1200w"
-          sizes="(min-width: 78rem) 34rem, (min-width: 54rem) 45vw, (min-width: 36rem) 34rem, calc(100vw - 2rem)"
-        >
-        <img
-          class="home-hero__logo"
-          src="{% static 'images/brand/nuldl-club-logo-800.webp' %}"
-          width="800"
-          height="800"
-          alt="Nonlinear Upper Limb Dynamics Laboratory logo"
-          decoding="async"
-          fetchpriority="high"
-        >
-      </picture>
+      <div class="home-hero__titleblock">
+        <p class="home-hero__note">Specimen 001 is kept in the dark. Bring a light.</p>
+        <dl class="drawing-block">
+          <div><dt>Dwg no.</dt> <dd>NULDL-001</dd></div>
+          <div><dt>Scale</dt> <dd>1:1</dd></div>
+          <div><dt>Est.</dt> <dd>2026</dd></div>
+        </dl>
+      </div>
     </section>
 
     <section class="public-section" id="new-to-armwrestling" aria-labelledby="new-to-armwrestling-title">

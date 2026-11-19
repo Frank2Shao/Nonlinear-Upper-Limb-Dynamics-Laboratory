@@ -1,7 +1,23 @@
+import re
+from html import unescape
+
 import pytest
 from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
+
+
+def visible_text(html: str) -> str:
+    """Collapse markup to the whitespace-normalised text a reader would get."""
+    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split())
+
+
+def hero_title(content: str) -> str:
+    match = re.search(
+        r'<h1[^>]*id="home-title"[^>]*>(?P<title>.*?)</h1>', content, re.S
+    )
+    assert match, "Home must render the Hero H1."
+    return visible_text(match["title"])
 
 
 def test_home_uses_approved_metadata_and_content(client):
@@ -17,7 +33,7 @@ def test_home_uses_approved_metadata_and_content(client):
     assert f'<meta name="description" content="{description}">' in content
     assert f'<meta property="og:description" content="{description}">' in content
     assert "Studying chaotic upper-limb interactions since 2026." in content
-    assert "Nonlinear Upper Limb Dynamics Laboratory" in content
+    assert hero_title(content) == "Nonlinear Upper Limb Dynamics Laboratory"
     assert "NULDL Armwrestling Club is an armwrestling community" in content
     assert "New to Armwrestling?" in content
     assert "Join Us !" in content
@@ -81,3 +97,24 @@ def test_home_uses_responsive_logo_without_restricted_branding(client):
         "University of Sydney",
     ):
         assert restricted_term not in content
+
+
+def test_home_hero_uses_three_title_lines_tag_and_drawing_title_block(client):
+    response = client.get(reverse("home"))
+
+    content = response.content.decode()
+    lines = re.findall(
+        r'<span class="home-hero__title-line">(.*?)</span>\s*</span>', content, re.S
+    )
+    assert [visible_text(line) for line in lines] == [
+        "Nonlinear",
+        "Upper Limb Dynamics",
+        "Laboratory",
+    ]
+    text = visible_text(content)
+    assert "Research Field Studying chaotic upper-limb interactions since 2026." in text
+    assert "Specimen 001 is kept in the dark. Bring a light." in text
+    assert "Dwg no. NULDL-001 Scale 1:1 Est. 2026" in text
+    # The title block is decorative but stays readable by assistive technology.
+    title_block = content[content.index('class="home-hero__titleblock"') :]
+    assert 'aria-hidden="true"' not in title_block[: title_block.index("</section>")]
