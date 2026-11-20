@@ -422,6 +422,13 @@ Registered Member 选择 Cancel registration
 - 每张卡片突出日期、标题、时间、地点、报名状态和明确的详情或报名入口：左侧为金色细边框日期块（星期、日、月份与年份，与下方日期行重复，对辅助技术隐藏）；中间为标题链接和图纸式信息行（`Date`/`Time`/`Location`，起止不在同一天时为 `Starts`/`Ends`）；右侧为报名状态标签与 `View details` 次要按钮（可访问名称包含活动标题）。状态标签一律为不填充的细描边文字框（不使用材质底，避免被误认为按钮）：`Registration open` 为金色文字，`Registration unavailable` 与 `Past event` 为次要文字色，状态始终由文字表达；状态标签与 `View details` 等宽（窄屏时两者各占一半并等高）；`View details` 保持描边次要按钮，金色材质填充只留给 `Join the Club`、`Register` 等主要操作；窄屏时日期块与标题一行，信息行与状态、按钮各占整行；
 - 在缺少高质量活动照片时，以排版、日期模块和抽象图形建立层级，不要求每场活动配置封面；
 - 后续加入照片时，卡片结构应允许渐进扩展，不改变核心信息顺序。
+- Events 列表页（项目负责人在 Visual Refresh 第二轮确认的 mockup）：页头为等宽金色小标签 `Club activities` 与大标题 `Events`；`Upcoming` / `Past` 以标签页呈现——一行等宽大写文字链接，下方一条半透明金色细线，当前项为金色文字加 `2px` 金色下划线（与 Header 导航当前页一致），其余为次要正文色；卡片沿用首页活动卡片，`Past` 中卡片的日期数字改用低优先级文字色；无结果时显示金色虚线框中的 `No events found.`；
+- 活动详情页：
+  - 页面顶部为等宽大写小链接 `← Back to events`（箭头为装饰），取代原先位于底部的 `Back to events` 按钮；
+  - 页头为等宽金色小标签 `Club activity`、大标题（活动名称）及其旁边的状态标签（与列表卡片同一不填充样式）；
+  - 宽屏为两栏：左栏为活动说明正文；右栏为带顶部金色渐变细线的信息面板，依次为图纸式信息行（`Date` 含星期、`Time`、`Location`，跨天时为 `Starts`/`Ends`）、有地图链接时的 `View location in map`，以及报名区；窄屏为单栏，信息面板位于说明之前；
+  - 报名区按状态显示：Anonymous 且可报名时为 `Log in to register` 金色材质主按钮；会员可报名时为 `Register` 金色材质主按钮；已报名时为金色文字状态标签 `Registered` 加 `Cancel registration` 描边次要按钮（取代原先的警示色状态横幅）；不可报名与 Past 为次要文字色状态标签；面板内按钮与状态标签占满面板宽度；
+  - 报名与取消确认 dialog 使用半透明金色细边框；标题上方为等宽金色小标签 `Risk Notice`；Risk Notice 正文放在暖黑底、半透明金色细边框的区域中，版本号以等宽小字 `Notice version` 呈现；按钮文案与顺序不变。禁用 JavaScript 时的完整确认页沿用同一正文与按钮样式。
 
 ### 7.6 活动地点
 

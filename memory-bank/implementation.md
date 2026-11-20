@@ -530,6 +530,16 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。
 
+### Visual Refresh 第二轮：Events 列表与详情
+
+**展开条件：** 第一轮 V1–V7 已验收；项目负责人已确认 Events 列表与详情的设计 mockup（规则见 `design_document.md` 7.5）。约束与第一轮相同：不改变业务逻辑、权限、URL、表单字段或 migration；报名与取消的 HTMX、Alpine 与普通 POST 契约保持不变。
+
+| 步骤 | 实施与验收 |
+| --- | --- |
+| V8 | Events 列表页。页头改为 `.section-heading` 式等宽标签与大标题；`Upcoming`/`Past` 由两个按钮改为标签页导航（仍为带 `?view=` 的普通链接与 `aria-current`）；Past 卡片日期数字弱化；无结果状态使用 `.events-empty`。验证筛选、无效参数回退、无 JavaScript、键盘 Focus、24px 触控目标、desktop/mobile 无溢出与对比度。 |
+| V9 | 活动详情页与报名区。顶部 `Back to events` 小链接、页头状态标签、两栏布局（窄屏单栏且信息面板在前）、信息面板（含星期的日期、时间、地点、地图链接）；报名区各状态按 7.5 呈现，`Registered` 改为状态标签并保留 `role="status"`、`x-ref="status"` 与 HTMX 后聚焦；报名与取消 dialog 及无 JavaScript 确认页按 7.5 restyle。验证 Anonymous、可报名、已报名、取消、关闭、Past 各状态，HTMX 与普通 POST，dialog 键盘与 Focus，200% 放大与 desktop/mobile 截图。 |
+| V10 | 第二轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交 Events 列表与详情（含报名各状态）的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
+
 ## 十、Phase 6 概要：上线与运维
 
 **展开条件：** Phase 1–4 已验收，hosting、SMTP、media storage、monitoring 和数据保留决策已确认。

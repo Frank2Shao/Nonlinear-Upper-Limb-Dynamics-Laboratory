@@ -1815,3 +1815,36 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V7 截图并确认第一轮 Visual Refresh 完成，批准更新 `architecture.md`：新增 3.54 节并更新页头状态。后续页面（Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500）需要项目负责人先确认设计，再展开为具体步骤。
+
+## Visual Refresh 第二轮 — Events 设计确认
+
+- 以 mockup（1440 与 390px，临时目录，不进入仓库）提出 Events 列表与详情设计：列表页标签页式筛选、Past 卡片日期弱化、虚线框空状态；详情页顶部返回链接、页头状态标签、两栏布局与信息面板、报名区各状态（`Registered` 改为状态标签）、带 `Risk Notice` 小标签的确认 dialog。
+- 项目负责人已确认该设计。规则写入 `design_document.md` 7.5；`implementation.md` 新增第二轮步骤 V8（Events 列表）、V9（活动详情与报名区）、V10（第二轮质量门禁）。
+- 本次只修改文档，没有修改代码。V8 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V8 — Events 列表页
+
+### 前置条件检查
+
+- 项目负责人已确认第二轮 Events 设计（`design_document.md` 7.5）并授权 V8；V1–V7 已提交。
+
+### 已完成
+
+- `apps/events/templates/events/event_list.html`：页头改为 `.page-heading`（等宽金色小标签 `Club activities` 与大标题 `Events`）；`Upcoming`/`Past` 由两个描边按钮改为 `<nav class="filter-tabs" aria-label="Event filters">` 中的两个普通链接，`?view=` 参数与 `aria-current="page"` 不变。
+- `apps/events/templates/events/includes/event_card.html`：Past 活动的卡片加 `event-card--past`。
+- `static_src/css/site.css`：新增 `.page-heading`、`.filter-tabs`（等宽大写文字、半透明金色底线，当前项金色文字加 2px 金色下划线，悬停为浅金）与 `.event-card--past .event-card__day`（低优先级文字色）；删除 `.event-list` 的上边距（标签页已提供间距）。
+- 测试：`tests/test_event_pages.py` 新增断言——Past 视图卡片带 `event-card--past` 而 Upcoming 不带；两个视图都渲染 `filter-tabs` 导航，且只有当前视图带 `aria-current="page"`。既有浏览器测试按链接名称与 `aria-current` 定位筛选，无需修改。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `409 passed`；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过。
+- Development server 截图走查 Upcoming 与 Past 的 1440 与 390px：均无横向溢出，标签高度 47px（满足 24px 触控目标），与确认的 mockup 一致。
+
+### 当前边界与下一步门槛
+
+- 没有修改 view、URL、业务逻辑或 migration；活动详情页属于 V9。
+- `architecture.md` 尚未更新，需要项目负责人批准；V9 尚未开始。
+
+### 项目负责人确认
+
+- 项目负责人已确认 V8，并批准更新 `architecture.md`：新增 3.55 节，更新样式源、Events 列表模板、共享活动卡片与 Events 页面测试的文件职责。V9 尚未开始，需要项目负责人明确授权。
