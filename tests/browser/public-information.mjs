@@ -100,6 +100,28 @@ try {
   await desktopPage
     .getByRole("heading", { level: 1, name: "Beginners Are Welcome" })
     .waitFor();
+  // Procedure squares sit in one column, each joined to the one above.
+  const procedure = await desktopPage.locator(".procedure li").evaluateAll((items) =>
+    items.map((item) => ({
+      left: Math.round(item.getBoundingClientRect().left),
+      connector: getComputedStyle(item, "::after").borderLeftWidth,
+    })),
+  );
+  assert.equal(procedure.length, 5);
+  assert.equal(new Set(procedure.map((item) => item.left)).size, 1);
+  assert.deepEqual(
+    procedure.slice(1).map((item) => item.connector),
+    ["1px", "1px", "1px", "1px"],
+  );
+  const ruleRows = await desktopPage.locator(".rule-list li").count();
+  assert.equal(ruleRows, 5);
+  const riskLayout = await desktopPage.locator(".risk-panel").evaluate((panel) => {
+    const section = panel.closest(".report-section");
+    const label = section.querySelector(".report-section__label").getBoundingClientRect();
+    const rectangle = panel.getBoundingClientRect();
+    return { labelRight: label.right, panelLeft: rectangle.left };
+  });
+  assert.ok(riskLayout.labelRight < riskLayout.panelLeft, JSON.stringify(riskLayout));
   await assertNoHorizontalOverflow(desktopPage, "Desktop public page");
   await assertReadableElements(desktopPage, "Desktop public page");
   await desktopContext.close();

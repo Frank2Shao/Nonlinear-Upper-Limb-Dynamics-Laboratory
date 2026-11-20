@@ -130,8 +130,7 @@ def test_enabled_draft_has_navigation_and_risk_panel_action(client):
         in beginners_content
     )
     assert re.search(
-        r'<section class="public-section safety-panel".*?data-draft-risk-notice.*?'
-        r"</section>",
+        r'<div class="risk-panel">.*?data-draft-risk-notice.*?</div>',
         beginners_content,
         re.DOTALL,
     )

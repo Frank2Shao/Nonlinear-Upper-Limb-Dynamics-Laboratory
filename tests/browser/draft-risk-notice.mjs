@@ -47,21 +47,25 @@ try {
   desktopPage.on("pageerror", (error) => pageErrors.push(error.message));
   await desktopPage.goto(`${baseUrl}/beginners-safety/`);
   const draftAction = desktopPage
-    .locator(".safety-panel")
+    .locator(".risk-panel")
     .getByRole("link", {
       name: "Read the Draft Risk Notice",
       exact: true,
     });
   const panelAlignment = await draftAction.evaluate((element) => {
-    const rectangle = element.getBoundingClientRect();
-    const panel = element
-      .closest(".safety-panel__action")
-      .getBoundingClientRect();
-    return Math.abs(
-      rectangle.left + rectangle.width / 2 - (panel.left + panel.width / 2),
-    );
+    const panel = element.closest(".risk-panel");
+    const contentLeft =
+      panel.getBoundingClientRect().left +
+      Number.parseFloat(getComputedStyle(panel).borderLeftWidth) +
+      Number.parseFloat(getComputedStyle(panel).paddingLeft);
+    const paragraph = panel.querySelector("p").getBoundingClientRect();
+    const action = element.getBoundingClientRect();
+    return { offset: Math.abs(action.left - contentLeft), below: action.top >= paragraph.bottom };
   });
-  assert.ok(panelAlignment <= 1, "Draft Risk Notice action must be centred in its panel.");
+  assert.ok(
+    panelAlignment.offset <= 1 && panelAlignment.below,
+    `Draft Risk Notice action must sit left-aligned under the risk text: ${JSON.stringify(panelAlignment)}`,
+  );
   await draftAction.focus();
   await desktopPage.keyboard.press("Enter");
   await desktopPage.waitForURL("**/risk-notice/");

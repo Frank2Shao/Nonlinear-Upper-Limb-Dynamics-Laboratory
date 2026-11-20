@@ -111,6 +111,14 @@ def test_beginners_safety_page_uses_approved_content_metadata_and_headings(clien
         "Safe training depends on clear communication",
     ):
         assert approved_text in content
+    assert '<p class="label-mono">Beginners &amp; Safety</p>' in content
+    assert content.count('class="report-section"') == 5
+    for pattern in (
+        r'<ol class="procedure">(.*?)</ol>',
+        r'<ul class="rule-list">(.*?)</ul>',
+    ):
+        match = re.search(pattern, content, re.DOTALL)
+        assert match and match.group(1).count("<li>") == 5
 
 
 @pytest.mark.parametrize("url_name", ["home", "about", "beginners_safety"])

@@ -24,7 +24,7 @@ const publicPages = [
   {
     path: "/beginners-safety/",
     status: 200,
-    required: [".step-list", ".safety-list", ".safety-panel", ".button"],
+    required: [".procedure", ".rule-list", ".risk-panel", ".button"],
   },
   { path: "/risk-notice/", status: 200, required: [".status-banner"] },
   { path: "/test-error/403/", status: 403, required: [".button"] },

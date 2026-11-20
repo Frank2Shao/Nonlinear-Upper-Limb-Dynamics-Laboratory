@@ -356,8 +356,6 @@
   /* Shared card surface. Each block below sets only its own spacing and layout. */
   .panel,
   .content-card,
-  .step-list li,
-  .safety-list li,
   .profile-public-card,
   .member-card,
   .empty-state {
@@ -424,14 +422,9 @@
     margin-inline: auto;
   }
 
-  .public-page__action,
-  .safety-panel__action {
+  .public-page__action {
     display: flex;
     align-items: center;
-  }
-
-  .safety-panel__action {
-    justify-content: center;
   }
 
   /* Home Hero: one text column whose width is set by the longest title line,
@@ -1128,64 +1121,114 @@
   }
 
   .content-section > :last-child,
-  .safety-panel > :last-child,
   .public-page__action > :last-child {
     margin-bottom: 0;
   }
 
-  .step-list,
-  .safety-list {
+  /* Numbered procedure: gold-edged index squares joined by a gold line. */
+  .procedure {
+    display: grid;
     margin: 0;
     padding: 0;
-    display: grid;
-    gap: 0.75rem;
+    counter-reset: procedure-step;
     list-style: none;
   }
 
-  .step-list {
-    counter-reset: public-step;
-  }
-
-  .step-list li,
-  .safety-list li {
+  .procedure li {
     position: relative;
-    min-width: 0;
-    padding: 1rem 1rem 1rem 3.5rem;
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    padding-block: 0.625rem;
+    counter-increment: procedure-step;
   }
 
-  .step-list li {
-    counter-increment: public-step;
-  }
-
-  .step-list li::before,
-  .safety-list li::before {
-    position: absolute;
-    top: 0.85rem;
-    left: 1rem;
+  .procedure li::before {
+    content: counter(procedure-step, decimal-leading-zero);
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--color-gold-line);
+    background: var(--color-ink);
     color: var(--color-gold);
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
   }
 
-  .step-list li::before {
-    content: counter(public-step, decimal-leading-zero);
+  /* The connector runs from the previous square's centre to this one's. */
+  .procedure li + li::after {
+    content: "";
+    position: absolute;
+    top: -0.625rem;
+    left: calc(1.375rem - 0.5px);
+    height: 1.875rem;
+    border-left: 1px solid var(--color-gold-line);
   }
 
-  .safety-list li::before {
-    content: "•";
-  }
-
-  .safety-panel {
+  /* Risk panel: warm ground with the gold top edge of the event panel. */
+  .risk-panel {
     --button-ground: var(--color-warning-surface);
-    padding: clamp(1.5rem, 4vw, 2rem);
-    border-left: 0.25rem solid var(--color-warning);
+    position: relative;
+    display: grid;
+    gap: 1.25rem;
+    padding: clamp(1.25rem, 4vw, 1.75rem);
+    border: 1px solid var(--color-gold-line);
     border-radius: var(--radius-card);
     background: var(--color-warning-surface);
   }
 
-  .safety-panel__action {
-    margin-top: 1.5rem;
+  .risk-panel::before {
+    content: "";
+    position: absolute;
+    inset: -1px -1px auto;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--color-gold-shadow),
+      var(--color-gold-highlight) 40%,
+      transparent
+    );
+  }
+
+  .risk-panel > * {
+    margin: 0;
+  }
+
+  .risk-panel .button {
+    justify-self: start;
+  }
+
+  /* Rules as rows in one drawing-style frame, each with a gold square mark. */
+  .rule-list {
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-gold-line);
+    background: var(--color-ink);
+    list-style: none;
+  }
+
+  .rule-list li {
+    display: grid;
+    grid-template-columns: 0.4rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .rule-list li + li {
+    border-top: 1px solid var(--color-gold-line);
+  }
+
+  .rule-list li::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    background: var(--color-gold);
+    transform: translateY(-0.1rem);
   }
 
   .cta-panel {
