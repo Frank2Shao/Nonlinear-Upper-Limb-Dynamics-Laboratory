@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 20 日
-**对应进度：** Visual Refresh, Step V12
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V12 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V13
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -702,6 +702,14 @@ ASGI / WSGI ───────────→ config.settings.production
 - 测试：页头小标签、5 个分节、各 5 项的流程与规则列表；Draft 入口位于 `.risk-panel` 内、在面板内容左缘对齐并位于正文下方；Accessibility 门禁必需元素改为 `.procedure`、`.rule-list`、`.risk-panel`；宽屏流程方块同列且有连接线、规则 5 行、风险面板位于分节标题右侧。
 - 走查截图使用只在本地临时存在的测试（Test settings 的 live server，Draft 关闭与开启两种状态，截图后删除），覆盖 1440、820、390px。
 - 本步没有修改 view、URL、Metadata、文案、Draft 开关逻辑或 migration。完整 pytest `409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；截图走查经项目负责人确认。
+
+### 3.60 Visual Refresh V13：第三轮质量门禁
+
+- 第三轮（V11 About、V12 Beginners & Safety）沿用 V7、V10 的门禁方式，没有新增脚本：`scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中执行共享门禁 `scripts/verify_project.py`，再在真实 Development server 上运行 Phase 2–4 desktop/mobile smoke。
+- 结果：完整 pytest `409 passed`、branch coverage `95%`，Ruff、migration drift、Django check 与 `check --deploy --fail-level WARNING` 均无问题，三组 smoke 全部通过；验收后工作区没有任何已跟踪文件变化。
+- 人工走查使用只在本地临时存在的测试（Test settings 的 live server、一名合成已验证会员，Draft Risk Notice 关闭与开启两种状态，截图后删除），在 1440 × 900 与 390 × 844 下覆盖 About 与 Beginners & Safety 的 Anonymous/会员 × Draft 开/关，共 16 张：About 仅对 Anonymous 显示居中的 `Join`；Beginners & Safety 风险面板内的 `Read the Draft Risk Notice` 与 Header 的 `Draft Risk Notice` 导航随 Draft 开关同步出现或消失。均无横向溢出与 page error，经项目负责人确认。Development database 未写入数据。
+- 第三轮完成后，Home、Events 列表与详情、About、Beginners & Safety 已按新视觉实施；Members、认证与 Account、错误页仍沿用原有布局，按 Members → 认证与 Account → 403/404/500 的顺序逐页确认设计后再展开步骤。
+- 本步没有修改代码、view、URL、业务逻辑或 migration。
 
 ## 四、当前文件职责
 

@@ -2021,3 +2021,29 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V12 截图并确认，批准更新 `architecture.md`：新增 3.59 节，更新页头状态以及样式源、Beginners & Safety 模板与相关测试的文件职责。V13（第三轮质量门禁）尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V13 — 第三轮质量门禁
+
+### 前置条件检查
+
+- V11、V12 已由项目负责人确认并提交推送（`a92b6ad`）；工作区干净，Docker PostgreSQL healthy；项目负责人授权开始 V13。
+
+### 验证结果
+
+- `scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中完整通过（`Phase 4 end-to-end acceptance passed.`）：
+  - 共享门禁 `scripts/verify_project.py`：`npm ci`、Chromium 安装、静态资源 build/check/watch smoke、Ruff lint/format（`All checks passed!`）、`makemigrations --check`、Django check（无问题）、干净 PostgreSQL 上的完整 pytest（`409 passed`）、branch coverage `95%`、Production `check --deploy --fail-level WARNING`（无问题）与 manifest `collectstatic`。
+  - 真实 Development server 上的 Phase 2、Phase 3、Phase 4 desktop/mobile smoke 全部通过。
+- 验收后工作区仍然干净。
+- 走查截图使用一个只在本地临时存在的测试（Test settings 的 live server、一名合成已验证会员，Draft 关闭与 `override_settings` 开启两种状态，截图后删除），在 1440 × 900 与 390 × 844 下覆盖 About 与 Beginners & Safety 的 Anonymous/会员 × Draft 开/关，共 16 张：
+  - About：Anonymous 显示居中的 `Join`，会员不显示；
+  - Beginners & Safety：Draft 开启时风险面板内显示 `Read the Draft Risk Notice`，关闭时面板只有风险说明；Header 的 `Draft Risk Notice` 导航同步出现或消失。
+- 全部截图无横向溢出、无 page error；与项目负责人确认的 V11、V12 一致，走查中未发现需要修改的问题。截图保存在临时目录，已提交项目负责人走查；Development database 未写入数据。
+
+### 当前边界与下一步门槛
+
+- 本步没有修改代码。`architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+- 后续页面按 Members → 认证与 Account → 403/404/500 的顺序，逐页先确认设计再展开步骤。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V13 的 16 张截图并确认，批准更新 `architecture.md`：新增 3.60 节并更新页头进度与状态。第三轮（About 与 Beginners & Safety）完成；Members 的设计确认尚未开始，需要项目负责人明确授权。
