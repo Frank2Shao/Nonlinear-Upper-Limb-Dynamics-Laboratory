@@ -101,6 +101,68 @@ def test_detail_shows_only_allowed_public_fields_and_safe_external_links(client)
     )
 
 
+def headings(content: str) -> list[tuple[str, str]]:
+    return [
+        (level, re.sub(r"<[^>]+>", "", text).strip())
+        for level, text in re.findall(r"<h([1-6])[^>]*>(.*?)</h\1>", content, re.S)
+    ]
+
+
+def test_detail_has_back_link_panel_and_numbered_sections(client):
+    profile = create_profile(
+        username="layout-detail",
+        display_name="Layout Member",
+        bio="A short public bio.",
+        instagram_handle="layout.member",
+        researcher_number=7,
+    )
+
+    content = client.get(
+        reverse("members:detail", args=[profile.user.username])
+    ).content.decode()
+
+    assert (
+        f'<a class="back-link" href="{reverse("members:list")}">'
+        '<span aria-hidden="true">←</span> Back to members</a>'
+    ) in content
+    assert headings(content) == [("1", "Layout Member"), ("2", "Bio"), ("2", "Links")]
+    kicker = re.search(r'<div class="profile-kicker">(.*?)</div>', content, re.S).group(
+        1
+    )
+    assert '<p class="label-mono">Member profile</p>' in kicker
+    assert '<p class="gold-tag">Researcher 07</p>' in kicker
+    assert content.index("Researcher 07") < content.index("<h1")
+    assert re.findall(r'report-section__index" aria-hidden="true">(\d+)<', content) == [
+        "01",
+        "02",
+    ]
+
+
+def test_detail_leaves_out_empty_sections_and_unassigned_tag(client):
+    links_only = create_profile(
+        username="links-only",
+        display_name="Links Only",
+        instagram_handle="links.only",
+    )
+    bare = create_profile(username="bare-detail", display_name="Bare Member")
+
+    links_content = client.get(
+        reverse("members:detail", args=[links_only.user.username])
+    ).content.decode()
+    bare_content = client.get(
+        reverse("members:detail", args=[bare.user.username])
+    ).content.decode()
+
+    assert headings(links_content) == [("1", "Links Only"), ("2", "Links")]
+    assert re.findall(
+        r'report-section__index" aria-hidden="true">(\d+)<', links_content
+    ) == ["01"]
+    assert "Researcher" not in links_content
+    assert "gold-tag" not in links_content
+    assert headings(bare_content) == [("1", "Bare Member")]
+    assert "report-section" not in bare_content
+
+
 def test_detail_escapes_profile_content(client):
     profile = create_profile(username="escaped-detail", display_name="Escaped Member")
     MemberProfile.objects.filter(pk=profile.pk).update(

@@ -73,6 +73,22 @@ const assertDirectory = async (page, label) => {
   );
 };
 
+const panelLayout = (page) =>
+  page.locator(".profile-panel").evaluate((panel) => {
+    const media = panel.querySelector(".profile-panel__media").getBoundingClientRect();
+    const identity = panel.querySelector(".profile-panel__identity").getBoundingClientRect();
+    const tag = panel.querySelector(".profile-kicker .gold-tag");
+    const heading = panel.querySelector("h1").getBoundingClientRect();
+    return {
+      mediaRight: media.right,
+      mediaBottom: media.bottom,
+      identityLeft: identity.left,
+      identityTop: identity.top,
+      tag: tag?.textContent.trim() ?? null,
+      tagAboveHeading: tag ? tag.getBoundingClientRect().bottom <= heading.top : null,
+    };
+  });
+
 const assertCardsShareARow = async (page) => {
   const [first, second] = await page
     .locator(".member-card")
@@ -129,6 +145,15 @@ try {
     "Member detail must use ordinary public robots rules.",
   );
   await desktopPage.getByText("Public bio for Alpha Member.").waitFor();
+  await desktopPage.getByRole("link", { name: "Back to members" }).waitFor();
+  await desktopPage.getByRole("heading", { level: 2, name: "Bio" }).waitFor();
+  const desktopPanel = await panelLayout(desktopPage);
+  assert.ok(
+    desktopPanel.mediaRight <= desktopPanel.identityLeft,
+    `Desktop detail avatar must sit left of the identity: ${JSON.stringify(desktopPanel)}`,
+  );
+  assert.equal(desktopPanel.tag, "Researcher 07");
+  assert.equal(desktopPanel.tagAboveHeading, true, "The Researcher tag must sit above the name.");
   const instagramLink = desktopPage.getByRole("link", {
     name: "Instagram: @browser_alpha.club",
   });
@@ -154,6 +179,12 @@ try {
   await assertDirectory(mobilePage, "Mobile");
   await mobilePage.goto(`${baseUrl}/members/browser-bravo/`);
   await mobilePage.getByRole("heading", { level: 1, name: "Bravo Member" }).waitFor();
+  const mobilePanel = await panelLayout(mobilePage);
+  assert.ok(
+    mobilePanel.mediaBottom <= mobilePanel.identityTop,
+    `Mobile detail avatar must sit above the identity: ${JSON.stringify(mobilePanel)}`,
+  );
+  assert.equal(mobilePanel.tag, null, "A member without a number must not show a tag.");
   assert.equal(
     await mobilePage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
     true,

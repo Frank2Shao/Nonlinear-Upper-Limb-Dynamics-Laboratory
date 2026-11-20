@@ -1,51 +1,87 @@
-<article class="profile-public-card" aria-labelledby="profile-public-name">
-  <header class="profile-public-card__header">
-    <p class="eyebrow">Member profile</p>
-    {% if public_profile_detail %}
-      <h1 id="profile-public-name">{{ profile.resolved_display_name }}</h1>
-    {% else %}
-      <h2 id="profile-public-name">{{ profile.resolved_display_name }}</h2>
-    {% endif %}
-    <p class="profile-public-card__username">@{{ profile.user.username }}</p>
-  </header>
-
-  {% include "members/includes/public_avatar.html" with profile=profile block_class="profile-public-card" %}
-
-  {% if profile.public_experience_level or profile.public_preferred_arm %}
-    <dl class="definition-list">
-      {% if profile.public_experience_level %}
-        <dt>Experience level</dt>
-        <dd>{{ profile.public_experience_level }}</dd>
+{% comment %}
+Public profile fields, shared by the public detail page and the owner's
+Preview. With `public_profile_detail` the name is the page H1 and the Bio and
+Links sections are H2; in Preview the name is H2 and the sections are H3.
+Sections without content are left out and the numbers stay consecutive.
+{% endcomment %}
+<article class="profile-public" aria-labelledby="profile-public-name">
+  <div class="profile-panel">
+    <div class="profile-panel__media">
+      {% include "members/includes/public_avatar.html" with profile=profile block_class="profile-panel" %}
+    </div>
+    <div class="profile-panel__identity">
+      <div class="profile-kicker">
+        <p class="label-mono">Member profile</p>
+        {% if profile.researcher_label %}
+          <span class="profile-kicker__separator" aria-hidden="true">·</span>
+          <p class="gold-tag">{{ profile.researcher_label }}</p>
+        {% endif %}
+      </div>
+      {% if public_profile_detail %}
+        <h1 id="profile-public-name">{{ profile.resolved_display_name }}</h1>
+      {% else %}
+        <h2 id="profile-public-name">{{ profile.resolved_display_name }}</h2>
       {% endif %}
-      {% if profile.public_preferred_arm %}
-        <dt>Preferred arm</dt>
-        <dd>{{ profile.public_preferred_arm }}</dd>
+      <p class="profile-panel__username">@{{ profile.user.username }}</p>
+      {% if profile.public_experience_level or profile.public_preferred_arm %}
+        <dl class="member-facts">
+          {% if profile.public_experience_level %}
+            <div>
+              <dt>Experience level</dt>
+              <dd>{{ profile.public_experience_level }}</dd>
+            </div>
+          {% endif %}
+          {% if profile.public_preferred_arm %}
+            <div>
+              <dt>Preferred arm</dt>
+              <dd>{{ profile.public_preferred_arm }}</dd>
+            </div>
+          {% endif %}
+        </dl>
       {% endif %}
-    </dl>
-  {% endif %}
+    </div>
+  </div>
 
   {% if profile.bio %}
-    <section aria-labelledby="profile-bio-title">
-      <h3 id="profile-bio-title">Bio</h3>
-      <p class="profile-public-card__bio">{{ profile.bio|linebreaksbr }}</p>
+    <section class="report-section" aria-labelledby="profile-bio-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">01</span>
+        {% if public_profile_detail %}
+          <h2 id="profile-bio-title">Bio</h2>
+        {% else %}
+          <h3 id="profile-bio-title">Bio</h3>
+        {% endif %}
+      </div>
+      <div class="report-section__body">
+        <p class="profile-public__bio">{{ profile.bio|linebreaksbr }}</p>
+      </div>
     </section>
   {% endif %}
 
   {% if profile.instagram_handle or profile.other_social_url %}
-    <section aria-labelledby="profile-links-title">
-      <h3 id="profile-links-title">Links</h3>
-      <ul class="profile-public-card__links">
-        {% if profile.instagram_handle %}
-          <li>
-            <a href="https://www.instagram.com/{{ profile.instagram_handle|urlencode }}/" target="_blank" rel="noopener noreferrer">Instagram: @{{ profile.instagram_handle }}</a>
-          </li>
+    <section class="report-section" aria-labelledby="profile-links-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">{% if profile.bio %}02{% else %}01{% endif %}</span>
+        {% if public_profile_detail %}
+          <h2 id="profile-links-title">Links</h2>
+        {% else %}
+          <h3 id="profile-links-title">Links</h3>
         {% endif %}
-        {% if profile.other_social_url %}
-          <li>
-            <a href="{{ profile.other_social_url }}" target="_blank" rel="noopener noreferrer">Other social profile</a>
-          </li>
-        {% endif %}
-      </ul>
+      </div>
+      <div class="report-section__body">
+        <ul class="profile-public__links">
+          {% if profile.instagram_handle %}
+            <li>
+              <a href="https://www.instagram.com/{{ profile.instagram_handle|urlencode }}/" target="_blank" rel="noopener noreferrer">Instagram: @{{ profile.instagram_handle }}</a>
+            </li>
+          {% endif %}
+          {% if profile.other_social_url %}
+            <li>
+              <a href="{{ profile.other_social_url }}" target="_blank" rel="noopener noreferrer">Other social profile</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
     </section>
   {% endif %}
 </article>

@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from django.test import Client
 from django.urls import reverse
@@ -77,6 +79,31 @@ def test_preview_uses_only_the_current_members_profile(client):
     assert "Current member biography" in content
     assert "Other Private Profile" not in content
     assert "Other private biography" not in content
+
+
+def test_preview_shares_the_public_layout_one_heading_level_lower(client):
+    member, profile = create_member(username="preview-layout")
+    profile.display_name = "Preview Layout"
+    profile.bio = "Preview biography"
+    profile.instagram_handle = "preview.layout"
+    profile.researcher_number = 12
+    profile.save()
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_preview")).content.decode()
+    levels = [
+        (level, re.sub(r"<[^>]+>", "", text).strip())
+        for level, text in re.findall(r"<h([1-6])[^>]*>(.*?)</h\1>", content, re.S)
+    ]
+
+    assert levels[:4] == [
+        ("1", "Profile Preview"),
+        ("2", "Preview Layout"),
+        ("3", "Bio"),
+        ("3", "Links"),
+    ]
+    assert '<p class="gold-tag">Researcher 12</p>' in content
+    assert 'class="profile-panel"' in content
 
 
 def test_unpublished_profile_can_be_previewed_without_changing_state(client):

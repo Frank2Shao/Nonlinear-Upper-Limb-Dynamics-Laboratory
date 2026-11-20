@@ -6,8 +6,8 @@
 {% block open_graph_description %}View the public member profile for {{ profile.resolved_display_name }}.{% endblock %}
 
 {% block content %}
-  <section class="profile-flow">
-    <a href="{% url 'members:list' %}">Back to Members</a>
+  <div class="member-profile">
+    <a class="back-link" href="{% url 'members:list' %}"><span aria-hidden="true">←</span> Back to members</a>
     {% include "members/includes/profile_public_fields.html" with profile=profile public_profile_detail=True %}
-  </section>
+  </div>
 {% endblock %}
