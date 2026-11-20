@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 20 日
-**对应进度：** Visual Refresh, Step V9
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V9 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V10
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -670,6 +670,15 @@ ASGI / WSGI ───────────→ config.settings.production
 - 走查截图使用一个只在本地临时存在的测试（在 test database 中建立合成活动、合成 Risk Notice 与两名合成会员，截图后删除），覆盖 1440、约 820 与 390px 下的全部报名状态、两个 dialog 与无 JavaScript 确认页；Development database 未写入数据。
 - 测试：状态标签 class、顶部返回链接、页头状态、信息面板及其先于说明的源码顺序、`Registered` 为带 `role="status"` 的状态标签、`(View in Map)` 位于 `Location` 行内，以及 dialog 的精确可访问名称与 `Risk Notice` 标题。
 - 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest `409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过。
+
+### 3.57 Visual Refresh V10：第二轮质量门禁
+
+- 第二轮（V8 Events 列表、V9 活动详情与报名区）沿用 V7 的门禁方式，没有新增脚本：`scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中执行共享门禁 `scripts/verify_project.py`，再在真实 Development server 上运行 Phase 2–4 desktop/mobile smoke。
+- 结果：完整 pytest `409 passed`、branch coverage `95%`，Ruff、migration drift、Django check 与 `check --deploy --fail-level WARNING` 均无问题，三组 smoke 全部通过；验收后工作区没有任何已跟踪文件变化。
+- 人工走查使用只在本地临时存在的测试（test database 中的合成开放、关闭与 Past 活动、合成 Risk Notice 与两名合成会员，截图后删除），在 1440 × 900 与 390 × 844 下各截 11 张：列表 Upcoming/Past、详情页 Anonymous/会员可报名/已报名/报名关闭/Past、报名与取消 dialog、禁用 JavaScript 的报名与取消确认页；均无横向溢出与 page error，经项目负责人确认。Development database 未写入数据。
+- 走查中项目负责人决定保持禁用 JavaScript 的完整报名确认页现状：标题仍为 `Event registration` / `Confirm registration`（与 dialog 的 `Confirm registration` / `Risk Notice` 不同），Risk Notice 正文区沿用 dialog 的最大高度并在框内滚动。
+- 第二轮完成后，Events 列表、详情、报名区与确认页已按新视觉实施；About、Beginners & Safety、Members、认证与 Account、错误页仍沿用原有布局，按 About、Beginners & Safety → Members → 认证与 Account → 403/404/500 的顺序逐页确认设计后再展开步骤。
+- 本步没有修改代码、view、URL、业务逻辑或 migration。
 
 ## 四、当前文件职责
 

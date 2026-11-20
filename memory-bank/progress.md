@@ -1903,3 +1903,32 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已确认 V9（含全部走查修订），并批准更新 `architecture.md`：新增 3.56 节，更新样式源、活动详情、报名区、Risk Notice 表单与无 JavaScript 确认页模板及相关测试的文件职责。V10（第二轮质量门禁）尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V10 — 第二轮质量门禁
+
+### 前置条件检查
+
+- V8、V9 已由项目负责人确认并提交推送（`a54795d`）；工作区干净，Docker PostgreSQL healthy。
+
+### 验证结果
+
+- `scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中完整通过（`Phase 4 end-to-end acceptance passed.`）：
+  - 共享门禁 `scripts/verify_project.py`：`npm ci`、Chromium 安装、静态资源 build/check/watch smoke、Ruff lint/format（`All checks passed!`）、`makemigrations --check`、Django check（无问题）、干净 PostgreSQL 上的完整 pytest（`409 passed`，含全部 Phase 1–4 Playwright 与 Accessibility 门禁）、branch coverage `95%`、Production `check --deploy --fail-level WARNING`（无问题）与 manifest `collectstatic`。
+  - 真实 Development server 上的 Phase 2、Phase 3、Phase 4 desktop/mobile smoke 全部通过。
+- 验收后工作区仍然干净。
+- 走查截图使用一个只在本地临时存在的测试（在 test database 中建立合成的开放、关闭与 Past 活动、合成 Risk Notice 与两名合成会员，截图后删除，不进入仓库），在 1440 × 900 与 390 × 844 下各 11 张，共 22 张：
+  - Events 列表 Upcoming 与 Past；
+  - 详情页 Anonymous（`Log in to register`）、会员可报名（`Register`）、已报名（`Registered` + `Cancel registration`）、报名关闭（Registration unavailable）、Past；
+  - 报名 dialog（`Confirm registration` / `Risk Notice`）与取消 dialog；
+  - 禁用 JavaScript 的报名确认页与取消确认页。
+- 全部截图无横向溢出、无 page error；与项目负责人确认的 V8、V9 设计一致，走查中未发现需要修改的问题。截图保存在临时目录，已提交项目负责人走查；Development database 未写入数据。
+
+### 当前边界与下一步门槛
+
+- 走查问答：禁用 JavaScript 的完整报名确认页标题仍为 `Event registration` / `Confirm registration`（V9 只把 dialog 大标题改为 `Risk Notice`），Risk Notice 正文区沿用 dialog 的最大高度、需在框内滚动；项目负责人决定保持现状。
+- 本步没有修改代码。`architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+- 后续页面按 About、Beginners & Safety → Members → 认证与 Account → 403/404/500 的顺序，逐页先确认设计再展开步骤。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V10 截图并确认第二轮 Visual Refresh（Events）完成，批准更新 `architecture.md`：新增 3.57 节并更新页头状态。下一轮（About、Beginners & Safety）需要项目负责人先确认设计，再展开为具体步骤。
