@@ -117,15 +117,15 @@ const assertHomeLayout = async (page, label) => {
   assert.deepEqual(clippedElements, [], `${label} text and actions must remain visible.`);
 
   const cardHeadingSizes = await page
-    .locator("#new-to-armwrestling .content-card h3")
+    .locator("#new-to-armwrestling .feature-card h3")
     .evaluateAll((headings) =>
       headings.map((heading) => Number.parseFloat(getComputedStyle(heading).fontSize)),
     );
   assert.equal(cardHeadingSizes.length, 4);
   assert.equal(
-    cardHeadingSizes.every((size) => size === 19),
+    cardHeadingSizes.every((size) => size === 22),
     true,
-    `${label} card titles must be three pixels larger than the base text.`,
+    `${label} feature card titles must use the approved 1.375rem size.`,
   );
 };
 

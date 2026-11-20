@@ -11,11 +11,11 @@
         <a class="button button--secondary" href="{% url 'events:list' %}?view=upcoming"{% if selected == 'upcoming' %} aria-current="page"{% endif %}>Upcoming</a>
         <a class="button button--secondary" href="{% url 'events:list' %}?view=past"{% if selected == 'past' %} aria-current="page"{% endif %}>Past</a>
       </nav>
-      <div class="card-grid event-list">
+      <div class="event-stack event-list">
         {% for event in events %}
           {% include "events/includes/event_card.html" %}
         {% empty %}
-          <p>No events found.</p>
+          <p class="events-empty">No events found.</p>
         {% endfor %}
       </div>
     </section>

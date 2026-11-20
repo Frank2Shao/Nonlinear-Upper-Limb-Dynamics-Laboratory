@@ -27,7 +27,7 @@ try {
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
     await page.goto(baseUrl);
-    const homeEventCard = page.locator(".session-card .event-card").last();
+    const homeEventCard = page.locator(".event-stack .event-card").first();
     const viewAllEvents = page.getByRole("link", { name: "View all events" });
     const [cardBox, actionBox] = await Promise.all([
       homeEventCard.boundingBox(),
@@ -35,13 +35,25 @@ try {
     ]);
     assert.ok(cardBox && actionBox);
     assert.ok(
-      actionBox.y - (cardBox.y + cardBox.height) >= 20,
-      "Home Event card and View all events must have visible spacing.",
+      cardBox.y - (actionBox.y + actionBox.height) >= 16,
+      "View all events must sit in the section heading, clearly above the Event cards.",
     );
     await viewAllEvents.click();
     await assertPageStructure(page, `Events list ${JSON.stringify(options)}`);
     await assertNoHorizontalOverflow(page, `Events list ${JSON.stringify(options)}`);
     await assertVisibleContentFits(page, `Events list ${JSON.stringify(options)}`, VISIBLE_CONTENT);
+    // The status is an unfilled label, as wide as the details action beside it.
+    const aside = await page.locator(".event-card__aside").first().evaluate((element) => {
+      const status = element.querySelector(".status-tag");
+      const action = element.querySelector(".button");
+      return {
+        statusWidth: status.getBoundingClientRect().width,
+        actionWidth: action.getBoundingClientRect().width,
+        statusBackground: getComputedStyle(status).backgroundImage,
+      };
+    });
+    assert.ok(Math.abs(aside.statusWidth - aside.actionWidth) < 1, JSON.stringify(aside));
+    assert.equal(aside.statusBackground, "none");
     if (options.viewport.width === 390) {
       await assertTouchTargets(page, `Events list ${JSON.stringify(options)}`);
     } else {
@@ -53,7 +65,7 @@ try {
     await page.getByRole("link", { name: "Past", exact: true }).click();
     await page.getByText("No events found.").waitFor();
     await page.getByRole("link", { name: "Upcoming", exact: true }).click();
-    await page.getByRole("link", { name: "Synthetic Training Session" }).click();
+    await page.getByRole("link", { name: "Synthetic Training Session", exact: true }).click();
     await page.getByRole("heading", { name: "Synthetic Training Session", level: 1 }).waitFor();
     assert.equal(await page.getByRole("link", { name: "View location in map" }).getAttribute("href"), "https://maps.google.com/?q=synthetic");
     assert.equal(await page.locator("form").count(), 0);

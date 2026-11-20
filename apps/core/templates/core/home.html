@@ -70,41 +70,53 @@
     </section>
 
     <section class="public-section" id="new-to-armwrestling" aria-labelledby="new-to-armwrestling-title">
-      <div class="public-section__header">
-        <p class="eyebrow">Start with the fundamentals</p>
-        <h2 id="new-to-armwrestling-title">New to Armwrestling?</h2>
-        <h2>Join Us !</h2>
+      <div class="section-heading">
+        <div class="section-heading__titles">
+          <p class="label-mono">Start with the fundamentals</p>
+          <h2 id="new-to-armwrestling-title">New to Armwrestling?</h2>
+          <h2><span class="gold-text">Join Us !</span></h2>
+        </div>
       </div>
 
-      <div class="card-grid">
-        <article class="content-card">
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="feature-card__index" aria-hidden="true">01</span>
           <h3>Beginner Induction</h3>
           <p>Learn the basic rules, positions and safety principles before your first practice pull.</p>
         </article>
-        <article class="content-card">
+        <article class="feature-card">
+          <span class="feature-card__index" aria-hidden="true">02</span>
           <h3>Supervised Practice</h3>
           <p>Develop technique through structured practice using dedicated armwrestling equipment.</p>
         </article>
-        <article class="content-card">
+        <article class="feature-card">
+          <span class="feature-card__index" aria-hidden="true">03</span>
           <h3>Technique and Rules</h3>
           <p>Build a clearer understanding of movement, leverage, match rules and training methods.</p>
         </article>
-        <article class="content-card">
+        <article class="feature-card">
+          <span class="feature-card__index" aria-hidden="true">04</span>
           <h3>Community and Competition</h3>
           <p>Take part in social training sessions, workshops and internal competitions.</p>
         </article>
       </div>
     </section>
 
-    <section class="public-section session-card" aria-labelledby="upcoming-session-title">
-      <p class="eyebrow">Club activities</p>
-      <h2 id="upcoming-session-title">Upcoming Events</h2>
-      {% for event in upcoming_events %}
-        {% include "events/includes/event_card.html" %}
-      {% empty %}
-        <p>No upcoming events are currently available.</p>
-      {% endfor %}
-      <a class="button button--secondary home-events-action" href="{% url 'events:list' %}">View all events</a>
+    <section class="public-section" aria-labelledby="upcoming-session-title">
+      <div class="section-heading">
+        <div class="section-heading__titles">
+          <p class="label-mono">Club activities</p>
+          <h2 id="upcoming-session-title">Upcoming Events</h2>
+        </div>
+        <a class="button button--secondary button--compact" href="{% url 'events:list' %}">View all events</a>
+      </div>
+      <div class="event-stack">
+        {% for event in upcoming_events %}
+          {% include "events/includes/event_card.html" %}
+        {% empty %}
+          <p class="events-empty">No upcoming events are currently available.</p>
+        {% endfor %}
+      </div>
     </section>
   </div>
 {% endblock %}

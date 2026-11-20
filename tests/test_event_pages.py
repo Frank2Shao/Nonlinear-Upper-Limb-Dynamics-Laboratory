@@ -78,17 +78,20 @@ def test_home_shows_only_three_public_upcoming_events_and_links(client):
 
 
 @override_settings(RISK_NOTICE_DRAFT_VISIBLE=True)
-def test_event_cards_show_bold_registration_status(client):
+def test_event_cards_show_registration_status_labels(client):
     now = timezone.now()
     event("open-event", now + timedelta(days=1), registration_open=True)
     event("closed-event", now + timedelta(days=2), registration_open=False)
 
-    without_notice = client.get(reverse("events:list")).content.decode()
-    assert '<p class="event-status">Registration open</p>' not in without_notice
-    assert (
-        without_notice.count('<p class="event-status">Registration unavailable</p>')
-        == 2
+    open_label = (
+        '<p class="event-status status-tag status-tag--open">Registration open</p>'
     )
+    unavailable_label = (
+        '<p class="event-status status-tag">Registration unavailable</p>'
+    )
+    without_notice = client.get(reverse("events:list")).content.decode()
+    assert open_label not in without_notice
+    assert without_notice.count(unavailable_label) == 2
 
     RiskNoticeVersion.objects.create(
         version="synthetic-crlf",
@@ -99,8 +102,8 @@ def test_event_cards_show_bold_registration_status(client):
     home_content = client.get(reverse("home")).content.decode()
 
     for content in (list_content, home_content):
-        assert '<p class="event-status">Registration open</p>' in content
-        assert '<p class="event-status">Registration unavailable</p>' in content
+        assert open_label in content
+        assert unavailable_label in content
 
 
 def test_events_navigation_marks_list_and_detail_current(client):

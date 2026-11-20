@@ -7,7 +7,7 @@
     <section class="public-section" aria-labelledby="event-title">
       <p class="eyebrow">Club activity</p>
       <h1 id="event-title">{{ event.title }}</h1>
-      <div class="content-card event-card">
+      <div class="content-card">
         {% timezone "Australia/Sydney" %}
           <p><strong>Starts:</strong> <time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"j F Y, g:i a" }}</time></p>
           <p><strong>Ends:</strong> <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"j F Y, g:i a" }}</time></p>

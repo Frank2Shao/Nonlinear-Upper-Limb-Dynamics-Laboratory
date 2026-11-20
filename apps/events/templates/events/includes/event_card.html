@@ -1,15 +1,32 @@
 {% load tz %}
-<article class="content-card event-card">
-  <h3><a href="{% url 'events:detail' event.slug %}">{{ event.title }}</a></h3>
-  {% timezone "Australia/Sydney" %}
-    <p><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"j F Y, g:i a" }}</time> – <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"j F Y, g:i a" }}</time></p>
-  {% endtimezone %}
-  <p>{{ event.venue_text }}</p>
-  {% if event.is_past %}
-    <p class="event-status">Past event</p>
-  {% elif event.registration_open and registration_notice_available %}
-    <p class="event-status">Registration open</p>
-  {% else %}
-    <p class="event-status">Registration unavailable</p>
-  {% endif %}
-</article>
+{% timezone "Australia/Sydney" %}
+  <article class="event-card">
+    {# The date block repeats the Date row below, so assistive technology skips it. #}
+    <div class="event-card__date" aria-hidden="true">
+      <span class="event-card__weekday">{{ event.starts_at|date:"D" }}</span>
+      <span class="event-card__day">{{ event.starts_at|date:"d" }}</span>
+      <span class="event-card__month">{{ event.starts_at|date:"M Y" }}</span>
+    </div>
+    <h3 class="event-card__title"><a href="{% url 'events:detail' event.slug %}">{{ event.title }}</a></h3>
+    <dl class="event-facts">
+      {% if event.starts_at|date:"Ymd" == event.ends_at|date:"Ymd" %}
+        <div><dt>Date</dt> <dd>{{ event.starts_at|date:"j F Y" }}</dd></div>
+        <div><dt>Time</dt> <dd><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"g:i a" }}</time> – <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"g:i a" }}</time></dd></div>
+      {% else %}
+        <div><dt>Starts</dt> <dd><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"j F Y, g:i a" }}</time></dd></div>
+        <div><dt>Ends</dt> <dd><time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"j F Y, g:i a" }}</time></dd></div>
+      {% endif %}
+      <div><dt>Location</dt> <dd>{{ event.venue_text }}</dd></div>
+    </dl>
+    <div class="event-card__aside">
+      {% if event.is_past %}
+        <p class="event-status status-tag">Past event</p>
+      {% elif event.registration_open and registration_notice_available %}
+        <p class="event-status status-tag status-tag--open">Registration open</p>
+      {% else %}
+        <p class="event-status status-tag">Registration unavailable</p>
+      {% endif %}
+      <a class="button button--secondary button--compact" href="{% url 'events:detail' event.slug %}">View details<span class="sr-only"> for {{ event.title }}</span></a>
+    </div>
+  </article>
+{% endtimezone %}
