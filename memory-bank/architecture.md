@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 21 日
-**对应进度：** Visual Refresh, Step V15
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V15 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V16
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V16 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -400,7 +400,7 @@ ASGI / WSGI ───────────→ config.settings.production
 
 - `members:detail` 在 `/members/<username>/` 提供公开 GET 页面；view 只从 `MemberProfile.objects.public().select_related("user")` 查询，并按保存的 Username 精确匹配。
 - 未发布、管理员隐藏、停用、邮箱未验证、大小写不匹配和不存在的 Username 都无法离开公开 queryset，并统一进入项目 404 handler；可见错误正文不披露资料是否存在或不可见原因。
-- Detail 与本人 Preview 复用 `profile_public_fields.html` 的字段顺序。Detail 将公开名称呈现为唯一 H1；Preview 继续以 H2 嵌入本人流程页面，不产生重复 H1。
+- Detail 与本人 Preview 复用 `profile_public_fields.html` 的字段顺序。Detail 将公开名称呈现为唯一 H1；Preview 继续以 H2 嵌入本人流程页面，不产生重复 H1（V16 起分节标题相应为 H2 / H3，见 3.63）。
 - 详情字段白名单为公开名称、Username、Avatar/fallback、非默认 Experience level、非默认 Preferred arm、Bio、Instagram Username 和一个 HTTPS social URL。账户身份、USU 审核、Admin、Executive role 与时间戳不输出。
 - Django 默认 escaping 继续保护公开文本；Bio 使用 `linebreaksbr` 保留纯文本换行。外部链接使用新窗口及 `noopener noreferrer`，其他社交链接继续受 HTTPS model 与数据库约束保护。
 - Detail 使用全局默认 `index, follow`，不增加特殊 robots directive。显式 sitemap allowlist 只增加 `members:list`，不枚举任何 `members:detail` URL。
@@ -732,6 +732,17 @@ ASGI / WSGI ───────────→ config.settings.production
 - 测试：页头小标签与 H1；标签只在已分配号码的卡片中、位于 H2 之前；未发布与隐藏资料的号码不出现；浏览器测试另断言标签位于名称正上方且左对齐、桌面卡片并排、键盘 Focus 时整卡出现 outline、点击卡片角落进入详情。
 - 本步没有修改 view、URL、queryset、Metadata、文案或 migration。完整 pytest `429 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；1440/820/390px、Focus/悬停与空状态截图走查经项目负责人确认。
 
+### 3.63 Visual Refresh V16：Member detail 与本人 Preview（第四轮）
+
+- `profile_public_fields.html` 仍是详情与 Preview 的唯一公开字段组件，结构改为外层 `article.profile-public`：先是 `.profile-panel` 信息面板（Avatar/fallback；`.profile-kicker` 中的 `Member profile` 与已分配时的 Researcher `gold-tag`；名称；等宽 `@username`；`.member-facts` 资料格），再是 `Bio` 与 `Links` 两个 `.report-section`。公开字段白名单、Bio 的 `linebreaksbr` 与 escaping、外链 `target="_blank"` 与 `noopener noreferrer` 均不变。
+- 没有内容的分节不输出，分节编号由模板按实际出现顺序给出（只有 Links 时为 `01`），什么都没填时只剩信息面板。
+- 标题层级由 `public_profile_detail` 决定：详情页名称为唯一 H1、分节为 H2；Preview 名称为 H2、分节为 H3，从而修正了原先详情页 H1 之后直接出现 H3 的跳级。Preview 的 H2 名称与公开 H1 使用同一字号、字重与大写，报告分节的 H3 与 H2 同样式，使 Preview 与公开效果一致。
+- `member_detail.html` 外层为 `.member-profile`，顶部使用与活动详情相同的 `.back-link`「← Back to members」；Preview 页面外壳（窄栏、隐藏提示、操作按钮）不变，留给认证与 Account 轮次。
+- 面板宽于 `--breakpoint-hero` 时为 `15rem : 1fr` 两列，否则 Avatar 位于身份信息上方（`max-nav` 下 11rem）；面板内的 `.member-facts` 改为整格换行的横向格子，复用 V15 的资料格组件。`public_avatar.html` 以 `profile-panel` 为 block 输出 `profile-panel__avatar(-fallback)`。
+- 删除 `.profile-public-card` 系列规则及其在共享卡片表面、Avatar、断行与 `max-nav` 分组中的条目，改为对应的 `profile-panel` / `profile-public` 项；长 Username 与 Bio 仍可任意断行。
+- 测试：详情页返回链接、H1/H2 层级、kicker 标签位于 H1 之前、分节编号连续及缺失分节与未分配标签不输出；Preview 共用面板且层级为 H1 → H2 → H3；浏览器测试另断言桌面 Avatar 在身份信息左侧、手机在上方，以及标签位于名称上方。
+- 本步没有修改 view、URL、queryset、Metadata、文案或 migration。完整 pytest `432 passed`（其后仅调整 Preview H2 样式，相关浏览器、Accessibility 与静态资源测试重跑 `28 passed`）；`static:check`、Ruff、Django check 与 `git diff --check` 通过；详情三种组合、Preview 与隐藏状态 Preview 的 1440/820/390px 截图走查经项目负责人确认。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -754,7 +765,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About、Beginners & Safety）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片、居中页面操作、连线编号流程、带金色顶线的风险面板与单框规则列表、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 列表页头与金色细边框网格卡片（Researcher 标签、整卡点击与卡片外框 Focus、图纸式资料格 `.member-facts`）、Member detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About、Beginners & Safety）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片、居中页面操作、连线编号流程、带金色顶线的风险面板与单框规则列表、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 列表页头与金色细边框网格卡片（Researcher 标签、整卡点击与卡片外框 Focus、图纸式资料格 `.member-facts`）、Member detail 与 Preview 共用的信息面板（Researcher 标签 kicker、面板内横向资料格）与编号分节、返回链接、Members empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -858,14 +869,14 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/members/views.py` | 提供只消费公开 queryset 的 Members 目录与 Username detail，以及登录保护且要求启用账户与 verified Email 的本人 Profile 编辑、Preview、Publish confirmation 和 Unpublish confirmation；本人流程固定按当前 User 查询对象。 |
 | `apps/members/urls.py` | 暴露公开 `members:list`、`members:detail` 及本人 Profile edit、preview、publish 和 unpublish 命名路由。 |
 | `apps/members/templates/members/member_list.html` | 呈现等宽小标签页头与公开 Members 网格卡片：Avatar/fallback、已分配时位于名称上方的 Researcher 金色标签、覆盖整张卡片的公开名称详情链接、非默认经验与惯用手资料格，以及没有公开 Profile 时的 empty state；不输出 detail-only 或敏感字段。 |
-| `apps/members/templates/members/member_detail.html` | 使用普通公开 metadata/robots 与共享字段组件呈现单个公开 Profile，并提供返回 Members 的普通链接。 |
+| `apps/members/templates/members/member_detail.html` | 使用普通公开 metadata/robots 与共享字段组件呈现单个公开 Profile，顶部提供等宽 `← Back to members` 返回链接。 |
 | `apps/members/templates/members/profile_edit.html` | 使用全局页面壳呈现资料字段、当前方形 Avatar、删除控制、metadata 风险提示、CSRF、multipart、普通 POST 和 Preview 入口，并明确保存不会改变发布状态。 |
 | `apps/members/templates/members/profile_preview.html` | 呈现仅本人可见的公开效果 Preview、当前隐藏提示及 Edit、Publish 或 Unpublish 操作入口。 |
 | `apps/members/templates/members/profile_publish_confirm.html` | 列出全部公开字段（含已分配的 Researcher 编号或其未分配说明）、Username detail path、名称回退和 Avatar metadata 风险，并通过 CSRF POST 确认 Publish。 |
 | `apps/members/templates/members/profile_unpublish_confirm.html` | 说明 Unpublish 影响并通过 CSRF POST 确认取消发布，不删除已保存资料。 |
 | `apps/members/templates/members/includes/public_avatar.html` | 按调用方 BEM block 输出公开 Avatar 或装饰性首字母 fallback，供 Members 卡片与公开字段组件复用。 |
 | `apps/members/templates/members/includes/profile_publication_action.html` | 根据本人 Profile 发布状态输出 Publish 或 Unpublish 入口，供 Account 与 Preview 复用。 |
-| `apps/members/templates/members/includes/profile_public_fields.html` | 集中公开字段顺序和展示边界，供本人 Preview 与公开 detail 复用，并按页面语义分别输出 H2 或唯一 H1。 |
+| `apps/members/templates/members/includes/profile_public_fields.html` | 集中公开字段顺序和展示边界，供本人 Preview 与公开 detail 复用：信息面板（Avatar、`Member profile` 与已分配时的 Researcher 标签、名称、`@username`、资料格）与只在有内容时输出、编号连续的 Bio/Links 报告分节；按页面语义输出唯一 H1 + H2 分节或 H2 + H3 分节。 |
 | `apps/members/templates/members/includes/profile_hidden_notice.html` | 在本人资料流程中输出不泄露管理员或后台信息的中性隐藏提示。 |
 | `apps/members/admin.py` | 注册 MemberProfile 后台模型，依赖标准 change 权限提供列表、筛选和搜索；列表含可排序的 Researcher 编号列；change form 只允许维护隐藏状态、Executive role 与 Researcher 编号，会员自述、User、发布状态和时间戳只读，并关闭新增与删除入口。 |
 | `apps/members/migrations/__init__.py` | 将 `members.migrations` 标记为 migration package。 |
@@ -925,9 +936,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_member_profile.py` | 验证 MemberProfile schema、默认值、幂等创建、字段规范化、上传安全、公开查询、会员字段边界、Admin 配置，以及 Researcher 编号的显示格式、空值共存与 model/数据库两层的重复和非正数拒绝。 |
 | `tests/test_member_profile_admin.py` | 验证 MemberProfile Admin 的四类角色权限、标准 change permission、只读字段、防伪造、Hide/Unhide、Executive role、Researcher 编号的分配/修改/清除、无效与重复输入错误及列表排序、Django LogEntry，以及隐藏后的公开与本人流程边界。 |
 | `tests/test_profile_edit.py` | 验证 Profile 编辑访问资格、本人对象所有权、允许字段、Display name/Bio/Instagram/HTTPS 验证、伪造字段隔离、状态保持、保存后返回 Account 和普通 POST。 |
-| `tests/test_profile_publication.py` | 验证本人 Preview、访问资格、所有权、GET 无副作用、Publish/Unpublish 幂等 POST、CSRF、固定 redirect、管理员隐藏优先级、公开说明（含 Researcher 编号已分配与未分配两种文字）和敏感字段隔离。 |
+| `tests/test_profile_publication.py` | 验证本人 Preview、访问资格、所有权、GET 无副作用、Publish/Unpublish 幂等 POST、CSRF、固定 redirect、管理员隐藏优先级、公开说明（含 Researcher 编号已分配与未分配两种文字）、Preview 共用信息面板与 H1 → H2 → H3 层级，以及敏感字段隔离。 |
 | `tests/test_member_directory.py` | 验证公开目录 URL、公开 queryset、稳定排序、名称与 Avatar fallback、卡片详情链接、字段白名单、默认值隐藏、页头小标签、Researcher 标签只在已分配时位于名称之前且不泄露非公开资料号码、empty state、导航状态及敏感字段隔离。 |
-| `tests/test_member_detail.py` | 验证 Username 精确 URL、普通 robots、公开字段、安全外链、HTML escaping、默认值隐藏、敏感字段隔离及所有不可见状态的统一 404 正文。 |
+| `tests/test_member_detail.py` | 验证 Username 精确 URL、普通 robots、公开字段、安全外链、HTML escaping、默认值隐藏、返回链接、H1/H2 层级、kicker 中的 Researcher 标签、分节编号连续与空分节省略、敏感字段隔离及所有不可见状态的统一 404 正文。 |
 | `tests/test_member_directory_browser.py` | 以真实测试站点调用 Members 目录与详情 Playwright 场景，并建立包含公开 Bio、社交链接与一个 Researcher 编号的合成已发布资料；固定卡片 Avatar 与摘要布局。 |
 | `tests/test_avatar_lifecycle.py` | 使用隔离临时 media 验证 Avatar 原始字节、格式与大小边界、替换、主动删除、保留现有 Avatar 的重复校验、失败保护、孤立文件清理、页面提示和 Development/Production media URL 边界。 |
 | `tests/test_avatar_browser.py` | 以真实测试站点和临时 media 调用 Avatar Playwright 场景，并通过 authenticated Session 验证本人编辑页。 |
@@ -976,7 +987,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/browser/error-pages.mjs` | 在 Chromium 中验证 Step 25 三个错误状态的正确响应、desktop/mobile、项目 CSS、键盘 Focus、无 JavaScript、无水平溢出和同源网络边界。 |
 | `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口；按钮对比度读取 `::after`/`::before` 填充层，覆盖主按钮、描边按钮与 Header 按钮；Home 对比度覆盖 Hero 介绍、材质标签、eyebrow 与图纸标题栏（光照未点亮状态），以及功能卡片编号、正文与活动空状态。 |
 | `tests/browser/avatar-edit.mjs` | 在 Chromium desktop/mobile 中验证当前 Avatar 加载、方形裁切、metadata 提示、删除控件、键盘 Focus、上传错误保持及同源网络边界。 |
-| `tests/browser/member-directory.mjs` | 在 Chromium desktop/mobile/no-JavaScript 场景验证公开 Members cards、左侧紧凑 Avatar、右侧摘要、名称正上方的 Researcher 标签、桌面并排卡片、整卡 Focus 外框与整卡点击、稳定顺序、详情导航、robots、安全外链、Focus、无溢出、page error 和同源网络边界。 |
+| `tests/browser/member-directory.mjs` | 在 Chromium desktop/mobile/no-JavaScript 场景验证公开 Members cards、左侧紧凑 Avatar、右侧摘要、名称正上方的 Researcher 标签、桌面并排卡片、整卡 Focus 外框与整卡点击、稳定顺序、详情导航、详情信息面板桌面左右/手机上下布局与名称上方的标签、robots、安全外链、Focus、无溢出、page error 和同源网络边界。 |
 | `tests/browser/phase3-accessibility.mjs` | 在 Chromium 中统一验证 Account/Profile/Members 全流程的 desktop/mobile、200% content zoom、键盘 Focus、24px 触控目标、表单错误关联、连续长内容重排、禁用 JavaScript 提交与返回 Account、reduced motion、page error 和同源网络边界。 |
 | `memory-bank/design_document.md` | 产品与体验设计的权威来源，定义用户、页面、流程、权限、业务规则、隐私、Accessibility、内容和 Branding 边界。 |
 | `memory-bank/tech_stack.md` | 技术决策的权威来源，定义框架、版本策略、单体架构、环境、安全、部署和运维边界。 |

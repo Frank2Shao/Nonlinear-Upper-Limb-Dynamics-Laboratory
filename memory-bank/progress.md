@@ -2128,3 +2128,39 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V15 截图并确认，批准更新 `architecture.md`：新增 3.62 节，更新页头进度与状态，以及样式源、Members 列表模板与相关测试的文件职责。V16（Member detail 与 Preview）尚未开始，需要项目负责人明确授权；空状态样式未另作决定，保持现状。
+
+## Visual Refresh Step V16 — Member detail 与本人 Preview
+
+### 前置条件检查
+
+- V14、V15 已由项目负责人确认并提交推送（`af972b1`）；项目负责人授权开始 V16。本会话已完整阅读 `architecture.md` 与 `design_document.md`。
+
+### 实施内容
+
+- `members/includes/profile_public_fields.html`（详情与 Preview 共用）重写为：
+  - `.profile-panel` 信息面板：左侧 Avatar 或首字母 fallback（`public_avatar.html`，block 为 `profile-panel`），右侧依次为 `.profile-kicker`（等宽 `Member profile`，已分配号码时加装饰性间隔点与 `gold-tag` Researcher 标签）、名称、等宽 `@username`、`.member-facts` 资料格；
+  - `Bio` 与 `Links` 改为 `.report-section`，没有内容的分节不输出，编号按出现顺序连续（只有 Links 时为 `01`）；
+  - 标题层级：详情页名称为 H1、分节为 H2；Preview 名称为 H2、分节为 H3（原先详情页的 H1 之后直接是 H3）。
+- `member_detail.html`：外层 `.member-profile`，顶部改为与活动详情一致的 `.back-link`「← Back to members」（取代普通链接 `Back to Members`）。Preview 页面外壳、隐藏提示与操作按钮不变。
+- `static_src/css/site.css`：
+  - 新增 `.member-profile` / `.profile-public` 纵向间距、`.profile-panel`（金色细边框、顶部金色渐变细线；`@variant hero` 下 `15rem : 1fr` 两列，否则 Avatar 在上；`max-nav` 下 Avatar 11rem）、`.profile-kicker`、`.profile-panel__username`，面板内 `.member-facts` 改为可整格换行的横向格子；Preview 的 H2 名称与公开 H1 使用同一字号、字重与大写；
+  - 报告分节的 H3 与 H2 同样式（供 Preview 使用）；
+  - 删除 `.profile-public-card` 系列规则及其在共享卡片表面、Avatar、断行分组和 `max-nav` 中的条目，改为 `profile-panel` / `profile-public` 对应项。
+- 测试：
+  - `test_member_detail.py`：返回链接、标题层级（H1 名称、H2 Bio/Links）、kicker 中的小标签与 `Researcher 07` 位于 H1 之前、分节编号 `01`/`02`；只有 Links 时编号为 `01`、未分配号码时没有标签、什么都没填时没有分节。
+  - `test_profile_publication.py`：Preview 使用同一面板、标题层级为 H1 页面标题 → H2 名称 → H3 Bio/Links，并显示 `Researcher 12`。
+  - `member-directory.mjs`：桌面详情 Avatar 在身份信息左侧、标签在名称上方、存在 `Back to members` 与 H2 `Bio`；手机详情 Avatar 在身份信息上方，未分配号码时没有标签。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `432 passed`；之后只调整了 Preview H2 的大写与字重（CSS），重新运行 Members 浏览器、Phase 3 Accessibility 与静态资源测试 `28 passed`。`static:check`、Ruff lint/format、Django check 与 `git diff --check` 通过。
+- 走查截图使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、四名合成会员，头像为程序生成的抽象图，截图后删除）：详情页完整/只有 Links/未填写三种组合、本人 Preview、被管理员隐藏时的 Preview，在 1440 与 390px 下，加上 820px 完整详情，共 11 张，均无横向溢出与 page error。
+
+### 当前边界与下一步门槛
+
+- Preview 页面外壳（窄栏页头、隐藏提示、操作按钮）与 Publish/Unpublish 确认页仍为旧样式，属于认证与 Account 轮次。
+- `architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V16 截图并确认，批准更新 `architecture.md`：新增 3.63 节，更新页头进度与状态、3.31 的标题层级说明，以及样式源、详情模板、共享公开字段组件与相关测试的文件职责。V17（第四轮质量门禁）尚未开始，需要项目负责人明确授权。
