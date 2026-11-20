@@ -472,6 +472,7 @@ Registered Member 选择 Cancel registration
 
 - Metadata title：`About NULDL Armwrestling Club`
 - Metadata description：`Learn about NULDL Armwrestling Club, our training activities and our approach to technique, safety and inclusive participation.`
+- Page label：`About the club`（标题上方的等宽金色小标签，Visual Refresh 第三轮由项目负责人确认加入）
 - Heading：`About NULDL Armwrestling Club`
 - Introduction：`Nonlinear Upper Limb Dynamics Laboratory is a student-led, community-focused armwrestling club.`
 
@@ -500,13 +501,14 @@ Registered Member 选择 Cancel registration
 
 `Beginners are welcome, and competitive ambition is encouraged without creating unnecessary barriers for new participants.`
 
-- Anonymous page action：`Join`
+- Anonymous page action：`Join`（页面末尾居中，见 7.9）
 - Authenticated member：不显示页面招新按钮
 
 #### Beginners & Safety
 
 - Metadata title：`Beginners and Safety | NULDL Armwrestling Club`
 - Metadata description：`Learn what to expect at your first NULDL Armwrestling Club session and review the essential safety principles for participation.`
+- Page label：`Beginners & Safety`（标题上方的等宽金色小标签，Visual Refresh 第三轮由项目负责人确认加入）
 - Heading：`Beginners Are Welcome`
 
 `You do not need previous armwrestling experience to attend a beginner session. Your first session will introduce the basic rules, safe positioning, equipment and fundamental techniques before controlled practice begins.`
@@ -542,7 +544,7 @@ Registered Member 选择 Cancel registration
 `Safe training depends on clear communication, controlled practice and respect between participants. Ask for clarification whenever an instruction or position is unclear.`
 
 - 不显示页面底部招新按钮组。
-- Conditional Development/Preview action：`Read the Draft Risk Notice`，位于 `Armwrestling Involves Risk` panel 内并居中显示。
+- Conditional Development/Preview action：`Read the Draft Risk Notice`，位于 `Armwrestling Involves Risk` 面板内、正文下方左对齐（Visual Refresh 第三轮由居中改为左对齐，见 7.9）。
 
 #### Risk Notice — Development/Preview only
 
@@ -585,6 +587,21 @@ Registered Member 选择 Cancel registration
 - 未发布、管理员隐藏、账户停用或邮箱未验证的详情页统一返回 404；
 - Header 在 Members 页面可用后增加 `Members` 公开导航；
 - Members 列表进入 sitemap；个人 detail 不进入 sitemap，但不设置特殊 robots directive。
+
+### 7.9 About 与 Beginners & Safety 版式
+
+以下规则来自项目负责人在 Visual Refresh 第三轮确认的 mockup；文案仍以 7.7 为准，不增删内容。
+
+- 两页使用与 Events 列表一致的左对齐页头：等宽金色小标签（About 为 `About the club`，Beginners & Safety 为 `Beginners & Safety`）、大标题与介绍文字；页面占满共享内容宽度，取代原先居中的窄栏；
+- 每个内容区块是一个“报告分节”：上方一条半透明金色细线；宽屏（≥ `--breakpoint-hero`）时左侧为等宽金色编号（`01`、`02`…，对辅助技术隐藏）与节标题，右侧为正文，左右按 1 : 2 分宽，正文列延伸到内容区右边缘（项目负责人在走查后选择，以避免右侧大片空白）；窄屏时编号与节标题一行，正文在下方；
+- 起补充说明作用的段落以左侧 2px 半透明金色竖线和次要文字色与主段落区分：About 的 `Website access does not automatically provide voting rights…`，Beginners & Safety 的 `If you are uncertain about your fitness…`；
+- About：
+  - `What We Do` 四项使用 Home 的编号功能卡片（半透明金色边框、顶部金色渐变细线、对辅助技术隐藏的 `01–04` 编号，项目名为卡片标题），宽屏两列、窄屏一列；
+  - Anonymous 的 `Join` 位于页面末尾一条金色细线之下，在内容宽度内居中，为金色材质主按钮，大小与 Home Hero 按钮相当（约 `16rem` 宽、`22px` 文字），取代原先约九成宽的大号按钮；
+- Beginners & Safety：
+  - `What to Expect` 的五个步骤为编号流程：每步左侧为半透明金色细边框的等宽编号方块，方块之间以金色细竖线相连，右侧为步骤文字；
+  - `Armwrestling Involves Risk` 的正文放在暖色面板中（半透明金色细边框、顶部金色渐变细线，与活动详情信息面板一致），取代左侧粗金条；`Read the Draft Risk Notice`（仅 Development/Preview）为描边次要按钮，在面板内左对齐；
+  - `During Training` 的五条规则合并为一个半透明金色细边框的分行列表，行间以细线分隔，每行前为金色小方块标记，取代五张独立卡片。
 
 ## 八、状态与异常处理
 

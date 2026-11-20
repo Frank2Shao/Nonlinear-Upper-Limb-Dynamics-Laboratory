@@ -540,6 +540,16 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V9 | 活动详情页与报名区。顶部 `Back to events` 小链接、页头状态标签、两栏布局（窄屏单栏且信息面板在前）、信息面板（含星期的日期、时间、地点、地图链接）；报名区各状态按 7.5 呈现，`Registered` 改为状态标签并保留 `role="status"`、`x-ref="status"` 与 HTMX 后聚焦；报名与取消 dialog 及无 JavaScript 确认页按 7.5 restyle。验证 Anonymous、可报名、已报名、取消、关闭、Past 各状态，HTMX 与普通 POST，dialog 键盘与 Focus，200% 放大与 desktop/mobile 截图。 |
 | V10 | 第二轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交 Events 列表与详情（含报名各状态）的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
 
+### Visual Refresh 第三轮：About 与 Beginners & Safety
+
+**展开条件：** 第二轮 V8–V10 已验收；项目负责人已确认 About 与 Beginners & Safety 的设计 mockup（规则见 `design_document.md` 7.9，页头小标签见 7.7）。约束与前两轮相同：不改变业务逻辑、权限、URL、Metadata、文案或 migration；Draft Risk Notice 入口仍只在环境允许时出现，Anonymous 与已登录会员的 `Join` 分支不变。
+
+| 步骤 | 实施与验收 |
+| --- | --- |
+| V11 | About 页与共用报告分节组件。建立页头（等宽小标签、H1、介绍，左对齐、占满共享内容宽度）、报告分节（金色细线、对辅助技术隐藏的编号、宽屏 1 : 2 两列、窄屏单列）与补充说明段落样式；`What We Do` 改用编号功能卡片（宽屏两列）；Anonymous 的 `Join` 改为页面末尾居中、Hero 尺寸的主按钮。更新依赖旧结构的 About 测试。验证 Anonymous/会员、Heading 顺序、desktop/mobile、200% 放大、无 JavaScript、键盘 Focus、24px 触控目标、无溢出与对比度。 |
+| V12 | Beginners & Safety 页。复用 V11 的页头与报告分节；`What to Expect` 改为编号流程；风险说明改为带顶部金色渐变细线的暖色面板，Draft Risk Notice 入口在面板内左对齐且只在环境允许时出现；`During Training` 改为单框分行规则列表。更新依赖旧结构的测试。验证 Draft 开关两种状态、Heading 顺序、desktop/mobile、200% 放大、无 JavaScript、键盘 Focus、触控目标、无溢出与对比度。 |
+| V13 | 第三轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交两页（含 Anonymous/会员、Draft 开/关）的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
+
 ## 十、Phase 6 概要：上线与运维
 
 **展开条件：** Phase 1–4 已验收，hosting、SMTP、media storage、monitoring 和数据保留决策已确认。

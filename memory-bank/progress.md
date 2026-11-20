@@ -1932,3 +1932,53 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V10 截图并确认第二轮 Visual Refresh（Events）完成，批准更新 `architecture.md`：新增 3.57 节并更新页头状态。下一轮（About、Beginners & Safety）需要项目负责人先确认设计，再展开为具体步骤。
+
+## Visual Refresh 第三轮 — About 与 Beginners & Safety 设计确认
+
+- 以 mockup（1440 与 390px，临时目录，不进入仓库）提出两页设计：左对齐页头（新增等宽小标签 `About the club` / `Beginners & Safety`）、带编号的报告分节、补充说明段落、About 的编号功能卡片与 `Join`、Beginners & Safety 的编号流程、风险面板与单框规则列表。
+- 走查修订：`Join` 改为在页面末尾居中；宽屏右侧空白较大，提出“正文延伸到右边缘”（B）与“整页收窄居中”（A）两个方案，项目负责人选择 B（左右 1 : 2 分宽）。
+- 项目负责人已确认该设计。规则写入 `design_document.md` 7.9，页头小标签、`Join` 位置与 Draft Risk Notice 入口左对齐同步写入 7.7；`implementation.md` 新增第三轮步骤 V11（About 与共用报告分节）、V12（Beginners & Safety）、V13（第三轮质量门禁）。
+- 本次只修改文档，没有修改代码。V11 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V11 — About 页与共用报告分节
+
+### 前置条件检查
+
+- 项目负责人已确认第三轮设计（`design_document.md` 7.7、7.9）并授权开始 V11；已重新阅读 `architecture.md` 与 `design_document.md`。
+
+### 实施内容
+
+- `about.html`：
+  - 页头改为 `.page-heading`（等宽小标签 `About the club`、H1、`.lede`），左对齐并占满共享内容宽度（`public-page--report`，取代 `public-page--content` 窄栏）；
+  - 四个区块改为 `.report-section`：金色细线、`aria-hidden` 的 `01–04` 编号与 H2 在 `.report-section__label`，正文在 `.report-section__body`；
+  - `What We Do` 改用 Home 的 `.feature-grid` / `.feature-card`（`aria-hidden` 编号 `01–04`，项目名为 H3）；
+  - 投票权说明段落加 `.report-note`；
+  - Anonymous 的 `Join` 放在 `.report-action` 中居中（`data-public-primary` 与 Signup 链接不变，会员仍不显示）。
+- `static_src/css/site.css`：
+  - 新增 `.public-page--report`、`.report-section`（含 `__label`、`__index`、`__body`）、`.report-note`、分节内功能卡片（`minmax(20rem)` 自动列数：宽屏两列、窄屏一列，不新增断点）与 `.report-action`；
+  - `@variant hero` 下分节为 `1fr : 2fr` 两列，编号与标题纵向排列；
+  - `.button--hero` 改为 Hero 按钮尺寸（`min(100%, 16rem)`、`min-height: 3.5rem`、`1.375rem` 文字），并在 `max-nav` 下保持该宽度（窄屏按钮默认占满整行）；
+  - 删除只被旧 About 使用的 `.card-grid`、`.public-card-list .content-card` 与 `.public-page__join-action`。
+- 测试：
+  - `test_public_information_pages.py`：Heading 顺序加入四个 H3，断言页头小标签、4 张功能卡片与 4 个分节；
+  - `public-information.mjs`：
+    - 宽屏分节标题列在正文左侧、正文右缘与页面右缘对齐；
+    - 功能卡片两列；
+    - `Join` 约 22px 文字、至少 56px 高、约 16rem 宽，并在页面中居中（取代旧的“九成宽、32px 文字”断言）；
+    - 手机上编号标题在正文之上，`Join` 保持 16rem 宽；
+    - About 也加入 200% 放大与无 JavaScript 检查；
+    - 可读性检查加入 H3。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `409 passed`；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过。
+- Development server 上 About（Anonymous）1440、820、390px 全页截图，均无横向溢出与 page error。走查中发现 `max-nav` 让 `Join` 在窄屏占满整行，已修正为保持 16rem 并加入断言。
+
+### 当前边界与下一步门槛
+
+- 没有修改 view、URL、Metadata、文案或 migration；Beginners & Safety 仍为旧布局（V12）。
+- `architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V11 截图并确认，批准更新 `architecture.md`：新增 3.58 节，更新页头状态以及样式源、About 模板与相关测试的文件职责。V12（Beginners & Safety）尚未开始，需要项目负责人明确授权。

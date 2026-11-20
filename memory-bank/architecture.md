@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 20 日
-**对应进度：** Visual Refresh, Step V10
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V11
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 的 V11 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -680,6 +680,18 @@ ASGI / WSGI ───────────→ config.settings.production
 - 第二轮完成后，Events 列表、详情、报名区与确认页已按新视觉实施；About、Beginners & Safety、Members、认证与 Account、错误页仍沿用原有布局，按 About、Beginners & Safety → Members → 认证与 Account → 403/404/500 的顺序逐页确认设计后再展开步骤。
 - 本步没有修改代码、view、URL、业务逻辑或 migration。
 
+### 3.58 Visual Refresh V11：About 页与共用报告分节（第三轮）
+
+- 第三轮（About 与 Beginners & Safety）先由项目负责人确认 mockup，规则写入 `design_document.md` 7.9（页头小标签、`Join` 位置与 Draft Risk Notice 入口对齐写入 7.7），`implementation.md` 展开为 V11（About 与共用报告分节）、V12（Beginners & Safety）、V13（第三轮质量门禁）。走查中项目负责人选择让正文列延伸到右边缘（左右 1 : 2），并要求 `Join` 居中。
+- 报告页结构：`public-page--report` 取代 `public-page--content` 窄栏，页面占满共享内容宽度；页头复用 `.page-heading`（等宽小标签 `About the club`、H1、`.lede`），左对齐。
+- `.report-section` 是 About 与（V12 起）Beginners & Safety 共用的分节：上方金色细线；`.report-section__label` 内为对辅助技术隐藏的等宽 `01–04` 编号与 H2，`.report-section__body` 为正文。窄屏时编号与标题一行、正文在下；`@variant hero` 下为 `1fr : 2fr` 两列且编号与标题纵向排列，正文右缘与内容区右缘对齐。没有新增断点。
+- `.report-note`（左侧 2px 金色细线、次要文字色）标出补充说明段落；About 中用于投票权与 Executive 资格的说明。
+- `What We Do` 复用 Home 的 `.feature-grid` / `.feature-card`（编号 `aria-hidden`，项目名为 H3）；分节内的功能卡片以 `minmax(min(20rem, 100%), 1fr)` 自动排列，宽屏两列、窄屏一列，标题 1.25rem。
+- Anonymous 的 `Join` 放在 `.report-action`（金色细线下居中）；`.button--hero` 改为 Home Hero 按钮尺寸（`min(100%, 16rem)` 宽、至少 3.5rem 高、1.375rem 文字），并在 `max-nav` 下保持该宽度，不随窄屏按钮默认占满整行。`data-public-primary`、Signup 链接与会员不显示的分支不变。
+- 删除只被旧 About 使用的 `.card-grid`、`.public-card-list .content-card` 与 `.public-page__join-action`。
+- 测试：Heading 顺序加入四个 H3，并断言页头小标签、4 张功能卡片与 4 个分节；浏览器测试断言宽屏分节两列且正文到达右缘、功能卡片两列、`Join` 的字号/高度/宽度与页面居中、手机上标题在正文之上且 `Join` 保持 16rem，并对 About 增加 200% 放大与无 JavaScript 检查。
+- 本步没有修改 view、URL、Metadata、文案或 migration。完整 pytest `409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；1440/820/390px 截图走查经项目负责人确认。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -702,7 +714,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片与居中页面操作、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -749,7 +761,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、Hero（对辅助技术隐藏的背景照片与指针光照层及其 Alpine 坐标更新、材质标签与等宽 eyebrow、三行金色 H1、介绍、等宽按钮行、右侧响应式 Logo、图纸标题栏）、认证状态分支 CTA、页内新手入口与四张编号功能卡片，以及标题区带 `View all events` 的最多三条 Upcoming Event 预览和 empty state。 |
-| `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA；Anonymous Join 使用 `.button--hero` 大号按钮。 |
+| `apps/core/templates/core/about.html` | 提供正式英文 About 与页面 Metadata：等宽小标签页头，四个带编号的报告分节（组织目的、以编号功能卡片呈现的活动内容、含补充说明的参与资格、训练方式），以及只向 Anonymous 显示、在页面末尾居中的 Hero 尺寸 `Join`。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
 | `templates/account/_page.html` | allauth 页面共用骨架：eyebrow、唯一 H1（`page-title`）、可选 intro 与页面主体。 |
 | `templates/account/includes/panel_form.html` | 输出带全部字段、CSRF、redirect 字段和单个提交按钮的 panel 表单，供登录、重置、设置/确认密码与验证码请求页复用。 |
@@ -891,7 +903,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_home_page.py` | 验证 Home 获准英文内容与 Metadata、Hero 三行标题、标签与 eyebrow、图纸标题栏、背景彩蛋层对辅助技术隐藏且照片只由 CSS 加载、动态 Upcoming Events 区域、empty state、Events 列表入口、无报名表单、响应式 Logo 引用、受限 Branding 边界及 Anonymous/Member CTA。 |
 | `tests/test_home_images.py` | 参数化验证 Logo、金色材质（含按钮变体）与 Hero 照片（不透明源图、RGB 生成物）源文件的精确 hash、格式、尺寸与模式，以及全部 WebP 生成物的尺寸、格式、透明度、无 metadata、压缩和可重复性。 |
 | `tests/test_home_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 22 Home Playwright scenario。 |
-| `tests/test_public_information_pages.py` | 验证 About 与 Beginners & Safety 的 URL、模板、Metadata、获准文案、受限内容、Header 当前页、Anonymous/Member CTA 和未实施功能边界。 |
+| `tests/test_public_information_pages.py` | 验证 About 与 Beginners & Safety 的 URL、模板、Metadata、获准文案与 Heading 顺序（含 About 功能卡片 H3）、About 页头小标签/功能卡片/报告分节、受限内容、Header 当前页、Anonymous/Member CTA 和未实施功能边界。 |
 | `tests/test_public_information_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 23 公开信息页 Playwright scenario。 |
 | `tests/test_draft_risk_notice.py` | 验证 Draft 环境矩阵、默认关闭、Production 强制关闭、Preview 显式开关、404、逐字正文、重复 acknowledgement、robots、条件链接、无表单和零数据库查询。 |
 | `tests/test_draft_risk_notice_browser.py` | 以开启 Draft 的 Django `StaticLiveServerTestCase` 调用 Step 24 Playwright scenario。 |
@@ -918,7 +930,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_4.py` | Step 45 验收入口：以共享项目门禁依次运行 Phase 2–4 Development smoke。 |
 | `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
 | `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、主内容内标题与按钮可见性、desktop Hero 按钮等宽等高、标题三行且第二行决定栏宽、Logo 在右侧且 300–500px、mobile Logo 位于标题下方、desktop 背景照片加载与指针光照点亮/跟随/熄灭且不遮挡按钮、mobile 与宽屏触屏不加载照片、Header/页面/Footer 共享 80rem 宽度、功能卡片标题 22px、无水平溢出和同源网络边界。 |
-| `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |
+| `tests/browser/public-information.mjs` | 在 Chromium 中验证 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界，以及 About 报告分节两列布局与正文到达右缘、功能卡片两列、`Join` 尺寸与居中、手机上分节标题在正文之上。 |
 | `tests/browser/draft-risk-notice.mjs` | 在 Chromium 中验证 Step 24 Draft Risk Notice 的条件入口、banner、robots、desktop/mobile、键盘、无 JavaScript、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/error-pages.mjs` | 在 Chromium 中验证 Step 25 三个错误状态的正确响应、desktop/mobile、项目 CSS、键盘 Focus、无 JavaScript、无水平溢出和同源网络边界。 |
 | `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口；按钮对比度读取 `::after`/`::before` 填充层，覆盖主按钮、描边按钮与 Header 按钮；Home 对比度覆盖 Hero 介绍、材质标签、eyebrow 与图纸标题栏（光照未点亮状态），以及功能卡片编号、正文与活动空状态。 |
