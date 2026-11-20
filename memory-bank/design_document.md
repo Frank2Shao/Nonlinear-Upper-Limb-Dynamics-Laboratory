@@ -397,8 +397,9 @@ Registered Member 选择 Cancel registration
 - Hero 次级操作为 `New to Armwrestling?`；完整 Events 入口位于近期活动区的 `View all events`；
 - Hero 另提供 `Join on USU` 外部链接，指向 USU 平台上的社团页面 `https://usu.edu.au/clubs/armwrestling/`。Anonymous 与已登录会员都显示该链接，顺序为 `Join the Club`（仅 Anonymous）、`Join on USU`、`New to Armwrestling?`；使用普通链接打开，禁用 JavaScript 时同样可用；
 - `Join on USU` 只是指向 USU 页面的文字链接：网站不读取、提交或同步 USU 数据，也不据此改变网站会员身份或报名资格；链接不使用 USU 或 USYD 的 Logo、校徽或其他视觉资产，符合 9.6 的 Branding 限制；
-- Hero 下方直接展示独立的 `New to Armwrestling?` 板块，说明无需经验、基本训练方式、安全原则和加入路径；
+- Hero 下方直接展示独立的 `New to Armwrestling?` 板块，说明无需经验、基本训练方式、安全原则和加入路径；板块标题区为等宽金色小标签加两行标题（第二行 `Join Us !` 使用金色质感文字），四张卡片带 `1px` 半透明金色边框、顶部金色渐变细线和装饰性等宽编号 `01–04`（对辅助技术隐藏）；
 - 首页 `Upcoming Events` 区从数据库读取最多三条已发布的 Upcoming Event，与 Events 列表共用活动卡片；没有近期活动时显示 `No upcoming events are currently available.`；该区始终提供 `View all events` 入口；
+- `Upcoming Events` 区不使用整块面板：标题区右侧放 `View all events` 次要按钮（窄屏换行至标题下方），活动卡片纵向排列；空状态为半透明金色虚线框内的等宽文字；
 - Phase 2 的静态日程卡已被上述动态预览取代，首场 Training Session 由管理员在 Admin 录入；
 - Hero 视觉采用"实验报告"方向（设计稿：Design canvas `NULDL Home hero concepts` 的 `D · Refined`）：
   - 页面背景为深黑底叠加极淡的金色坐标网格；
@@ -418,7 +419,7 @@ Registered Member 选择 Cancel registration
 - 仅支持 Upcoming 和 Past 两个视图，默认显示 Upcoming，无效参数回退到 Upcoming；使用普通链接切换，禁用 JavaScript 时仍可用；
 - 管理员可为活动填写可选的 Google Maps HTTPS URL，活动详情页有有效链接时显示 `View location in map`；
 - 首场 Training Session 由管理员录入现有日程（2026 年 12 月 1 日，悉尼时间 3:00–7:00 pm）。地点未确认时显示 `Venue details to be confirmed`。Home 没有已公开的近期活动时显示空状态；
-- 每张卡片突出日期、标题、时间、地点、报名状态和明确的详情或报名入口；
+- 每张卡片突出日期、标题、时间、地点、报名状态和明确的详情或报名入口：左侧为金色细边框日期块（星期、日、月份与年份，与下方日期行重复，对辅助技术隐藏）；中间为标题链接和图纸式信息行（`Date`/`Time`/`Location`，起止不在同一天时为 `Starts`/`Ends`）；右侧为报名状态标签与 `View details` 次要按钮（可访问名称包含活动标题）。状态标签一律为不填充的细描边文字框（不使用材质底，避免被误认为按钮）：`Registration open` 为金色文字，`Registration unavailable` 与 `Past event` 为次要文字色，状态始终由文字表达；状态标签与 `View details` 等宽（窄屏时两者各占一半并等高）；`View details` 保持描边次要按钮，金色材质填充只留给 `Join the Club`、`Register` 等主要操作；窄屏时日期块与标题一行，信息行与状态、按钮各占整行；
 - 在缺少高质量活动照片时，以排版、日期模块和抽象图形建立层级，不要求每场活动配置封面；
 - 后续加入照片时，卡片结构应允许渐进扩展，不改变核心信息顺序。
 
@@ -637,7 +638,7 @@ Registered Member 选择 Cancel registration
 - 按钮、状态标签和局部边框可以使用克制的切角细节：主按钮与次要按钮均切去左上角和右下角，Hero 按钮约 `10px`，Header 按钮约 `8px`；
 - 导航当前页使用金色文字加 `2px` 金色下划线；其他导航项为次要正文色；
 - 次要按钮为 `1px` 金色渐变描边包裹暖黑内芯，悬停时内芯变为深金褐色；
-- 图纸标题栏使用 `1px` 半透明金色边框、等宽字体，标签列为低优先级文字色、数值列为主要文字色；活动卡片的日期、时间与地点信息行沿用同一风格，具体样式在 V6 设计确认时定稿；
+- 图纸标题栏使用 `1px` 半透明金色边框、等宽字体，标签列为低优先级文字色、数值列为主要文字色；活动卡片的日期、时间与地点信息行沿用同一风格（V6 已实施，见 7.5）；
 - 主要按钮为金色材质填充配近黑文字，悬停时一次性扫过高光（不循环，遵守 `prefers-reduced-motion`）；
 - 次要按钮使用金色描边，低优先级操作使用文字链接或中性样式；
 - Hover 和 Pressed 状态以短促的亮度、边框或轻微位移反馈表达，不使用大范围发光；

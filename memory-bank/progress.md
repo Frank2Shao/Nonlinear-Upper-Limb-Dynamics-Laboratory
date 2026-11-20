@@ -1745,3 +1745,49 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已确认 V5（含删除装饰文字、删除受力标注、更换照片与铺满 Hero 的修订），并批准更新 `architecture.md`：新增 3.52 节（含 V4 取消），修正 3.49、3.51 中已过时的照片、装饰说明与信息表描述，更新照片源图与生成物、构建脚本、字体、Home 模板与样式及相关测试的文件职责。V6 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V6 — Home 其余区块与共享活动卡片
+
+### 前置条件检查
+
+- V5 已确认并提交；V4 取消后其信息行风格并入 V6（见 `implementation.md`）。
+- V6 要求先在设计画布确认样式；本会话无法访问 Design canvas，因此以 `design_document.md` 7.5、9.3、9.4 与 V2 组件制作临时 HTML mockup（1440/390px 截图，只在 scratchpad 中），项目负责人确认后实施。
+
+### 已完成
+
+- `apps/core/templates/core/home.html`：
+  - `New to Armwrestling?`：新的 `.section-heading` 标题区（等宽金色小标签 `Start with the fundamentals`、两行 H2，`Join Us !` 使用 `.gold-text`）；四张 `.feature-card` 带装饰性编号 `01–04`（`aria-hidden`），文案不变。
+  - `Upcoming Events`：去掉整块 `.session-card` 面板，`View all events` 移到标题区右侧（紧凑次要按钮）；卡片放在 `.event-stack` 中；空状态改为 `.events-empty`。
+- `apps/events/templates/events/includes/event_card.html` 重写（Home 与 Events 列表共用）：日期块（星期/日/月年，`aria-hidden`）、标题链接、`<dl class="event-facts">`（同一天显示 `Date` 与 `Time`，跨天显示 `Starts`/`Ends`，均含 `<time datetime>`；`Location`）、状态标签与 `View details` 次要按钮（可访问名称 `View details for <title>`，使用 Tailwind `sr-only`）。状态分支与文案不变，`event-status` class 保留，开放状态另加 `.gold-tag`。整个卡片在 `Australia/Sydney` 时区下渲染。
+- `apps/events/templates/events/event_list.html`：列表容器改为 `.event-stack`，空状态使用 `.events-empty`。
+- `apps/events/templates/events/event_detail.html`：详情信息卡去掉不再适用的 `event-card` class（V6 前该 class 在详情页没有任何样式作用），以免继承新的列表卡片布局；详情页其余不变。
+- `static_src/css/site.css`：新增 `.section-heading`、`.feature-grid`/`.feature-card`、`.event-stack`/`.event-card` 网格布局、`.event-facts`、`.status-tag`、`.events-empty`；窄于 `--breakpoint-hero` 时活动卡片改为“日期块 + 标题 / 信息行 / 状态与按钮”三行，信息行纵向排列。删除 `.session-card`、`.home-events-action`、`.home-page .content-card h3` 与旧 `.event-card h3` 规则。Home 卡片标题由 19px 改为 mockup 中确认的 22px（1.375rem）。
+
+### 测试
+
+- `tests/test_event_pages.py`：状态标签断言改为新 class（`event-status status-tag gold-tag` / `event-status status-tag`），测试名改为 `test_event_cards_show_registration_status_labels`。
+- `tests/browser/event-pages.mjs`：`View all events` 改为位于活动卡片上方（≥ 16px 间距）；点击标题链接时使用精确名称，避免与 `View details for …` 混淆。
+- `tests/browser/home-page.mjs`：卡片标题选择器改为 `.feature-card h3`，字号 22px。
+- `tests/browser/phase2-accessibility.mjs`：新增 `.feature-card__index`、`.feature-card p`、`.events-empty` 对比度检查。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `409 passed`；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过；最后一次 CSS 调整（日期块居中不换行、窄屏宽 5.5rem）后重跑 Home、Events、报名浏览器与 Accessibility 测试 `29 passed`。
+- Development server 截图走查 Home 两个区块与 Events 列表的 1440 与 390px：无横向溢出；走查中修正窄屏日期块月份换行与左对齐。
+
+### 当前边界与下一步门槛
+
+- 没有修改 view、URL、业务逻辑或 migration；活动详情页的视觉重做属于后续 Events 页面轮次。
+- `architecture.md` 尚未更新，需要项目负责人批准；V7 尚未开始。
+
+### V6 修订：状态标签与按钮
+
+- 项目负责人指出 `Registration open` 的金色材质底容易被误认为按钮，并要求它与 `View details` 等宽。
+- 状态标签改为不填充的细描边文字框：开放状态用 `.status-tag--open`（金色文字，取代 `.gold-tag`），其余状态保持次要文字色；文字居中。
+- `.event-card__aside` 改为 `justify-items: stretch`，桌面端两者等于较宽一方的宽度；窄屏时改为两等分列并等高。
+- `View details` 保持描边次要按钮：金色材质填充只用于主要操作，列表中每张卡片各一个材质按钮会与 Hero 的 `Join the Club` 争夺注意力。
+- 测试：`test_event_pages.py` 改为 `status-tag status-tag--open`；`event-pages.mjs` 新增断言——状态标签与按钮等宽、标签没有背景图。`design_document.md` 7.5 同步更新。
+
+### 项目负责人确认
+
+- 项目负责人已确认 V6（含状态标签与按钮修订），并批准更新 `architecture.md`：新增 3.53 节，注明 3.38 中 `.event-card` 的变化，并更新样式源、Home 与 Events 模板及相关测试的文件职责。V7（第一轮质量门禁）尚未开始，需要项目负责人明确授权。

@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 20 日
-**对应进度：** Visual Refresh, Step V5
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（V1–V3、V5 完成，V4 已取消），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V6
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（V1–V3、V5–V6 完成，V4 已取消），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -463,7 +463,7 @@ ASGI / WSGI ───────────→ config.settings.production
 - `events:detail` 按唯一 slug 查询已发布 Event，不暴露未发布对象。详情模板以 Sydney 时区显示起止时间，对可选地图 URL 使用 `target="_blank"` 和 `rel="noopener noreferrer"`。
 - Home view 使用同一 `public().upcoming()` queryset 并限制三条，不复制活动日期规则。Home 与 Events 列表共用 `event_card.html`，保持字段、状态文字和链接行为一致。
 - 公开层只提供 GET 浏览。Upcoming 显示报名不可用，Past 显示历史状态；现有 `register_for_event` 事务服务没有连接到任何公开 view 或 form，Production Draft/Risk Notice 开关继续强制关闭。
-- `.event-card` 将共享 content card 恢复为自然高度，避免 Home 链接被拉伸卡片遮挡；`.event-list` 和 `.event-detail-actions` 只负责 Events 列表与详情操作的局部间距，不改变其他 card grid。
+- `.event-card` 将共享 content card 恢复为自然高度，避免 Home 链接被拉伸卡片遮挡；`.event-list` 和 `.event-detail-actions` 只负责 Events 列表与详情操作的局部间距，不改变其他 card grid。（V6 起 `.event-card` 成为独立的网格卡片，不再基于 content card，见 3.53。）
 - Django 测试固定可见性、Sydney 零点分类、排序、回退、安全外链和无表单边界；Playwright 在 desktop、mobile 和禁用 JavaScript 场景检查 Home 至 Events 的导航、筛选、详情、无水平溢出、page error 与同源网络边界。
 
 ### 3.39 会员报名与 Risk Notice 确认流
@@ -625,6 +625,23 @@ ASGI / WSGI ───────────→ config.settings.production
 - 测试：Home 页面测试固定彩蛋层对辅助技术隐藏、不含标注、HTML 不引用照片、装饰文字已删除；Home 浏览器测试在 desktop 验证照片已请求、光照默认熄灭、指针进入后点亮并跟随、离开后熄灭、光照下 Hero 按钮仍可点击，在 390px mobile 与 1280px 触屏（`hover: none`）验证该层不显示且没有照片请求；图片测试以 `OPAQUE_SOURCES` 声明该源图不透明、生成物为 RGB。
 - 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest（含全部 Playwright 与 Accessibility 门禁）`409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；1440/1920/900px 截图走查经项目负责人确认。
 
+### 3.53 Visual Refresh V6：Home 其余区块与共享活动卡片
+
+- 由于本会话无法访问 Design canvas，V6 先以 `design_document.md` 7.5、9.3、9.4 与 V2 组件制作临时 HTML mockup，经项目负责人确认后实施；mockup 只在临时目录，不进入仓库。
+- 新增共用区块标题 `.section-heading`：等宽金色小标签、标题组与可选的右侧操作（窄屏换行）。Home 的 `New to Armwrestling?` 与 `Upcoming Events` 都使用它；`Join Us !` 使用 V2 的 `.gold-text`。
+- `New to Armwrestling?` 卡片改为 `.feature-grid` / `.feature-card`：半透明金色边框、顶部金色渐变细线、对辅助技术隐藏的等宽编号 `01–04`，标题 1.375rem。文案不变。
+- `Upcoming Events` 去掉整块 `.session-card` 面板；`View all events` 改为标题区右侧的紧凑次要按钮，卡片放在 `.event-stack` 中，空状态为 `.events-empty` 虚线框。
+- `events/includes/event_card.html` 重写为 Home 与 Events 列表共用的网格卡片，整张卡片在 `Australia/Sydney` 时区下渲染：
+  - 左侧日期块（星期、日、月份与年份），因与信息行重复而 `aria-hidden`；
+  - 标题链接；
+  - `<dl class="event-facts">` 图纸式信息行：起止在同一 Sydney 日期时为 `Date` + `Time`，跨天时为 `Starts` + `Ends`，各值带 `<time datetime>`；另有 `Location`；
+  - 右侧状态标签与 `View details` 次要紧凑按钮，可访问名称为 `View details for <title>`（Tailwind `sr-only` 补充标题）。
+- 状态标签 `.status-tag` 一律为不填充的细描边文字框，开放状态以 `.status-tag--open` 使用金色文字；状态分支、文案与 `event-status` class 不变。金色材质填充只用于主要操作，`View details` 保持描边按钮。状态标签与按钮等宽（`justify-items: stretch`），窄于 `--breakpoint-hero` 时卡片改为“日期块 + 标题 / 信息行 / 状态与按钮”三行，状态与按钮两等分并等高。
+- 活动详情页的信息卡去掉了原有的 `event-card` class（V6 前它在详情页没有样式作用），避免继承新的列表卡片布局；详情页的视觉重做留给后续 Events 页面轮次。
+- 删除 `.session-card`、`.home-events-action`、`.home-page .content-card h3` 与旧 `.event-card h3` 规则。
+- 测试：状态标签断言改为新 class；Events 浏览器测试改为 `View all events` 位于卡片上方、精确匹配标题链接，并断言状态标签与按钮等宽且无背景图；Home 浏览器测试改为 `.feature-card h3` 22px；Accessibility 门禁新增卡片编号、卡片正文与空状态对比度。
+- 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest（含全部 Playwright 与 Accessibility 门禁）`409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；Home 与 Events 列表 1440/390px 截图走查经项目负责人确认。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -647,7 +664,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、Events 卡片与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -693,7 +710,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/validators.py` | 提供 Members 与 Events 共用的 HTTPS URL validator（先给出明确的 HTTPS 提示，再执行 `URLValidator`）和 `https://` scheme 小写规范化函数。 |
 | `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
-| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、Hero（对辅助技术隐藏的背景照片与指针光照层及其 Alpine 坐标更新、材质标签与等宽 eyebrow、三行金色 H1、介绍、等宽按钮行、右侧响应式 Logo、图纸标题栏）、认证状态分支 CTA、页内新手入口、训练内容、参与资格，以及最多三条 Upcoming Event 预览、empty state 和 Events 列表入口。 |
+| `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、Hero（对辅助技术隐藏的背景照片与指针光照层及其 Alpine 坐标更新、材质标签与等宽 eyebrow、三行金色 H1、介绍、等宽按钮行、右侧响应式 Logo、图纸标题栏）、认证状态分支 CTA、页内新手入口与四张编号功能卡片，以及标题区带 `View all events` 的最多三条 Upcoming Event 预览和 empty state。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About、页面 Metadata、组织目的、活动内容、参与资格、训练方式和认证状态分支 CTA；Anonymous Join 使用 `.button--hero` 大号按钮。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety、页面 Metadata、入门步骤、训练风险、停止条件、安全提示和认证状态分支 CTA；仅在环境允许时增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice。 |
 | `templates/account/_page.html` | allauth 页面共用骨架：eyebrow、唯一 H1（`page-title`）、可选 intro 与页面主体。 |
@@ -771,7 +788,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/events/forms.py` | 定义最小报名与取消确认表单；报名只接收当前 Risk Notice ID 和明确同意，取消只接收明确确认，不重复收集账户身份资料。 |
 | `apps/events/views.py` | 提供公开 Upcoming/Past 列表、已发布 Event 详情及受登录和 verified Email 保护的报名/取消确认；协调普通 POST、HTMX 局部响应、旧版本重试与关闭状态拒绝；单次请求内复用会员资格、当前 Notice 与有效报名查询结果。 |
 | `apps/events/urls.py` | 将 `/events/`、`/events/<slug>/`、`/events/<slug>/register/` 与 `/events/<slug>/cancel/` 暴露为具名路由。 |
-| `apps/events/templates/events/event_list.html` | 呈现 Upcoming/Past 筛选、共享 Event cards 和无结果状态；不提供 `All` 或报名操作。 |
+| `apps/events/templates/events/event_list.html` | 呈现 Upcoming/Past 筛选、纵向排列的共享 Event cards 和虚线框无结果状态；不提供 `All` 或报名操作。 |
 | `apps/events/templates/events/event_detail.html` | 以 Sydney 时区呈现活动详情、可选安全地图链接及共享报名区域，并只在本页加载本地 HTMX 渐进增强。 |
 | `apps/events/templates/events/event_registration_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整 Risk Notice 确认页，并保留返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/registration_form.html` | 直接呈现当前 Risk Notice 的完整正文及版本，并集中错误、CSRF 与确认按钮，供 dialog 和完整确认页复用；不添加重复正文 banner。 |
@@ -779,7 +796,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/events/templates/events/includes/confirm_page.html` | 两张整页确认模板共用的正文结构，按传入的标题、heading id 与表单 include 呈现，并提供返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/cancellation_form.html` | 集中取消说明、错误、CSRF 与确认按钮，供 cancellation dialog 和完整确认页复用。 |
 | `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，包含报名/取消 Alpine dialogs 与 HTMX target；服务端通过 `data-open-dialog`/`data-focus-status` 声明需要打开的 dialog 或聚焦的状态元素。 |
-| `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的活动标题、以 Sydney 时区显示的起止时间、地点和 Upcoming/Past 状态，并根据共享当前 Notice 可用性显示一致的报名状态。 |
+| `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的网格活动卡片：对辅助技术隐藏的日期块、标题链接、以 Sydney 时区显示的 `Date`/`Time`（跨天为 `Starts`/`Ends`）与 `Location` 信息行、根据 Past 与共享当前 Notice 可用性显示的状态标签，以及可访问名称含标题的 `View details` 按钮。 |
 | `apps/events/migrations/__init__.py` | 将 `events.migrations` 标记为 migration package。 |
 | `apps/events/migrations/0001_initial.py` | 创建 Event 表及其数据库约束。 |
 | `apps/events/migrations/0002_eventregistration.py` | 创建 EventRegistration 表、关系和数据库约束。 |
@@ -788,9 +805,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_event_registration_admin.py` | 验证报名名单的内置查看权限、角色隔离、只读防伪造、有效/取消/重新报名历史、Risk Notice 版本追溯及公开页面隐私。 |
 | `tests/test_event_registration_pages.py` | 验证报名/取消详情、确认正文、普通 POST、HTMX、幂等、旧版本重试、重新报名、资格、不可操作状态及跨会员报名隐私。 |
 | `tests/test_event_registration_browser.py` | 建立两个合成 verified member Session，并调用 Playwright 场景验证 JavaScript 与无 JavaScript 下的报名、取消和重新报名路径。 |
-| `tests/test_event_pages.py` | 验证 Sydney 零点下 Upcoming/Past 分类、公开性、稳定排序、无效参数回退、Home 三条限制、详情 404、HTML escaping、安全地图链接及无表单边界。 |
+| `tests/test_event_pages.py` | 验证 Sydney 零点下 Upcoming/Past 分类、公开性、稳定排序、无效参数回退、Home 三条限制、详情 404、HTML escaping、安全地图链接、无表单边界及活动卡片状态标签。 |
 | `tests/test_event_pages_browser.py` | 以真实测试站点建立合成已发布 Event，并调用 Events Playwright 场景。 |
-| `tests/browser/event-pages.mjs` | 在 desktop、mobile、200% 内容放大和禁用 JavaScript 场景验证 Home 到 Events 列表/详情的导航、Upcoming/Past、地图链接、语义结构、键盘 Focus、触控目标、内容重排、page error 与同源网络边界。 |
+| `tests/browser/event-pages.mjs` | 在 desktop、mobile、200% 内容放大和禁用 JavaScript 场景验证 Home 到 Events 列表/详情的导航、Upcoming/Past、`View all events` 位于卡片上方、状态标签与详情按钮等宽且不填充、地图链接、语义结构、键盘 Focus、触控目标、内容重排、page error 与同源网络边界。 |
 | `tests/browser/event-registration.mjs` | 在真实 Chromium 中验证报名与取消 dialogs、Risk Notice、HTMX 状态更新、重新报名、mobile、200% 内容放大、无 JavaScript 完整确认页、Focus、触控目标、page error 与同源网络边界。 |
 | `apps/safety/__init__.py` | 将 `safety` 标记为 Python package。 |
 | `apps/safety/apps.py` | 定义 `SafetyConfig`，将 `apps.safety` 注册为 Django App。 |
@@ -862,11 +879,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/browser/phase4-development-smoke.mjs` | 对真实 Development server 执行 Phase 4 desktop/tablet/mobile Home、Events、详情、导航、报名状态、CSS、布局、page error 和同源请求 smoke checks。 |
 | `scripts/accept_phase_4.py` | Step 45 验收入口：以共享项目门禁依次运行 Phase 2–4 Development smoke。 |
 | `tests/browser/public-foundation.mjs` | 在 Chromium 中验证 Step 21 desktop/mobile Header、键盘 Focus、原生菜单开关、无 JavaScript 导航、布局和同源网络边界。 |
-| `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、主内容内标题与按钮可见性、desktop Hero 按钮等宽等高、标题三行且第二行决定栏宽、Logo 在右侧且 300–500px、mobile Logo 位于标题下方、desktop 背景照片加载与指针光照点亮/跟随/熄灭且不遮挡按钮、mobile 与宽屏触屏不加载照片、Header/页面/Footer 共享 80rem 宽度、无水平溢出和同源网络边界。 |
+| `tests/browser/home-page.mjs` | 在 Chromium 中验证 Step 22 Home 的 desktop/mobile/no-JavaScript 内容、CTA、Logo 加载与比例、主内容内标题与按钮可见性、desktop Hero 按钮等宽等高、标题三行且第二行决定栏宽、Logo 在右侧且 300–500px、mobile Logo 位于标题下方、desktop 背景照片加载与指针光照点亮/跟随/熄灭且不遮挡按钮、mobile 与宽屏触屏不加载照片、Header/页面/Footer 共享 80rem 宽度、功能卡片标题 22px、无水平溢出和同源网络边界。 |
 | `tests/browser/public-information.mjs` | 在 Chromium 中验证 Step 23 About 与 Beginners & Safety 的 desktop/mobile、键盘、200% content zoom、无 JavaScript、CTA、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/draft-risk-notice.mjs` | 在 Chromium 中验证 Step 24 Draft Risk Notice 的条件入口、banner、robots、desktop/mobile、键盘、无 JavaScript、内容可见性、无水平溢出和同源网络边界。 |
 | `tests/browser/error-pages.mjs` | 在 Chromium 中验证 Step 25 三个错误状态的正确响应、desktop/mobile、项目 CSS、键盘 Focus、无 JavaScript、无水平溢出和同源网络边界。 |
-| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口；按钮对比度读取 `::after`/`::before` 填充层，覆盖主按钮、描边按钮与 Header 按钮；Home 对比度覆盖 Hero 介绍、材质标签、eyebrow 与图纸标题栏（光照未点亮状态）。 |
+| `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口；按钮对比度读取 `::after`/`::before` 填充层，覆盖主按钮、描边按钮与 Header 按钮；Home 对比度覆盖 Hero 介绍、材质标签、eyebrow 与图纸标题栏（光照未点亮状态），以及功能卡片编号、正文与活动空状态。 |
 | `tests/browser/avatar-edit.mjs` | 在 Chromium desktop/mobile 中验证当前 Avatar 加载、方形裁切、metadata 提示、删除控件、键盘 Focus、上传错误保持及同源网络边界。 |
 | `tests/browser/member-directory.mjs` | 在 Chromium desktop/mobile/no-JavaScript 场景验证公开 Members cards、左侧紧凑 Avatar、右侧摘要、稳定顺序、详情导航、robots、安全外链、Focus、无溢出、page error 和同源网络边界。 |
 | `tests/browser/phase3-accessibility.mjs` | 在 Chromium 中统一验证 Account/Profile/Members 全流程的 desktop/mobile、200% content zoom、键盘 Focus、24px 触控目标、表单错误关联、连续长内容重排、禁用 JavaScript 提交与返回 Account、reduced motion、page error 和同源网络边界。 |
