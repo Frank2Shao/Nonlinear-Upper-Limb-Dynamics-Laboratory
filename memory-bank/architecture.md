@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 20 日
-**对应进度：** Visual Refresh, Step V8
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V9
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V9 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -659,6 +659,18 @@ ASGI / WSGI ───────────→ config.settings.production
 - 测试新增 Past 卡片标记与标签页当前项断言；既有浏览器测试按链接名称与 `aria-current` 定位筛选，无需修改。
 - 本步没有修改 view、URL、业务逻辑或 migration。完整 pytest `409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；Upcoming/Past 的 1440 与 390px 截图走查经项目负责人确认。
 
+### 3.56 Visual Refresh V9：活动详情页与报名区（第二轮）
+
+- 详情页为单栏、居中的结构：顶部 `.back-link`「← Back to events」（等宽小字，上下内边距保证 24px 以上触控目标）；`.page-heading--center` 页头第一行为 `.event-detail-kicker`（`Club activity` · 状态标签，间隔点 `aria-hidden`），第二行为 H1；其下为通栏 `<aside class="event-panel" aria-label="Event details and registration">`；最后为宽 `min(100%, 48rem)` 居中、段落左对齐的说明栏。面板在源码中位于说明之前，阅读顺序与视觉顺序一致。
+- 页头状态与列表卡片使用同一判断（Past / `registration_available` / 其余为 Registration unavailable）。
+- 信息面板第一行为 Sydney 时区的 `event-facts`（同日 `Date` 含星期与 `Time`，跨天 `Starts`/`Ends`，均含 `<time datetime>`；`Location`），以 `flex: 1 1 16rem` 整格换行，单独成行的格子拉伸填满，1px 间隙配金色底绘制分隔线；地图链接作为 `(View in Map)` 位于 `Location` 值之后（新窗口、`noopener noreferrer`）。第二行为居中、宽 `min(100%, 20rem)` 的报名区。`event-facts` 的网格位置只作用于 `.event-card`，以便在面板与无 JavaScript 确认页中复用。
+- 报名区：Past、Registration unavailable 与 `Registered` 均为 `event-status status-tag`（`Registered` 加 `status-tag--open`，取代原警示色 `status-banner`）；`role="status"`、`tabindex="-1"`、`x-ref="status"`、`data-open-dialog`/`data-focus-status` 与 HTMX 整体替换 `#event-registration` 的契约不变。按钮与状态占满报名区宽度。
+- 报名 dialog 的 H2 为 `Risk Notice`，上方 `.event-registration-dialog__action` 以 1.375rem 等宽金色大写显示 `Confirm registration`；`aria-labelledby` 引用两者，可访问名称为 `Confirm registration Risk Notice`。dialog 为金色细边框加阴影；`.risk-notice-copy` 为暖黑底细边框的可滚动区域，版本行为 `.notice-version`。取消 dialog 标题不变。无 JavaScript 确认页改用 `.page-heading` 与单行 `event-facts`（`Event`）。
+- 走查中的修订（均经项目负责人确认）：宽屏左右两栏造成标题与面板错层和大片空白，改为通栏面板；信息行提前换行使按钮单列，改为“信息格整行 + 居中报名区”；标题区与说明栏居中；地图链接移入 `Location` 行并改为 `(View in Map)`；状态标签移到 `Club activity` 旁；dialog 大标题改为 `Risk Notice`。
+- 走查截图使用一个只在本地临时存在的测试（在 test database 中建立合成活动、合成 Risk Notice 与两名合成会员，截图后删除），覆盖 1440、约 820 与 390px 下的全部报名状态、两个 dialog 与无 JavaScript 确认页；Development database 未写入数据。
+- 测试：状态标签 class、顶部返回链接、页头状态、信息面板及其先于说明的源码顺序、`Registered` 为带 `role="status"` 的状态标签、`(View in Map)` 位于 `Location` 行内，以及 dialog 的精确可访问名称与 `Risk Notice` 标题。
+- 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest `409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -681,7 +693,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头、Events 筛选标签页、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 横向 cards/detail/empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -806,13 +818,13 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/events/views.py` | 提供公开 Upcoming/Past 列表、已发布 Event 详情及受登录和 verified Email 保护的报名/取消确认；协调普通 POST、HTMX 局部响应、旧版本重试与关闭状态拒绝；单次请求内复用会员资格、当前 Notice 与有效报名查询结果。 |
 | `apps/events/urls.py` | 将 `/events/`、`/events/<slug>/`、`/events/<slug>/register/` 与 `/events/<slug>/cancel/` 暴露为具名路由。 |
 | `apps/events/templates/events/event_list.html` | 呈现等宽标签页头、Upcoming/Past 标签页式筛选链接、纵向排列的共享 Event cards 和虚线框无结果状态；不提供 `All` 或报名操作。 |
-| `apps/events/templates/events/event_detail.html` | 以 Sydney 时区呈现活动详情、可选安全地图链接及共享报名区域，并只在本页加载本地 HTMX 渐进增强。 |
+| `apps/events/templates/events/event_detail.html` | 呈现顶部返回链接、居中页头（`Club activity` · 状态标签与 H1）、通栏信息面板（Sydney 时区信息格、`Location` 行内 `(View in Map)` 安全链接、共享报名区域）与居中说明栏，并只在本页加载本地 HTMX 渐进增强。 |
 | `apps/events/templates/events/event_registration_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整 Risk Notice 确认页，并保留返回 Event 的普通链接。 |
-| `apps/events/templates/events/includes/registration_form.html` | 直接呈现当前 Risk Notice 的完整正文及版本，并集中错误、CSRF 与确认按钮，供 dialog 和完整确认页复用；不添加重复正文 banner。 |
+| `apps/events/templates/events/includes/registration_form.html` | 在暖黑底细边框区域中直接呈现当前 Risk Notice 的完整正文及等宽版本行，并集中错误、CSRF 与确认按钮，供 dialog 和完整确认页复用；不添加重复正文 banner。 |
 | `apps/events/templates/events/event_cancellation_confirm.html` | 提供禁用 JavaScript 或直接访问时的完整取消确认页，并保留返回 Event 的普通链接。 |
-| `apps/events/templates/events/includes/confirm_page.html` | 两张整页确认模板共用的正文结构，按传入的标题、heading id 与表单 include 呈现，并提供返回 Event 的普通链接。 |
+| `apps/events/templates/events/includes/confirm_page.html` | 两张整页确认模板共用的正文结构，以等宽标签页头、单行活动信息格及传入的标题、heading id 与表单 include 呈现，并提供返回 Event 的普通链接。 |
 | `apps/events/templates/events/includes/cancellation_form.html` | 集中取消说明、错误、CSRF 与确认按钮，供 cancellation dialog 和完整确认页复用。 |
-| `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，包含报名/取消 Alpine dialogs 与 HTMX target；服务端通过 `data-open-dialog`/`data-focus-status` 声明需要打开的 dialog 或聚焦的状态元素。 |
+| `apps/events/templates/events/includes/registration_panel.html` | 根据 Past、已报名、可报名、Anonymous 和不可操作状态呈现唯一报名区域，包含报名/取消 Alpine dialogs 与 HTMX target；服务端通过 `data-open-dialog`/`data-focus-status` 声明需要打开的 dialog 或聚焦的状态元素；状态以不填充的状态标签呈现，报名 dialog 以 `Risk Notice` 为标题并以 `Confirm registration` 为其上方的大号等宽标签。 |
 | `apps/events/templates/events/includes/event_card.html` | 集中 Home 与 Events 列表共用的网格活动卡片：对辅助技术隐藏的日期块、标题链接、以 Sydney 时区显示的 `Date`/`Time`（跨天为 `Starts`/`Ends`）与 `Location` 信息行、根据 Past 与共享当前 Notice 可用性显示的状态标签（Past 卡片另加 `event-card--past` 弱化日期），以及可访问名称含标题的 `View details` 按钮。 |
 | `apps/events/migrations/__init__.py` | 将 `events.migrations` 标记为 migration package。 |
 | `apps/events/migrations/0001_initial.py` | 创建 Event 表及其数据库约束。 |
@@ -820,11 +832,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_event_model_admin.py` | 验证 Event 默认值、公开查询、字段约束、本地日期判断和后台权限。 |
 | `tests/test_event_registration.py` | 验证报名与取消状态、确认版本与时间、历史保留、数据库约束、资格、关闭条件，以及并发报名、并发取消和版本切换行为。 |
 | `tests/test_event_registration_admin.py` | 验证报名名单的内置查看权限、角色隔离、只读防伪造、有效/取消/重新报名历史、Risk Notice 版本追溯及公开页面隐私。 |
-| `tests/test_event_registration_pages.py` | 验证报名/取消详情、确认正文、普通 POST、HTMX、幂等、旧版本重试、重新报名、资格、不可操作状态及跨会员报名隐私。 |
+| `tests/test_event_registration_pages.py` | 验证报名/取消详情、确认正文、普通 POST、HTMX、幂等、旧版本重试、重新报名、资格、不可操作状态、跨会员报名隐私，以及 `Registered` 为带 `role="status"` 的状态标签。 |
 | `tests/test_event_registration_browser.py` | 建立两个合成 verified member Session，并调用 Playwright 场景验证 JavaScript 与无 JavaScript 下的报名、取消和重新报名路径。 |
-| `tests/test_event_pages.py` | 验证 Sydney 零点下 Upcoming/Past 分类、公开性、稳定排序、无效参数回退、Home 三条限制、详情 404、HTML escaping、安全地图链接、无表单边界、活动卡片状态标签、Past 卡片标记与筛选标签页当前项。 |
+| `tests/test_event_pages.py` | 验证 Sydney 零点下 Upcoming/Past 分类、公开性、稳定排序、无效参数回退、Home 三条限制、详情 404、HTML escaping、安全地图链接、无表单边界、活动卡片状态标签、Past 卡片标记、筛选标签页当前项、详情页返回链接/页头状态/信息面板顺序及 `Location` 行内地图链接。 |
 | `tests/test_event_pages_browser.py` | 以真实测试站点建立合成已发布 Event，并调用 Events Playwright 场景。 |
-| `tests/browser/event-pages.mjs` | 在 desktop、mobile、200% 内容放大和禁用 JavaScript 场景验证 Home 到 Events 列表/详情的导航、Upcoming/Past、`View all events` 位于卡片上方、状态标签与详情按钮等宽且不填充、地图链接、语义结构、键盘 Focus、触控目标、内容重排、page error 与同源网络边界。 |
+| `tests/browser/event-pages.mjs` | 在 desktop、mobile、200% 内容放大和禁用 JavaScript 场景验证 Home 到 Events 列表/详情的导航、Upcoming/Past、`View all events` 位于卡片上方、状态标签与详情按钮等宽且不填充、`(View in Map)` 地图链接、语义结构、键盘 Focus、触控目标、内容重排、page error 与同源网络边界。 |
 | `tests/browser/event-registration.mjs` | 在真实 Chromium 中验证报名与取消 dialogs、Risk Notice、HTMX 状态更新、重新报名、mobile、200% 内容放大、无 JavaScript 完整确认页、Focus、触控目标、page error 与同源网络边界。 |
 | `apps/safety/__init__.py` | 将 `safety` 标记为 Python package。 |
 | `apps/safety/apps.py` | 定义 `SafetyConfig`，将 `apps.safety` 注册为 Django App。 |

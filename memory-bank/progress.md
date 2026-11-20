@@ -1848,3 +1848,58 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已确认 V8，并批准更新 `architecture.md`：新增 3.55 节，更新样式源、Events 列表模板、共享活动卡片与 Events 页面测试的文件职责。V9 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V9 — 活动详情页与报名区
+
+### 前置条件检查
+
+- V8 已确认并提交；设计规则见 `design_document.md` 7.5。
+
+### 已完成
+
+- `apps/events/templates/events/event_detail.html` 重写：
+  - 顶部 `.back-link`「← Back to events」（箭头 `aria-hidden`），取代底部按钮；
+  - `.page-heading`：等宽金色小标签 `Club activity`、H1 与状态标签（Past / `registration_available` / 其余为 Registration unavailable，与列表卡片同一判断）；
+  - `.event-detail` 两栏：`<aside class="event-panel" aria-label="Event details and registration">` 在源码中位于说明之前（窄屏自然在前），宽于 `--breakpoint-hero` 时以 grid 放到右栏；面板内为 Sydney 时区的 `event-facts`（同日 `Date` 含星期与 `Time`，跨天 `Starts`/`Ends`，均含 `<time datetime>`）、可选 `View location in map`（新窗口安全属性不变）与报名区。
+- `registration_panel.html`：Past、Registration unavailable 与 `Registered` 改为 `event-status status-tag`（`Registered` 另加 `status-tag--open`，取代 `status-banner`），`role="status"`、`tabindex="-1"`、`x-ref="status"` 与 HTMX/Alpine 契约不变；报名 dialog 标题上方加等宽小标签 `Risk Notice`。
+- `registration_form.html`：版本行改为 `.notice-version`（等宽小字 `Notice version` + 版本号）；`confirm_page.html`（无 JavaScript 确认页）改用 `.page-heading` 与单行 `event-facts`（`Event`）。
+- `static_src/css/site.css`：新增 `.back-link`（含 24px 以上触控目标的上下内边距）、`.event-detail-heading`、`.event-detail`/`__body`、`.event-panel`（顶部金色渐变线、纵向信息行）、`.event-panel__map`、报名区网格（按钮与状态占满面板宽度）、dialog 金色细边框与阴影、`.risk-notice-copy`（暖黑底细边框）、`.notice-version`、`.confirm-page__event`；`event-facts` 的网格位置改为只作用于 `.event-card`，以便在面板与确认页中复用。
+- 测试：`test_event_pages.py` 改为新的状态 class，并新增顶部返回链接、页头状态、信息面板与“面板先于说明”的源码顺序断言；`test_event_registration_pages.py` 断言 `Registered` 为带 `role="status"` 的状态标签且不再使用 `status-banner`。
+- 走查中修正：返回链接最初只有 19px 高，未通过 24px 触控目标门禁，增加上下内边距后通过。
+- `design_document.md` 7.5 澄清：`Risk Notice` 小标签只用于报名 dialog（取消 dialog 不含 Risk Notice 正文）。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `409 passed`（之后新增的 Events 断言另跑 `21 passed`）；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过。
+- 截图走查使用一个临时测试（在 test database 中建立合成活动、合成 Risk Notice 与两名合成会员，截图后已删除，不进入仓库），覆盖 1440 与 390px 下的 Anonymous、会员可报名、已报名、报名关闭、Past、报名 dialog、取消 dialog 与无 JavaScript 确认页：均无横向溢出。
+
+### 当前边界与下一步门槛
+
+- 没有修改 view、URL、业务逻辑、表单字段或 migration；Development database 未写入任何数据。
+- `architecture.md` 尚未更新，需要项目负责人批准；V10 尚未开始。
+
+### V9 修订：详情页布局与报名 dialog 标题
+
+- 项目负责人走查指出：宽屏两栏中标题与信息面板错层，左侧说明很短时中间留下大片空白；报名 dialog 的大标题应为 `Risk Notice`，`Confirm registration` 可作小字但需约为原先等宽小标签的两倍大。
+- 详情页改为单栏：页头 → 通栏信息面板 → 说明。面板在宽于 `--breakpoint-hero` 时分为左右两列（左：横排信息行与地图链接，包在 `.event-panel__facts` 中；右：报名区），窄屏时纵向排列。面板顶部金色细线以 `align-self: start` 固定在边框处（垂直居中曾让它下移约 12px）。
+- 报名 dialog：H2 改为 `Risk Notice`（`clamp(2.25rem, 6vw, 2.75rem)`），上方 `.event-registration-dialog__action` 显示 `Confirm registration`（等宽金色大写，1.375rem，约为原 0.75rem 小标签的两倍）；`aria-labelledby` 同时引用两者，可访问名称为 `Confirm registration Risk Notice`。取消 dialog 不变。
+- 测试：`event-registration.mjs` 以精确名称 `Confirm registration Risk Notice` 定位 dialog，并断言其 H2 为 `Risk Notice`。`design_document.md` 7.5 同步更新。
+- 以同一临时测试重新截取 1440/390px 下全部报名状态、两个 dialog 与无 JavaScript 确认页（截图后删除），均无横向溢出。
+
+### V9 修订：详情页信息行换行、居中与地图链接
+
+- 项目负责人用真实长度的数据走查后指出：信息行提前换行，按钮被挤成单独一列，结构突兀；建议标题与说明居中；地图链接改为在 `Location` 行内显示 `(View in Map)`。
+- 信息面板改为两行：第一行为占满面板宽度的信息格（`flex: 1 1 16rem` 换行，1px 间隙配金色底绘制分隔线，单独成行的格子拉伸填满，不再出现空格子）；第二行为居中、宽 `min(100%, 20rem)` 的报名区。删除宽屏左右分列规则与 `.event-panel__facts`、`.event-panel__map`。
+- 页头加 `.page-heading--center`（小标签、标题与状态标签居中）；说明栏宽 `min(100%, 48rem)` 居中，段落文字保持左对齐（多行居中文字难读；项目负责人如需文字本身居中可再调整）。
+- 地图链接移入 `Location` 的 `<dd>`，文字改为 `(View in Map)`，仍为新窗口与 `noopener noreferrer`；`design_document.md` 7.5、7.6 同步改为该文案。
+- 测试：`test_event_pages.py` 断言链接位于 `Location` 行内、文字为 `(View in Map)`，无地图链接时不出现；`event-pages.mjs` 按 `(View in Map)` 精确定位链接。
+- 以临时测试（6 段长说明、合成地点与地图链接）截取 1440、820 与 390px：信息行在 1440px 一行、820px 两行（Location 独占并拉伸）、390px 逐行，均无横向溢出；临时测试已删除。
+
+### V9 修订：状态标签移到小标签旁
+
+- 项目负责人要求把状态标签放到 `Club activity` 旁边：页头改为 `.event-detail-kicker` 一行（`Club activity` · 状态标签，间隔点 `aria-hidden`），H1 单独一行；状态标签的描边样式不变。`.event-detail-heading` 删除。`design_document.md` 7.5 同步更新。
+- 1440 与 390px 截图确认居中且无横向溢出（临时测试已删除）。
+
+### 项目负责人确认
+
+- 项目负责人已确认 V9（含全部走查修订），并批准更新 `architecture.md`：新增 3.56 节，更新样式源、活动详情、报名区、Risk Notice 表单与无 JavaScript 确认页模板及相关测试的文件职责。V10（第二轮质量门禁）尚未开始，需要项目负责人明确授权。

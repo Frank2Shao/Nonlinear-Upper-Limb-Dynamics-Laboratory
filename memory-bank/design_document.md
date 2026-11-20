@@ -417,7 +417,7 @@ Registered Member 选择 Cancel registration
 
 - 完整 Events 页面使用信息卡片布局；
 - 仅支持 Upcoming 和 Past 两个视图，默认显示 Upcoming，无效参数回退到 Upcoming；使用普通链接切换，禁用 JavaScript 时仍可用；
-- 管理员可为活动填写可选的 Google Maps HTTPS URL，活动详情页有有效链接时显示 `View location in map`；
+- 管理员可为活动填写可选的 Google Maps HTTPS URL，活动详情页有有效链接时在 `Location` 一行的地点文字后显示 `(View in Map)` 链接（项目负责人在 Visual Refresh 第二轮将原先单独一行的 `View location in map` 改为此形式）；
 - 首场 Training Session 由管理员录入现有日程（2026 年 12 月 1 日，悉尼时间 3:00–7:00 pm）。地点未确认时显示 `Venue details to be confirmed`。Home 没有已公开的近期活动时显示空状态；
 - 每张卡片突出日期、标题、时间、地点、报名状态和明确的详情或报名入口：左侧为金色细边框日期块（星期、日、月份与年份，与下方日期行重复，对辅助技术隐藏）；中间为标题链接和图纸式信息行（`Date`/`Time`/`Location`，起止不在同一天时为 `Starts`/`Ends`）；右侧为报名状态标签与 `View details` 次要按钮（可访问名称包含活动标题）。状态标签一律为不填充的细描边文字框（不使用材质底，避免被误认为按钮）：`Registration open` 为金色文字，`Registration unavailable` 与 `Past event` 为次要文字色，状态始终由文字表达；状态标签与 `View details` 等宽（窄屏时两者各占一半并等高）；`View details` 保持描边次要按钮，金色材质填充只留给 `Join the Club`、`Register` 等主要操作；窄屏时日期块与标题一行，信息行与状态、按钮各占整行；
 - 在缺少高质量活动照片时，以排版、日期模块和抽象图形建立层级，不要求每场活动配置封面；
@@ -425,14 +425,14 @@ Registered Member 选择 Cancel registration
 - Events 列表页（项目负责人在 Visual Refresh 第二轮确认的 mockup）：页头为等宽金色小标签 `Club activities` 与大标题 `Events`；`Upcoming` / `Past` 以标签页呈现——一行等宽大写文字链接，下方一条半透明金色细线，当前项为金色文字加 `2px` 金色下划线（与 Header 导航当前页一致），其余为次要正文色；卡片沿用首页活动卡片，`Past` 中卡片的日期数字改用低优先级文字色；无结果时显示金色虚线框中的 `No events found.`；
 - 活动详情页：
   - 页面顶部为等宽大写小链接 `← Back to events`（箭头为装饰），取代原先位于底部的 `Back to events` 按钮；
-  - 页头为等宽金色小标签 `Club activity`、大标题（活动名称）及其旁边的状态标签（与列表卡片同一不填充样式）；
-  - 宽屏为两栏：左栏为活动说明正文；右栏为带顶部金色渐变细线的信息面板，依次为图纸式信息行（`Date` 含星期、`Time`、`Location`，跨天时为 `Starts`/`Ends`）、有地图链接时的 `View location in map`，以及报名区；窄屏为单栏，信息面板位于说明之前；
+  - 页头第一行为等宽金色小标签 `Club activity`、装饰性间隔点 `·` 与状态标签（与列表卡片同一不填充样式），第二行为大标题（活动名称）；
+  - 页头（小标签与状态标签一行、标题一行）居中；其下为一条通栏信息面板（带顶部金色渐变细线）：第一行为占满面板宽度的图纸式信息格（`Date` 含星期、`Time`、`Location`，跨天时为 `Starts`/`Ends`；一行放不下时整格换行，换行后的格子拉伸填满该行并保留分隔线；`Location` 格内地点文字后接 `(View in Map)`），第二行为居中的报名区（宽约 `20rem`）；面板之后为居中的说明栏（宽约 `48rem`，段落文字左对齐以保证多行可读性）。项目负责人走查后先将左右两栏改为通栏面板，又因信息行提前换行使按钮单独成列而改为上述两行结构；
   - 报名区按状态显示：Anonymous 且可报名时为 `Log in to register` 金色材质主按钮；会员可报名时为 `Register` 金色材质主按钮；已报名时为金色文字状态标签 `Registered` 加 `Cancel registration` 描边次要按钮（取代原先的警示色状态横幅）；不可报名与 Past 为次要文字色状态标签；面板内按钮与状态标签占满面板宽度；
-  - 报名与取消确认 dialog 使用半透明金色细边框；标题上方为等宽金色小标签 `Risk Notice`；Risk Notice 正文放在暖黑底、半透明金色细边框的区域中，版本号以等宽小字 `Notice version` 呈现；按钮文案与顺序不变。禁用 JavaScript 时的完整确认页沿用同一正文与按钮样式。
+  - 报名与取消确认 dialog 使用半透明金色细边框；报名 dialog 的大标题为 `Risk Notice`，其上方以约 `22px` 的等宽金色大写文字标明 `Confirm registration`（dialog 的可访问名称为 `Confirm registration Risk Notice`）；取消 dialog 不含 Risk Notice 正文，标题仍为 `Cancel registration`；Risk Notice 正文放在暖黑底、半透明金色细边框的区域中，版本号以等宽小字 `Notice version` 呈现；按钮文案与顺序不变。禁用 JavaScript 时的完整确认页沿用同一正文与按钮样式。
 
 ### 7.6 活动地点
 
-管理员在 Event 中填写可公开的地点文字，并可附上 Google Maps HTTPS 链接。活动详情页直接显示地点文字，有链接时提供 `View location in map`，使用普通链接打开 Google Maps。
+管理员在 Event 中填写可公开的地点文字，并可附上 Google Maps HTTPS 链接。活动详情页直接显示地点文字，有链接时在地点文字后提供 `(View in Map)`，使用普通链接在新窗口打开 Google Maps。
 
 ### 7.7 Phase 2 英文内容基线
 
