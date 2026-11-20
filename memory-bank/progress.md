@@ -2047,3 +2047,84 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V13 的 16 张截图并确认，批准更新 `architecture.md`：新增 3.60 节并更新页头进度与状态。第三轮（About 与 Beginners & Safety）完成；Members 的设计确认尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh 第四轮 — Members 设计确认
+
+- 项目负责人提出在会员名字或 Avatar 旁加入金色 `Researcher ##` 标签。会员资料原本没有编号字段，因此先请项目负责人决定号码来源：在“首次 Publish 时自动编号”“邮箱验证时自动编号”“管理员手动分配”中选择了管理员手动分配。
+- 以 mockup（1440 与 390px，合成会员与程序生成的抽象头像，临时目录，不进入仓库）提出 Members 列表与详情设计：左对齐页头、金色细边框卡片（整卡可点击）、图纸式资料格、详情信息面板、`Bio`/`Links` 报告分节；Researcher 标签给出“名字上方”（A）与“压在头像下沿”（B）两个位置，项目负责人选择 A。
+- 规则写入 `design_document.md`：4.4（Researcher 编号的分配、唯一性、显示格式与公开边界，卡片公开字段与 Admin 可维护字段）、3.4、7.8（Publish confirmation 列出编号）、新增 7.10（Members 版式）与 11.1（允许公开）。`implementation.md` 在 Step 8 字段表与 Migration 顺序中加入 `researcher_number` / `members.0002`，并新增第四轮步骤 V14（编号数据与 Admin）、V15（Members 列表）、V16（Member detail 与 Preview）、V17（第四轮质量门禁）。
+- 本轮经项目负责人批准新增一个字段与 migration（只在 V14），这是与前几轮“不改 migration”约束的唯一差异。
+- 本次只修改文档，没有修改代码。V14 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V14 — Researcher 编号的数据与 Admin
+
+### 前置条件检查
+
+- 项目负责人已确认第四轮 Members 设计（`design_document.md` 4.4、7.10、11.1）并授权开始 V14；已完整阅读 `architecture.md` 与 `design_document.md`。
+
+### 实施内容
+
+- `apps/members/models.py`：
+  - 新增 `researcher_number`（`PositiveIntegerField`，可空，`unique=True`，`MinValueValidator(1)`，verbose name `Researcher number`，Admin 帮助文字说明公开格式与留空含义）；
+  - 新增数据库约束 `members_profile_researcher_number_positive`（为空或不小于 1）；唯一性由字段级唯一索引保证，多个空值可以共存；
+  - 新增 `researcher_label` 属性：未分配时为 `None`，否则为至少两位补零的 `Researcher 07`（100 及以上照常显示）。
+- `apps/members/migrations/0002_memberprofile_researcher_number.py`：加入字段与检查约束（已在 Development database 应用）。
+- `apps/members/admin.py`：列表增加可排序的 `Researcher number` 列；change form 中 `researcher_number` 与 `is_hidden_by_admin`、`executive_role` 并列为唯一可编辑字段，其余字段仍只读，新增与删除入口仍关闭。
+- `profile_publish_confirm.html`：公开字段清单在名称之后加入一项——已分配时为 `Researcher number (Researcher 07)`，未分配时为 `Researcher number, if one has been assigned`。
+- 会员可写表单 `MemberProfileForm` 的显式字段白名单没有变化，因此会员无法提交该字段。本步没有修改任何公开页面版式。
+
+### 验证结果
+
+- 新增与更新测试：
+  - `test_member_profile.py`：默认无编号无标签；`01`/`07`/`42`/`100` 显示格式；多个空值共存；重复号码在 model 校验中被拒绝、直接写库时被唯一索引拒绝；`0` 在 model 校验中被拒绝、直接写库时被检查约束拒绝；会员表单不含该字段且伪造提交不改变已分配号码；Admin 可编辑字段集合加入该字段。
+  - `test_member_profile_admin.py`：获授权 Staff 可分配、修改与清除号码；`0`、`-3`、非数字与重复号码显示字段错误且不写入；列表显示并可按编号排序；可编辑字段集合更新。
+  - `test_profile_publication.py`：确认页在未分配与已分配时分别显示对应文字。
+- 完整 pytest 在全新 test database 上 `426 passed`（原 409 + 新增 17）；Ruff lint/format、Django check、`makemigrations --check` 与 `git diff --check` 通过。本步没有修改 CSS 或静态资源。
+- 走查截图使用只在本地临时存在的测试（Test settings 的 live server、一名合成 Superuser 与两名合成会员，截图后删除）：Admin 列表、已分配号码的修改页、填写重复号码时的字段错误，以及 Publish 确认页（已分配/未分配）的 1440 与 390px 截图，共 7 张，均无横向溢出与 page error；Development database 未写入合成数据。
+
+### 当前边界与下一步门槛
+
+- Members 列表、详情与 Preview 尚未显示标签（V15、V16）。
+- `architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V14 截图并确认，批准更新 `architecture.md`：新增 3.61 节，更新页头进度与状态，在 3.3、3.6、3.32 注明 Researcher 编号为管理员可编辑字段，并更新 MemberProfile model、Admin、Publish confirmation 模板、新 migration 与相关测试的文件职责。V15（Members 列表）尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V15 — Members 列表页
+
+### 前置条件检查
+
+- 项目负责人批准 V14 文档后要求直接进入下一步（Members 页面），视为授权开始 V15；V14 的代码、migration 与文档尚未提交（项目负责人未要求提交）。本会话已完整阅读 `architecture.md` 与 `design_document.md`。
+
+### 实施内容
+
+- `member_list.html`：
+  - 外层改为 `<section class="members-page">`，页头改为 `.page-heading`（等宽小标签 `Club community`、H1、`.lede`），取代 `eyebrow` 与普通段落；
+  - 卡片内容依次为：已分配时的 `gold-tag` Researcher 标签（`Researcher 07`，来自 `researcher_label`）、H2 名称链接、`<dl class="member-facts">` 资料格；未分配号码时不输出标签；
+  - 卡片字段白名单、排序、详情链接、Avatar include、`aria-labelledby` 与 empty state 结构不变。
+- `static_src/css/site.css`：
+  - 新增 `.members-page`（页头与卡片网格间距 `clamp(2rem, 5vw, 3rem)`）；
+  - `.member-directory` 改为 `auto-fill` / `minmax(min(100%, 22rem), 1fr)`：1440px 三列、820px 两列、手机一列，不新增断点；
+  - `.member-card`：金色细边框与顶部金色渐变细线、`6.5rem` 方形 Avatar（金色细边框、直角、页面底色 fallback），悬停时边框提亮、名称变为浅金；`max-nav` 下 Avatar `5rem`、名称 1.5rem；
+  - 名称链接以 `::after` 覆盖整张卡片，整卡可点击；名称自身的 Focus outline 取消，改由 `.member-card:has(:focus-visible)` 在卡片外框绘制同样的金色 Focus 环；
+  - 新增 `.member-card__tag`（左对齐、不换行）与共用图纸式资料格 `.member-facts`（等宽大写、标签低优先级色居左、数值主文字色居右，行间金色细线）；
+  - 删除 `.member-card__details` 系列规则，断行分组改为 `.member-facts dd`。
+- 测试：
+  - `test_member_directory.py`：页头小标签与 H1；已分配号码的卡片在 H2 之前输出 `Researcher 07` 金色标签，未分配的卡片没有标签；未发布与被隐藏资料的号码不出现在列表中。
+  - `member-directory.mjs`（合成会员 Alpha 分配 7 号）：标签位于名称正上方且左对齐、无号码的卡片没有标签、桌面两张卡片同一行并排、名称获得键盘 Focus 时整张卡片出现 outline、点击卡片右下角即可进入详情。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `429 passed`；`static:check`、Ruff lint/format、Django check 与 `git diff --check` 通过。
+- 走查截图使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、六名合成会员，头像为程序生成的抽象图，截图后删除）：列表 1440、820、390px，桌面键盘 Focus 与悬停状态，以及空状态 1440、390px，共 6 张，均无横向溢出与 page error。
+- 空状态沿用原有的共享卡片样式（H2 + 说明），7.10 没有规定其新样式。
+
+### 当前边界与下一步门槛
+
+- Member detail 与 Preview 仍为旧布局（V16）。
+- `architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V15 截图并确认，批准更新 `architecture.md`：新增 3.62 节，更新页头进度与状态，以及样式源、Members 列表模板与相关测试的文件职责。V16（Member detail 与 Preview）尚未开始，需要项目负责人明确授权；空状态样式未另作决定，保持现状。

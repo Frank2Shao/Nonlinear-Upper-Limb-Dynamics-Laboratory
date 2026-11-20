@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 20 日
+**最后更新：** 2026 年 11 月 21 日
 
 ## 一、文档边界
 
@@ -100,6 +100,7 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 - 开启或关闭活动报名；
 - 查看活动报名名单；
 - 隐藏不适当的公开会员资料；
+- 为会员资料分配 Researcher 编号；
 - 停用违反规则的账户。
 
 管理员权限应按照职责分配，不默认向所有 Staff 开放全部敏感数据。
@@ -148,13 +149,18 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 - Publish 与 Unpublish 只接受本人已认证的 POST 操作，不由普通编辑表单直接切换；
 - 会员主动 Publish 后才出现在 Members 页面；
 - 公开详情 URL 使用 `/members/<username>/`；Username 是公开 URL 的一部分，Display name 为空时也作为公开回退名称；
-- Members 卡片公开 Avatar、Display name 或 Username、Experience level 和 Preferred arm；值为 `Not specified` 时不显示对应项目；
+- Members 卡片公开 Avatar、Display name 或 Username、Researcher 编号（已分配时）、Experience level 和 Preferred arm；值为 `Not specified` 时不显示对应项目；
 - Member detail 在卡片字段之外公开 Bio、Instagram Username 和一个 HTTPS social URL；
+- Researcher 编号（项目负责人在 Visual Refresh 第四轮决定加入）：
+  - 由管理员在 Django Admin 手动分配，为正整数，全站唯一，可以留空；会员不能填写或修改；
+  - 公开资料以金色标签显示 `Researcher 07`，号码至少两位，不足补零（100 及以上照常显示）；未分配时不显示标签；
+  - 号码随资料一起公开或隐藏：未发布、管理员隐藏、账户停用或邮箱未验证时不出现在任何公开页面；
+  - 号码不因发布、取消发布或隐藏而自动回收或重排，只由管理员修改；
 - `created_at`、`updated_at`、Email、USYD 声明、USU ID 和审核信息不公开；
 - `executive_role` 由管理员维护；
 - 首期不在公开页面展示 Executive 角色；
 - 管理员通过 Django Admin 的现有 `is_hidden_by_admin` checkbox 隐藏或恢复资料；使用标准 `change_memberprofile` 权限和 Django Admin 日志，不增加专用权限、action、原因字段或历史表；
-- Admin 中会员自述字段保持只读，管理员只能维护隐藏状态、Executive role 及必要的只读识别信息；
+- Admin 中会员自述字段保持只读，管理员只能维护隐藏状态、Executive role、Researcher 编号及必要的只读识别信息；
 - 被隐藏的会员可以继续编辑和 Unpublish，并看到中性提示，但不能通过本人操作恢复公开可见性；
 - 管理员隐藏不能修改会员自述内容；
 - 隐藏资料不影响会员登录或活动报名。
@@ -578,7 +584,7 @@ Registered Member 选择 Cancel registration
 - 会员资料编辑、Preview、Publish 和 Unpublish 使用独立命名 URL；编辑保存成功后返回 Account，Preview 提供返回 Account 的普通链接；
 - 编辑表单包含 Display name、Avatar、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL，不包含管理员字段或直接发布 checkbox；
 - Preview 只允许当前 Profile 所有者访问，并使用与公开 detail 相同的字段顺序和视觉组件；
-- Publish confirmation 明确列出将公开的字段，并说明 Username 会出现在公开 URL，Display name 为空时也会作为公开名称；
+- Publish confirmation 明确列出将公开的字段（含管理员已分配的 Researcher 编号），并说明 Username 会出现在公开 URL，Display name 为空时也会作为公开名称；
 - 已发布会员可以 Unpublish；管理员隐藏时显示简单中性提示，不公开管理员身份或后台操作记录；
 - Members 列表提供 cards、字母顺序和 empty state，不提供搜索或 HTMX 筛选；
 - Members card 以左侧紧凑 Avatar 或非敏感 fallback、右侧公开名称及已填写的 Experience level 与 Preferred arm 构成；desktop/mobile 均不得因原图尺寸形成超大 Avatar；
@@ -602,6 +608,21 @@ Registered Member 选择 Cancel registration
   - `What to Expect` 的五个步骤为编号流程：每步左侧为半透明金色细边框的等宽编号方块，方块之间以金色细竖线相连，右侧为步骤文字；
   - `Armwrestling Involves Risk` 的正文放在暖色面板中（半透明金色细边框、顶部金色渐变细线，与活动详情信息面板一致），取代左侧粗金条；`Read the Draft Risk Notice`（仅 Development/Preview）为描边次要按钮，在面板内左对齐；
   - `During Training` 的五条规则合并为一个半透明金色细边框的分行列表，行间以细线分隔，每行前为金色小方块标记，取代五张独立卡片。
+
+### 7.10 Members 版式
+
+以下规则来自项目负责人在 Visual Refresh 第四轮确认的 mockup；公开字段与隐私边界仍以 4.4 和第十一章为准。
+
+- Researcher 标签使用 Home Hero `Research Field` 的金色材质标签（等宽大写小字），位于公开名称正上方（项目负责人在“名字上方”与“压在头像下沿”两个方案中选择前者）；
+- Members 列表：
+  - 页头与 Events、About 一致：等宽金色小标签 `Club community`、大标题 `Members` 与介绍文字，左对齐；
+  - 卡片为自动列数网格（宽屏约三列、手机一列），带半透明金色细边框和顶部金色渐变细线；左侧为方形 Avatar 或首字母 fallback（金色细边框、页面底色），右侧依次为 Researcher 标签、公开名称和图纸式资料格（`Experience level`、`Preferred arm` 各占一行，等宽标签为低优先级文字色、数值为主要文字色）；
+  - 公开名称链接覆盖整张卡片，整张卡片均可点击进入详情，键盘 Focus 显示在整张卡片外框；
+- Member detail：
+  - 顶部为等宽大写小链接 `← Back to members`（箭头为装饰），与活动详情一致；
+  - 信息面板（半透明金色细边框、顶部金色渐变细线）：宽屏左侧为方形 Avatar 或首字母 fallback，右侧依次为等宽金色小标签 `Member profile`、装饰性间隔点与 Researcher 标签、大标题（公开名称）、等宽 `@username`，以及图纸式资料格；窄屏时 Avatar 在上；
+  - `Bio` 与 `Links` 使用 7.9 的报告分节（编号对辅助技术隐藏）；没有内容的分节不显示，编号按实际出现的分节连续排列；
+- 会员本人的 Preview 与公开 detail 使用同一组件，因此同样显示 Researcher 标签。
 
 ## 八、状态与异常处理
 
@@ -722,6 +743,7 @@ Registered Member 选择 Cancel registration
 - 公开活动信息；
 - 已确认的地点信息；
 - 会员主动发布的 Avatar、公开名称、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL；
+- 已发布资料上由管理员分配的 Researcher 编号；
 - Published Profile 的 Username detail URL，以及 Display name 为空时的 Username 回退名称；
 - 已发布 Avatar 原文件中保留的 metadata；上传界面必须提前提示其中可能包含位置、设备或其他信息。
 

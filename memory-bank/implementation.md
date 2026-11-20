@@ -175,6 +175,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | `is_published` | 必填 Boolean；默认 `False`；会员可在 Phase 3 自行开启或关闭 |
 | `is_hidden_by_admin` | 必填 Boolean；默认 `False`；仅授权管理员可以修改 |
 | `executive_role` | 可空 String，最长 100 字符；自由文本；仅授权管理员可以修改；Phase 1 不公开展示 |
+| `researcher_number` | Visual Refresh 第四轮（V14）加入。可空正整数；非空时全站唯一且不小于 1；仅授权管理员可以修改；随已发布资料公开为 `Researcher 07`（至少两位，补零） |
 | `created_at` | 必填 DateTime；创建时自动记录；用户不可修改 |
 | `updated_at` | 必填 DateTime；每次保存时自动更新；用户不可修改 |
 
@@ -550,6 +551,19 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V12 | Beginners & Safety 页。复用 V11 的页头与报告分节；`What to Expect` 改为编号流程；风险说明改为带顶部金色渐变细线的暖色面板，Draft Risk Notice 入口在面板内左对齐且只在环境允许时出现；`During Training` 改为单框分行规则列表。更新依赖旧结构的测试。验证 Draft 开关两种状态、Heading 顺序、desktop/mobile、200% 放大、无 JavaScript、键盘 Focus、触控目标、无溢出与对比度。 |
 | V13 | 第三轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交两页（含 Anonymous/会员、Draft 开/关）的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
 
+### Visual Refresh 第四轮：Members
+
+**展开条件：** 第三轮 V11–V13 已验收；项目负责人已确认 Members 列表与详情的设计 mockup（规则见 `design_document.md` 7.10），并决定加入由管理员手动分配的 Researcher 编号（规则见 4.4、11.1）。
+
+**与前几轮约束的差异：** 本轮经项目负责人批准新增一个 MemberProfile 字段及其 migration（只在 V14）；其余约束不变：不改变 URL、Metadata、会员可写表单、发布/隐藏逻辑与公开查询边界。
+
+| 步骤 | 实施与验收 |
+| --- | --- |
+| V14 | Researcher 编号的数据与 Admin。新增 `MemberProfile.researcher_number`（可空正整数；数据库约束保证非空值唯一且不小于 1）与 migration `members.0002`；提供 `Researcher 07` 格式的显示属性；Admin change form 允许维护该字段（与 `is_hidden_by_admin`、`executive_role` 并列），列表显示并可按编号排序；会员可写表单仍排除该字段；Publish confirmation 的公开字段清单加入 Researcher 编号。验证：约束（重复、0、空值共存）、显示格式（`07`、`100`）、会员表单无法提交该字段、Admin 权限与修改、Publish confirmation 文案、`makemigrations --check`。本步不改公开页面版式。 |
+| V15 | Members 列表页。页头改为 `.page-heading`（`Club community`、H1、介绍，左对齐）；卡片按 7.10 restyle：金色细边框与顶部渐变细线、方形 Avatar、名称上方的 Researcher 标签（仅已分配时）、图纸式资料格；名称链接覆盖整张卡片，Focus 显示在卡片外框。更新依赖旧结构的测试。验证有/无编号、有/无 Avatar、长名称、空状态、排序、Heading 顺序、desktop/mobile、200% 放大、无 JavaScript、键盘 Focus、24px 触控目标、无溢出与对比度。 |
+| V16 | Member detail 与本人 Preview。顶部 `← Back to members`；信息面板（Avatar、`Member profile` · Researcher 标签、H1、`@username`、资料格）；`Bio` 与 `Links` 为报告分节，缺失内容的分节不显示且编号连续；Preview 共用同一组件（H2 版本保持 Heading 层级）。更新依赖旧结构的测试。验证有/无编号、Avatar、Bio、Links 的组合，Preview 与隐藏提示，未发布/隐藏 404 不变，Heading 顺序、desktop/mobile、200% 放大、键盘、外链属性、无溢出与对比度。 |
+| V17 | 第四轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交 Members 列表、详情与 Preview（含有/无编号与 Avatar）的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
+
 ## 十、Phase 6 概要：上线与运维
 
 **展开条件：** Phase 1–4 已验收，hosting、SMTP、media storage、monitoring 和数据保留决策已确认。
@@ -575,7 +589,8 @@ AI 开发者一次只执行一个步骤。每一步必须：
 1. `accounts.0001_initial` 创建 Custom User；
 2. `members.0001_initial` 创建 MemberProfile；
 3. `safety.0001_initial` 创建 RiskNoticeVersion；
-4. `events.0001_initial` 创建 Event，后续 migration 创建 EventRegistration。
+4. `events.0001_initial` 创建 Event，后续 migration 创建 EventRegistration；
+5. `members.0002` 为 MemberProfile 加入 `researcher_number`（Visual Refresh V14，项目负责人批准）。
 
 不得在 Custom User 建立前运行项目首次业务 migration。初始管理员使用明确的管理命令建立，不写入 migration。
 
