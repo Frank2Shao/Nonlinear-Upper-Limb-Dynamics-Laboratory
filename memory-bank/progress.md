@@ -1677,3 +1677,71 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已确认 V3，并批准更新 `architecture.md`：新增 3.51 节，更新 Home 模板、样式源及 Home/Accessibility 测试的文件职责。V4 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V4 — 已取消
+
+- 项目负责人决定取消 V4（Hero 近期活动信息表）：它只显示最近一场 Upcoming Event 的日期、时间与地点，与 Home 下方 `Upcoming Events` 区第一张活动卡片重复，且会增加已经较满的 Hero 的内容。
+- 原信息表的等宽信息行风格（等宽标签、`--color-subtle` 标签与 `--color-cream` 数值、`--color-gold-line` 细边框）并入 V6 活动卡片，具体样式在 V6 设计确认时定稿。
+- 文档更新：`design_document.md` 7.4 删除 Hero 信息表并说明近期活动只在 `Upcoming Events` 区展示，7.7 删除信息表文案，9.3 与 9.4 改为活动卡片信息行；`implementation.md` 将 V4 标为已取消（保留编号），V6 加入原信息表风格。
+- 本次只修改文档，没有修改代码、view 或测试。`architecture.md` 3.51 与 JetBrains Mono 文件说明中仍提到信息表，待下一次批准更新 `architecture.md` 时一并修正。V5 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V5 — Hero 背景彩蛋
+
+### 前置条件检查
+
+- V3 已确认，V4 已取消（见上节）；`design_document.md` 7.4、7.7、9.5 已包含彩蛋参数与标注文案；`hero-specimen-{560,1120}.webp` 由 V1 图片管线生成。
+- 开始时发现工作区已有未提交的照片替换：`static_src/images/home/hero-specimen-source.png`（仍为 1122 × 1402 RGBA，新 SHA-256 `94b50484…f2ed`）、`scripts/build_home_images.py` 中对应 hash 与两张重新生成的 WebP（560：40,286 bytes；1120：112,340 bytes）。视为项目负责人更新的照片，`images:check` 通过；`tests/test_home_images.py` 的固定 hash 随之更新。
+
+### 已完成
+
+- 按项目负责人要求删除 Hero 底部装饰文字 `Specimen 001 is kept in the dark. Bring a light.`（模板、`.home-hero__note` 样式、Home 页面测试与对比度检查）；图纸标题栏保留并靠右对齐。`design_document.md` 7.7 与 9.3 同步更新。
+- `apps/core/templates/core/home.html`：Hero 内新增 `aria-hidden="true"` 的 `.hero-specimen` 层，包含常态暗照片、光照下的照片，以及光照下的受力标注 SVG（握点金色虚线圆与圆点、一条直线与一条弯曲的带箭头发力线、两条细引线、`Fig. 01` / `Contact point` 与 `F = ?` / `Direction: nonlinear` 等宽标签）。
+- 指针交互使用 Hero 上的 Alpine 行内处理：`pointermove`（忽略 touch）只把指针相对 Hero 的坐标写入 `--light-x` / `--light-y` 并设置 `data-lit`，`pointerleave` 移除 `data-lit`；没有持续动画或定时器。
+- `static_src/css/site.css`：
+  - `.hero-specimen` 默认 `display: none`；只在 `@variant hero`（≥ 54rem，Logo 位于标题右侧）内的 `@media (hover: hover)` 中显示，照片 `image-set` 背景也只在该条件内声明，因此窄屏和不能悬停的设备不下载照片。
+  - 照片框位于 Hero 横向 36%、底边对齐、高 80%；常态不透明度 7%，光照下 85%。
+  - 光照层以 `radial-gradient(circle 12.5rem …)` 遮罩（0–55% 实心、至 200px 渐隐），`data-lit` 时不透明度 0 → 1（200ms，reduced motion 下即时）。
+  - 照片层位于文字与 Logo 之后（可被遮挡）；标注层在同一遮罩下位于内容之上，标签以暗色描边保持在文字或 Logo 上可读。整层 `pointer-events: none`。
+  - 标签字号约 11.6px（1440px 时）、字距 0.1em、大写，居中于握点上下，使完整标注落在 200px 光照内。
+- 测试：
+  - `tests/test_home_page.py`：彩蛋层对辅助技术隐藏并包含四条标注文案；HTML 不引用照片（只由 CSS 加载）；装饰文字已删除。
+  - `tests/browser/home-page.mjs`：desktop 下彩蛋层显示且不接收指针、照片已请求、光照默认熄灭、指针进入后两层光照点亮且坐标跟随指针、光照下三个 Hero 按钮中心仍命中按钮本身、指针离开后熄灭；mobile（390px）与 1280px 触屏（`hover: none`）均不显示该层且没有照片网络请求。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `409 passed`；`static:check`、Ruff lint/format、Django check、`makemigrations --check`、`git diff --check` 通过。
+- Development server 截图走查 1440、1920 与 900px：常态只见极淡轮廓；指针位于握点时照片、虚线圆、两条发力线、引线与两组标签完整出现在光照内；1440px 时标注位于文字栏与 Logo 之间，900px 时部分标签叠在 Logo 上，依靠暗色描边仍可读。
+
+### 当前边界与下一步门槛
+
+- 光照会暂时降低其下方 Hero 介绍文字的对比度（只在指针悬停期间）；对比度门禁在未点亮状态下检查。
+- 没有修改 view、URL、业务逻辑或 migration；未新增 JavaScript 文件或依赖。`architecture.md` 尚未更新（3.51 与字体说明中的信息表措辞也待一并修正），需要项目负责人批准；V6 尚未开始。
+
+### V5 修订：删除受力标注
+
+- 项目负责人走查后认为照片上叠加的受力标注不合适，要求全部删除：金色虚线圆与圆点、两条发力箭头、两条引线，以及 `Fig. 01` / `Contact point`、`F = ?` / `Direction: nonlinear` 标签。光照现在只显现照片本身。
+- 删除模板中的标注 SVG 与第二个光照层，以及对应 CSS（标注层、描边标签、`--marks` 修饰类）；照片、7% 常态、200px 柔边光照、指针跟随与熄灭、媒体条件和不下载规则不变。
+- 测试：Home 页面测试改为断言彩蛋层不含标注文案与 SVG；浏览器测试改为只有一个光照层。
+- 文档：`design_document.md` 7.4 删除受力标注描述并记录该决定，7.7 删除标注文案，9.3 等宽字体用途去掉彩蛋标注；`implementation.md` V5 行注明不叠加受力标注。
+- 同时确认：页面使用的两张 WebP 与当前磁盘上无粒子效果的照片源图一致；开发服务器下照片 URL 不带 hash，浏览器可能缓存旧版，强制刷新即可。
+
+### V5 修订：更换背景照片
+
+- 项目负责人再次替换 `static_src/images/home/hero-specimen-source.png`：新图为多名成员对抗场景的拼贴，1448 × 1086 横版，RGBA 但完全不透明（黑色底），SHA-256 `95bf86e1…63ec8`，2,153,981 bytes。
+- `scripts/build_home_images.py`：照片源图更新 hash 与尺寸，新增 `opaque` 标记——源图须保持完全不透明（不再要求透明通道），编码前转为 RGB；输出宽度改为 720 与 1440（适配约 640px 的显示宽度及 2x），生成 `hero-specimen-720.webp`（720 × 540，34,628 bytes）与 `hero-specimen-1440.webp`（1440 × 1080，88,894 bytes），删除旧的 560/1120 文件。`images:check` 通过。
+- `static_src/css/site.css`：照片框比例改为 1448 / 1086，仍按 36% 横向、底边对齐、高 80% 放置；照片四边各 12% 以遮罩渐隐，避免黑色底形成矩形边；`.hero-specimen` 增加 `overflow: hidden`，横版照片在较窄宽屏下超出 Hero 的部分被裁去，不产生横向滚动。
+- 测试：`tests/test_home_images.py` 更新照片 hash、尺寸与输出宽度，并以 `OPAQUE_SOURCES` 声明该源图不透明、生成物为 RGB；Home 页面测试改为检查 HTML 不引用 720/1440 照片。
+- `design_document.md` 7.4 与 9.6 改为描述当前照片拼贴；9.6 记录画面包含多名成员，按既有规则公开上线前需取得其同意（待项目负责人确认）。
+- 完整 pytest `409 passed`；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过；1440/1920/900px 截图确认常态极淡、光照显现照片、边缘无矩形痕迹。
+
+### V5 修订：照片铺满 Hero
+
+- 项目负责人指出横版照片被限制在 Hero 中间偏右下（原参数：横向 36%、底边对齐、高 80%），选择让照片铺满整个 Hero。
+- `static_src/css/site.css`：照片框改为 `inset: 0`，背景 `cover`、定位 `center 20%`（超出部分主要裁去照片底部的桌腿与地面）；四边 12% 渐隐、7% 常态、85% 光照下不透明度和 200px 光圈不变；不再需要 `.hero-specimen` 的 `overflow: hidden`。
+- 照片铺满约 1280 × 600px 时显示宽度约 1280px，720px 版本会被放大，因此改为只生成接近源图宽度的 `hero-specimen-1440.webp`（源图只有 1448px 宽，无法提供 2x），删除 720 版本；构建脚本与图片测试的输出宽度改为 `(1440,)`。
+- `design_document.md` 7.4 改为铺满 Hero 并记录该决定。
+- 1440/1920/900px 截图确认照片覆盖整个 Hero，光圈在标题、介绍文字、Logo 下都能显现照片，四边无矩形痕迹。
+
+### 项目负责人确认
+
+- 项目负责人已确认 V5（含删除装饰文字、删除受力标注、更换照片与铺满 Hero 的修订），并批准更新 `architecture.md`：新增 3.52 节（含 V4 取消），修正 3.49、3.51 中已过时的照片、装饰说明与信息表描述，更新照片源图与生成物、构建脚本、字体、Home 模板与样式及相关测试的文件职责。V6 尚未开始，需要项目负责人明确授权。

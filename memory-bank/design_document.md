@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 19 日
+**最后更新：** 2026 年 11 月 20 日
 
 ## 一、文档边界
 
@@ -402,14 +402,14 @@ Registered Member 选择 Cancel registration
 - Phase 2 的静态日程卡已被上述动态预览取代，首场 Training Session 由管理员在 Admin 录入；
 - Hero 视觉采用"实验报告"方向（设计稿：Design canvas `NULDL Home hero concepts` 的 `D · Refined`）：
   - 页面背景为深黑底叠加极淡的金色坐标网格；
-  - 左侧依次为 `Research Field` 金色标签与 Hero eyebrow、金色质感主标题、介绍文字、操作按钮，以及等宽字体的近期活动信息表（数据取自最近一场已发布的 Upcoming Event，没有近期活动时不显示该表）；
-  - 左栏采用单一栏宽（设计稿 `E · Aligned · three-line title`）：主标题固定三行 `Nonlinear` / `Upper Limb Dynamics` / `Laboratory`，桌面约 86px（`clamp(3rem, 6vw, 5.5rem)`），由第二行决定左栏宽度；标签与 eyebrow、介绍文字、按钮行和信息表全部对齐该栏宽，三个按钮等宽平分一行，按钮文字约 22px；
+  - 左侧依次为 `Research Field` 金色标签与 Hero eyebrow、金色质感主标题、介绍文字和操作按钮；近期活动只在下方 `Upcoming Events` 区展示，Hero 不另设近期活动信息表，以免与该区第一张活动卡片重复；
+  - 左栏采用单一栏宽（设计稿 `E · Aligned · three-line title`）：主标题固定三行 `Nonlinear` / `Upper Limb Dynamics` / `Laboratory`，桌面约 86px（`clamp(3rem, 6vw, 5.5rem)`），由第二行决定左栏宽度；标签与 eyebrow、介绍文字和按钮行全部对齐该栏宽，三个按钮等宽平分一行，按钮文字约 22px；
   - 左栏与 Logo 作为一组在 Hero 内居中，栏间距约 56px，Hero 内容最大宽度约 1360px；Logo 随剩余空间在 300–500px 之间伸缩；
   - 右侧展示完整透明背景 Logo（见 9.6）；
   - 页面底部以等宽字体显示图纸式标题栏（`Dwg no.`、`Scale`、`Est. 2026`）作为装饰；
-- Hero 背景彩蛋：项目负责人本人对抗照片经黑金调色、对手虚化处理后，置于文字与 Logo 之间偏下的背景层，可被文字和 Logo 遮挡，不为其单独预留布局空间；平时仅显示极淡轮廓，指针经过 Hero 时以跟随指针的圆形光照局部显现照片及受力标注；照片与标注均为装饰性内容，对辅助技术隐藏；
+- Hero 背景彩蛋：社团对抗照片拼贴（黑金调色、黑色底）铺满整个 Hero 的背景层，可被文字和 Logo 遮挡，不为其单独预留布局空间；平时仅显示极淡轮廓，指针经过 Hero 时以跟随指针的圆形光照局部显现照片；照片为装饰性内容，对辅助技术隐藏；
 - 当视口变窄、Logo 移至标题下方时，背景彩蛋整体不渲染，窄屏和手机布局不受其影响；无指针悬停能力的设备同样不显示光照效果；
-- 背景彩蛋参数：照片位于 Hero 横向约 36% 处、底边对齐、高约 80%；常态透明度约 7%；光照为半径约 200px 的柔边圆形，指针离开 Hero 后熄灭；受力标注只在光照范围内出现，包括握点处的金色虚线圆与圆点、两条带箭头的发力方向线（其中一条为弯曲路径，表达非线性方向）、两条细引线和两个等宽文字标签（文案见 7.7）；
+- 背景彩蛋参数：照片按比例覆盖整个 Hero（项目负责人在更换横版照片后决定，取代原先横向约 36%、底边对齐、高约 80% 的放置），超出部分主要裁去照片底部；常态透明度约 7%；照片四边渐隐融入页面底色；光照为半径约 200px 的柔边圆形，指针离开 Hero 后熄灭；光照只显现照片本身，不叠加受力标注、箭头、引线或文字标签（项目负责人在 V5 走查后决定删除原计划的受力标注）；
 - Logo 带极轻微的金色外发光（半径约 40px、不透明度约 12%），仅用于让透明背景 Logo 与暗底分离，不属于大范围发光；
 
 ### 7.5 Events
@@ -441,9 +441,7 @@ Registered Member 选择 Cancel registration
 - External action：`Join on USU`，链接 `https://usu.edu.au/clubs/armwrestling/`，Anonymous 与 authenticated member 都显示
 - Secondary action：`New to Armwrestling?`
 - Hero tag：`Research Field`（位于 eyebrow 前的金色标签）
-- Hero 信息表：`Next trial` 显示最近一场已发布 Upcoming Event 的日期与时间（悉尼时间）；`Location` 显示该 Event 的地点文字，未填写时显示 `Venue details to be confirmed`；`Subjects` 固定为 `All experience levels`；没有 Upcoming Event 时整张表不显示
-- 背景彩蛋标注文案：`Fig. 01` / `Contact point`；`F = ?` / `Direction: nonlinear`（对辅助技术隐藏）
-- 装饰文字：`Specimen 001 is kept in the dark. Bring a light.`；图纸标题栏 `Dwg no. NULDL-001`、`Scale 1:1`、`Est. 2026`。二者对辅助技术可读但不承载功能
+- 图纸标题栏：`Dwg no. NULDL-001`、`Scale 1:1`、`Est. 2026`，对辅助技术可读但不承载功能（原装饰文字 `Specimen 001 is kept in the dark. Bring a light.` 已由项目负责人删除）
 
 `New to Armwrestling?`
 
@@ -629,7 +627,7 @@ Registered Member 选择 Cancel registration
 - 正文、导航、表单和其他界面文字使用 `Inter`，字重范围为 `400–600`；
 - 活动日期、时间和状态可使用 `Barlow Condensed 600–700` 强化竞技节奏；
 - 正文不得使用压缩字体，长段内容以可读性优先；
-- 等宽字体 `JetBrains Mono`（`400–500`）用于"实验报告"语气的小号元素：Hero 标签与 eyebrow、信息表、背景彩蛋标注、图纸标题栏和装饰说明；统一大写，字号约 `11–12px`，字距约 `0.08–0.14em`；不用于正文、导航或按钮；
+- 等宽字体 `JetBrains Mono`（`400–500`）用于"实验报告"语气的小号元素：Hero 标签与 eyebrow、活动卡片的信息行和图纸标题栏；统一大写，字号约 `11–12px`，字距约 `0.08–0.14em`；不用于正文、导航或按钮；
 - Home Hero 主标题桌面约 `86px`，行高约 `0.92`；Hero 按钮文字约 `22px`（Inter，主按钮 `600`、次要按钮 `500`）；
 - 字号、行高和间距通过 Design Tokens 统一管理。
 
@@ -639,7 +637,7 @@ Registered Member 选择 Cancel registration
 - 按钮、状态标签和局部边框可以使用克制的切角细节：主按钮与次要按钮均切去左上角和右下角，Hero 按钮约 `10px`，Header 按钮约 `8px`；
 - 导航当前页使用金色文字加 `2px` 金色下划线；其他导航项为次要正文色；
 - 次要按钮为 `1px` 金色渐变描边包裹暖黑内芯，悬停时内芯变为深金褐色；
-- 信息表与图纸标题栏使用 `1px` 半透明金色边框、等宽字体，标签列为低优先级文字色、数值列为主要文字色；
+- 图纸标题栏使用 `1px` 半透明金色边框、等宽字体，标签列为低优先级文字色、数值列为主要文字色；活动卡片的日期、时间与地点信息行沿用同一风格，具体样式在 V6 设计确认时定稿；
 - 主要按钮为金色材质填充配近黑文字，悬停时一次性扫过高光（不循环，遵守 `prefers-reduced-motion`）；
 - 次要按钮使用金色描边，低优先级操作使用文字链接或中性样式；
 - Hover 和 Pressed 状态以短促的亮度、边框或轻微位移反馈表达，不使用大范围发光；
@@ -664,7 +662,7 @@ Registered Member 选择 Cancel registration
 - 肌肉、骨骼、关节轴线和受力轨迹等复杂插画在基础框架与功能稳定后统一设计；
 - 不直接复制网上的知名选手、比赛或媒体照片；
 - 第三方图片必须具有适用于网站宣传用途的明确许可，并保存授权记录；
-- 社团自行拍摄的成员照片应在公开使用前取得适当同意；Home Hero 背景彩蛋当前使用项目负责人本人照片，对手已虚化处理，第三方桌面贴纸已移除；照片正式版本后续统一处理；
+- 社团自行拍摄的成员照片应在公开使用前取得适当同意；Home Hero 背景彩蛋当前使用由项目负责人提供的社团对抗照片拼贴，画面包含多名成员，按本条在公开上线前需取得其适当同意；照片正式版本后续统一处理；
 - 后续活动照片应逐步补充，且不得成为活动信息可用性的前置条件。
 
 ### 9.7 内容原则

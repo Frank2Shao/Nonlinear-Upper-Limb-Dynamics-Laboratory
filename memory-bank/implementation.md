@@ -4,7 +4,7 @@
 **文档职责：** 为 AI 开发者提供可验证、可逐步执行的开发指令  
 **实施根目录：** `../`  
 **文档状态：** Progressive  
-**最后更新：** 2026 年 11 月 19 日
+**最后更新：** 2026 年 11 月 20 日
 
 ## 一、输入与优先级
 
@@ -523,9 +523,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V1 | 视觉 Tokens 与资产管线。更新 `static_src/css/site.css` 的 `@theme`：暖黑页面底色、金色材质色阶（暗部、主色、亮部）、正文与次要文字色、网格线色、等宽字体族；以 npm 锁定方式加入 JetBrains Mono 本地字体并纳入现有静态资产流程；扩展图片构建脚本，从 `static_src/images/brand/gold-texture-source.png` 与 `static_src/images/home/hero-specimen-source.png` 生成带校验的 WebP 变体，并纳入 `images:check`。验证 `static:check`、静态资产测试及对比度。 |
 | V2 | 全站共用组件。实现金色质感文字、金色材质填充、切角主按钮（悬停一次性高光，尊重 reduced motion）、金色渐变描边次要按钮、金色分隔线、等宽金色标签、坐标网格页面背景，以及使用这些组件的 Header 与 Footer。替换现有按钮样式时检查所有页面不回退。验证完整测试、全部页面 Accessibility 浏览器门禁（对比度、Focus、24px 触控目标、重排）及人工截图走查。 |
 | V3 | Home Hero 布局。按 7.4 的单一栏宽方案重建 Hero：三行金色标题、标签与 eyebrow、介绍、三个等宽按钮（`Join the Club` 仅 Anonymous、`Join on USU`、`New to Armwrestling?`）、右侧 Logo、底部图纸标题栏；窄屏时 Logo 移至标题下方。更新 Home 页面测试中依赖旧结构与旧文案的断言。验证 Anonymous 与 authenticated member 的按钮集合与顺序、desktop/mobile 布局和无 JavaScript 场景。 |
-| V4 | Hero 信息表。Home view 从既有 `public().upcoming()` 查询提供最近一场 Event，模板按 7.7 输出 `Next trial`、`Location`、`Subjects`，没有 Upcoming Event 时不渲染该表；时间统一以 `Australia/Sydney` 显示。验证有活动、无活动、地点为空、未发布活动不泄露及 Past 活动不显示。 |
-| V5 | Hero 背景彩蛋。照片与受力标注层仅在宽屏且支持悬停的媒体条件下渲染，照片通过 CSS 背景加载，窄屏和触屏设备不下载该图片；指针移动只更新 CSS 自定义属性驱动遮罩，不持续动画；整层对辅助技术隐藏且不拦截指针事件。验证 desktop 光照可见、mobile 无该图片网络请求、无 page error、文字与按钮可点击性不受影响。 |
-| V6 | Home 其余区块（`New to Armwrestling?` 卡片与 `Upcoming Events`）。先在设计画布确认样式，再以 V2 组件实施；活动卡片样式同时作用于 Events 列表。 |
+| V4 | **已取消。** 原计划在 Hero 中以信息表显示最近一场 Upcoming Event，与下方 `Upcoming Events` 区第一张活动卡片重复；项目负责人决定取消，其等宽信息行样式并入 V6 活动卡片。保留步骤编号。 |
+| V5 | Hero 背景彩蛋。照片层仅在宽屏且支持悬停的媒体条件下渲染（光照只显现照片，不叠加受力标注），照片通过 CSS 背景加载，窄屏和触屏设备不下载该图片；指针移动只更新 CSS 自定义属性驱动遮罩，不持续动画；整层对辅助技术隐藏且不拦截指针事件。验证 desktop 光照可见、mobile 无该图片网络请求、无 page error、文字与按钮可点击性不受影响。 |
+| V6 | Home 其余区块（`New to Armwrestling?` 卡片与 `Upcoming Events`）。先在设计画布确认样式，再以 V2 组件实施；活动卡片的日期、时间与地点采用原 V4 信息表风格（等宽标签、低优先级标签色与主要文字色数值、半透明金色细边框）；活动卡片样式同时作用于 Events 列表。 |
 | V7 | 第一轮质量门禁。完整测试、Ruff、`static:check`、Django checks、Phase 2–4 desktop/mobile smoke 与 Accessibility 门禁全部通过；提交 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后再更新 `architecture.md`。 |
 
 后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。
