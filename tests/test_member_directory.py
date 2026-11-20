@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from django.urls import reverse
 
@@ -132,6 +134,60 @@ def test_directory_uses_username_fallback_and_hides_not_specified_values(client)
     assert "Experience level" not in content
     assert "Preferred arm" not in content
     assert 'class="member-card__avatar-fallback"' in content
+
+
+def test_directory_page_heading_has_the_club_community_label(client):
+    content = client.get(reverse("members:list")).content.decode()
+
+    assert '<p class="label-mono">Club community</p>' in content
+    assert '<h1 id="members-title">Members</h1>' in content
+
+
+def test_directory_shows_researcher_tag_above_the_name_only_when_assigned(client):
+    create_profile(
+        username="numbered-member",
+        display_name="Numbered Member",
+        researcher_number=7,
+    )
+    create_profile(username="plain-member", display_name="Plain Member")
+
+    content = client.get(reverse("members:list")).content.decode()
+    numbered_card = re.search(
+        r'<article class="member-card"[^>]*>(?:(?!</article>).)*Numbered Member'
+        r"(?:(?!</article>).)*</article>",
+        content,
+        re.S,
+    ).group(0)
+    plain_card = re.search(
+        r'<article class="member-card"[^>]*>(?:(?!</article>).)*Plain Member'
+        r"(?:(?!</article>).)*</article>",
+        content,
+        re.S,
+    ).group(0)
+
+    assert content.count("Researcher 07") == 1
+    assert numbered_card.index("Researcher 07") < numbered_card.index("<h2")
+    assert "gold-tag" in numbered_card
+    assert "Researcher" not in plain_card
+    assert "gold-tag" not in plain_card
+
+
+def test_directory_does_not_reveal_numbers_of_non_public_profiles(client):
+    create_profile(
+        username="unpublished-numbered",
+        is_published=False,
+        researcher_number=3,
+    )
+    create_profile(
+        username="hidden-numbered",
+        is_hidden_by_admin=True,
+        researcher_number=4,
+    )
+
+    content = client.get(reverse("members:list")).content.decode()
+
+    assert "Researcher 03" not in content
+    assert "Researcher 04" not in content
 
 
 def test_directory_has_clear_empty_state(client):

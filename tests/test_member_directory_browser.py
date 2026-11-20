@@ -32,6 +32,7 @@ class MemberDirectoryBrowserTests(StaticLiveServerTestCase):
                 bio=f"Public bio for {display_name}.",
                 instagram_handle=f"{username.replace('-', '_')}.club",
                 other_social_url=f"https://example.com/{username}",
+                researcher_number=7 if username == "browser-alpha" else None,
             )
 
         run_node_scenario(

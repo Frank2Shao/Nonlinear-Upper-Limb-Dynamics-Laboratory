@@ -402,7 +402,7 @@
   .content-narrow code,
   .content-narrow strong,
   .member-card__content h2,
-  .member-card__details dd,
+  .member-facts dd,
   .definition-list dd {
     overflow-wrap: anywhere;
   }
@@ -1328,26 +1328,59 @@
     align-items: center;
   }
 
+  /* Members list: page heading, then a grid of cards. Each card has a gold
+     hairline frame and top edge, a square avatar, the optional Researcher tag
+     above the name, and drawing-style fact rows. */
+  .members-page {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3rem);
+  }
+
+  .members-page .page-heading {
+    margin-bottom: 0;
+  }
+
   .member-directory {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
     gap: 1rem;
   }
 
   .member-card {
+    position: relative;
     min-width: 0;
-    padding: 1rem;
+    padding: 1.25rem;
     display: grid;
-    grid-template-columns: clamp(7rem, 12vw, 10rem) minmax(0, 1fr);
-    align-content: start;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
     align-items: start;
-    gap: 1rem;
+    gap: 1.25rem;
+    border-color: var(--color-gold-line);
+    transition: border-color 150ms ease;
+  }
+
+  .member-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px -1px auto;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--color-gold-shadow),
+      var(--color-gold-highlight) 40%,
+      transparent
+    );
+  }
+
+  .member-card:hover {
+    border-color: color-mix(in srgb, var(--color-gold) 60%, transparent);
   }
 
   .member-card__avatar,
   .member-card__avatar-fallback {
     width: 100%;
     aspect-ratio: 1;
+    border-color: var(--color-gold-line);
+    border-radius: 0;
   }
 
   .member-card__avatar {
@@ -1355,43 +1388,85 @@
   }
 
   .member-card__avatar-fallback {
-    font-size: clamp(2.5rem, 7vw, 5rem);
+    background: var(--color-ink);
+    font-size: 3rem;
   }
 
   .member-card__content {
     min-width: 0;
+    display: grid;
+    gap: 0.625rem;
   }
 
+  .member-card__content > * {
+    margin: 0;
+  }
+
+  .member-card__tag {
+    justify-self: start;
+    white-space: nowrap;
+  }
+
+  .member-card__content h2 {
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  /* The name link covers the whole card, so the card is one target; focus is
+     drawn around the card instead of the name. */
   .member-card__name-link {
     color: var(--color-cream);
-    text-decoration-color: var(--color-gold);
-    text-decoration-thickness: 0.1em;
-    text-underline-offset: 0.18em;
+    text-decoration: none;
   }
 
-  .member-card__name-link:hover {
+  .member-card__name-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .member-card:hover .member-card__name-link {
     color: var(--color-gold-pale);
   }
 
-  .member-card__details {
+  .member-card__name-link:focus-visible {
+    outline: none;
+  }
+
+  .member-card:has(.member-card__name-link:focus-visible) {
+    outline: 0.2rem solid var(--color-gold-bright);
+    outline-offset: 0.2rem;
+  }
+
+  /* Drawing-style fact rows: one per line, label left and value right. */
+  .member-facts {
     margin: 0;
     display: grid;
+    gap: 1px;
+    border: 1px solid var(--color-gold-line);
+    background: var(--color-gold-line);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .member-facts > div {
+    display: flex;
+    justify-content: space-between;
     gap: 0.75rem;
+    padding: 0.4rem 0.625rem;
+    background: var(--color-ink);
   }
 
-  .member-card__details div {
-    display: grid;
-    gap: 0.1rem;
+  .member-facts dt {
+    color: var(--color-subtle);
   }
 
-  .member-card__details dt {
-    color: var(--color-muted);
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-
-  .member-card__details dd {
+  .member-facts dd {
     margin: 0;
+    color: var(--color-cream);
+    text-align: right;
   }
 
   .account-profile-summary {
@@ -1978,12 +2053,17 @@
     }
 
     .member-card {
-      grid-template-columns: 5.5rem minmax(0, 1fr);
-      padding: 0.75rem;
+      grid-template-columns: 5rem minmax(0, 1fr);
+      padding: 1rem;
+      gap: 1rem;
     }
 
     .member-card__avatar-fallback {
       font-size: 2.5rem;
+    }
+
+    .member-card__content h2 {
+      font-size: 1.5rem;
     }
 
     .definition-list dd:not(:last-child) {
