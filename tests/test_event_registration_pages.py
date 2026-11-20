@@ -102,6 +102,9 @@ def test_normal_post_registers_current_member_and_is_idempotent(
     detail = client.get(reverse("events:detail", args=[event.slug])).content.decode()
     assert "Registered" in detail
     assert ">Register</a>" not in detail
+    # "Registered" is a status label (not a warning banner) that keeps its role.
+    assert '<p class="event-status status-tag status-tag--open" role="status"' in detail
+    assert "status-banner" not in detail
 
 
 def test_htmx_post_replaces_registration_panel(client, registration_page_data):

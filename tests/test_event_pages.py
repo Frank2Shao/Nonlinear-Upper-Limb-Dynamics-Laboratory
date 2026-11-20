@@ -148,8 +148,26 @@ def test_detail_enforces_visibility_escaping_and_map_link(client):
     assert "&lt;script&gt;unsafe&lt;/script&gt;" in content
     assert 'href="https://maps.google.com/?q=synthetic"' in content
     assert 'rel="noopener noreferrer"' in content
-    assert "View location in map" in content
+    # The map link sits in the Location row, after the venue text.
+    assert re.search(
+        r"<dt>Location</dt> <dd>[^<]*<a href=\"https://maps\.google\.com/\?q=synthetic\""
+        r" target=\"_blank\" rel=\"noopener noreferrer\">\(View in Map\)</a></dd>",
+        content,
+    )
     assert "<form" not in content
+    # Back link at the top, heading status and the facts-and-registration panel.
+    assert (
+        f'<a class="back-link" href="{reverse("events:list")}">'
+        '<span aria-hidden="true">←</span> Back to events</a>'
+    ) in content
+    assert '<p class="status-tag">Registration unavailable</p>' in content
+    assert (
+        '<aside class="event-panel" aria-label="Event details and registration">'
+        in (content)
+    )
+    assert content.index('class="event-panel"') < content.index(
+        'class="event-detail__body"'
+    )
     assert (
         client.get(reverse("events:detail", args=["hidden-event"])).status_code == 404
     )
@@ -160,9 +178,9 @@ def test_event_views_provide_empty_states_and_without_map(client):
     assert "No events found." in client.get(reverse("events:list")).content.decode()
     public = event("no-map", timezone.now() + timedelta(days=1))
     response = client.get(reverse("events:detail", args=[public.slug]))
-    assert "View location in map" not in response.content.decode()
+    assert "(View in Map)" not in response.content.decode()
     assert re.search(
-        r'<p class="event-status" role="status"[^>]*>Registration unavailable</p>',
+        r'<p class="event-status status-tag" role="status"[^>]*>Registration unavailable</p>',
         response.content.decode(),
     )
     assert client.post(reverse("events:detail", args=[public.slug])).status_code == 405

@@ -68,8 +68,10 @@ try {
     "Register link",
   );
   await page.getByRole("link", { name: "Register", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Confirm registration" });
+  const dialog = page.getByRole("dialog", { name: "Confirm registration Risk Notice", exact: true });
   await dialog.waitFor();
+  // "Risk Notice" is the heading; the action it confirms is the label above it.
+  await dialog.getByRole("heading", { name: "Risk Notice", level: 2 }).waitFor();
   await assertDialogCentered(dialog, "Confirm registration dialog");
   await dialog.getByText("Participation in armwrestling is voluntary.").waitFor();
   await assertFocusIndicator(

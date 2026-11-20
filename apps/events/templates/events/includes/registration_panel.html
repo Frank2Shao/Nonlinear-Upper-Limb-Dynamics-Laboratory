@@ -17,9 +17,9 @@ Registration area for one event. Contract between the layers:
   {% if focus_status %}data-focus-status{% endif %}
 >
   {% if event.is_past %}
-    <p class="event-status" role="status" tabindex="-1" x-ref="status">Past event</p>
+    <p class="event-status status-tag" role="status" tabindex="-1" x-ref="status">Past event</p>
   {% elif registration %}
-    <p class="status-banner" role="status" tabindex="-1" x-ref="status">Registered</p>
+    <p class="event-status status-tag status-tag--open" role="status" tabindex="-1" x-ref="status">Registered</p>
     {% if can_cancel %}
       <a
         class="button button--secondary"
@@ -40,15 +40,16 @@ Registration area for one event. Contract between the layers:
       x-ref="status"
       @click.prevent="$refs.registrationDialog.showModal()"
     >Register</a>
-    <dialog class="event-registration-dialog" x-ref="registrationDialog" aria-labelledby="registration-dialog-title">
+    <dialog class="event-registration-dialog" x-ref="registrationDialog" aria-labelledby="registration-dialog-action registration-dialog-title">
       <div class="event-registration-dialog__content">
-        <h2 id="registration-dialog-title">Confirm registration</h2>
+        <p class="event-registration-dialog__action" id="registration-dialog-action">Confirm registration</p>
+        <h2 id="registration-dialog-title">Risk Notice</h2>
         {% include "events/includes/registration_form.html" with mode="dialog" %}
       </div>
     </dialog>
   {% elif registration_available and not request.user.is_authenticated %}
     <a class="button" x-ref="status" href="{% url 'account_login' %}?next={% url 'events:register' event.slug %}">Log in to register</a>
   {% else %}
-    <p class="event-status" role="status" tabindex="-1" x-ref="status">Registration unavailable</p>
+    <p class="event-status status-tag" role="status" tabindex="-1" x-ref="status">Registration unavailable</p>
   {% endif %}
 </section>

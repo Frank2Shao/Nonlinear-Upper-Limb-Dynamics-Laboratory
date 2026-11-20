@@ -67,7 +67,7 @@ try {
     await page.getByRole("link", { name: "Upcoming", exact: true }).click();
     await page.getByRole("link", { name: "Synthetic Training Session", exact: true }).click();
     await page.getByRole("heading", { name: "Synthetic Training Session", level: 1 }).waitFor();
-    assert.equal(await page.getByRole("link", { name: "View location in map" }).getAttribute("href"), "https://maps.google.com/?q=synthetic");
+    assert.equal(await page.getByRole("link", { name: "(View in Map)", exact: true }).getAttribute("href"), "https://maps.google.com/?q=synthetic");
     assert.equal(await page.locator("form").count(), 0);
     await assertPageStructure(page, `Event detail ${JSON.stringify(options)}`);
     await assertNoHorizontalOverflow(page, `Event detail ${JSON.stringify(options)}`);

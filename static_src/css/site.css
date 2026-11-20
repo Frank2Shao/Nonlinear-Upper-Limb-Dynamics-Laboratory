@@ -769,9 +769,6 @@
   }
 
   .event-facts {
-    grid-area: facts;
-    align-self: start;
-    justify-self: start;
     display: flex;
     flex-wrap: wrap;
     margin: 0;
@@ -803,6 +800,12 @@
   }
 
   /* Status and details action share one width (the wider of the two). */
+  .event-card .event-facts {
+    grid-area: facts;
+    align-self: start;
+    justify-self: start;
+  }
+
   .event-card__aside {
     grid-area: aside;
     display: grid;
@@ -849,8 +852,128 @@
     margin-top: 1.5rem;
   }
 
+  /* Event detail: a small back link, the centred title with its status, then
+     one band with the facts row and the centred registration action, then the
+     description in a centred column. */
+  /* Vertical padding keeps a 24px+ touch target for the small text. */
+  .back-link {
+    display: inline-flex;
+    gap: 0.5rem;
+    margin-block: -0.5rem 1.5rem;
+    padding-block: 0.5rem;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .back-link:hover {
+    color: var(--color-gold);
+  }
+
+  /* "Club activity · [status]" above the title. */
+  .event-detail-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .event-detail-kicker > * {
+    margin: 0;
+  }
+
+  .event-detail-kicker__separator {
+    color: var(--color-subtle);
+  }
+
+  .page-heading--center {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .page-heading--center .event-detail-kicker {
+    justify-content: center;
+  }
+
+  .event-detail {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  /* The column is centred; paragraphs stay left-aligned for readability. */
+  .event-detail__body {
+    width: min(100%, 48rem);
+    margin-inline: auto;
+    color: var(--color-muted);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  .event-detail__body p {
+    margin: 0;
+  }
+
+  .event-panel {
+    --button-ground: var(--color-surface);
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border: 1px solid var(--color-gold-line);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  .event-panel::before {
+    content: "";
+    height: 2px;
+    margin: -1.5rem -1.5rem 0;
+    background: linear-gradient(
+      90deg,
+      var(--color-gold-shadow),
+      var(--color-gold-highlight) 40%,
+      transparent
+    );
+  }
+
+  /* Facts as cells that wrap whole and stretch to fill each line: the 1px gaps
+     over a gold ground draw the dividers, so a wrapped row keeps its lines. */
+  .event-panel .event-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    background: var(--color-gold-line);
+  }
+
+  .event-panel .event-facts > div {
+    flex: 1 1 16rem;
+    background: var(--color-ink);
+  }
+
+  .event-panel .event-facts > div + div {
+    border-left: 0;
+  }
+
+  /* Registration area under the facts: centred, the action or status filling it. */
   .event-registration {
-    margin-top: 1.5rem;
+    justify-self: center;
+    display: grid;
+    gap: 0.75rem;
+    width: min(100%, 20rem);
+  }
+
+  .event-registration > * {
+    margin: 0;
+  }
+
+  .event-registration > .button {
+    width: 100%;
+  }
+
+  .event-registration > .status-tag {
+    padding-block: 0.6rem;
   }
 
   .event-registration-dialog {
@@ -860,9 +983,10 @@
     max-height: calc(100vh - 2rem);
     margin: auto;
     padding: 0;
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--color-gold-line);
     border-radius: var(--radius-card);
     background: var(--color-surface);
+    box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 60%);
     color: var(--color-cream);
     --button-ground: var(--color-surface);
   }
@@ -875,11 +999,50 @@
     padding: clamp(1.25rem, 4vw, 2rem);
   }
 
+  /* The dialog's heading is "Risk Notice"; the action it confirms sits above
+     it as a large mono label. */
+  .event-registration-dialog__action {
+    margin: 0 0 0.5rem;
+    color: var(--color-gold);
+    font-family: var(--font-mono);
+    font-size: 1.375rem;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .event-registration-dialog h2 {
+    margin-top: 0;
+    font-size: clamp(2.25rem, 6vw, 2.75rem);
+    line-height: 1;
+  }
+
+  /* Risk Notice text in the dialog and on the no-JavaScript confirmation page. */
   .risk-notice-copy {
     max-height: min(55vh, 32rem);
-    margin-block: 1rem;
-    padding-right: 0.5rem;
+    margin-block: 1.25rem;
+    padding: 1rem 1.25rem;
     overflow-y: auto;
+    border: 1px solid var(--color-gold-line);
+    background: var(--color-ink);
+    color: var(--color-muted);
+  }
+
+  .notice-version {
+    color: var(--color-subtle);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .notice-version strong {
+    color: var(--color-cream);
+    font-weight: 400;
+  }
+
+  .confirm-page__event {
+    margin-bottom: 0.5rem;
   }
 
   .event-registration__actions {
@@ -1596,12 +1759,12 @@
       font-size: 2.25rem;
     }
 
-    .event-facts {
+    .event-card .event-facts {
       display: grid;
       justify-self: stretch;
     }
 
-    .event-facts > div + div {
+    .event-card .event-facts > div + div {
       border-top: 1px solid var(--color-gold-line);
       border-left: 0;
     }

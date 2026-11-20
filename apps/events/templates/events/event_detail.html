@@ -5,19 +5,42 @@
 {% block content %}
   <div class="public-page">
     <section class="public-section" aria-labelledby="event-title">
-      <p class="eyebrow">Club activity</p>
-      <h1 id="event-title">{{ event.title }}</h1>
-      <div class="content-card">
-        {% timezone "Australia/Sydney" %}
-          <p><strong>Starts:</strong> <time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"j F Y, g:i a" }}</time></p>
-          <p><strong>Ends:</strong> <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"j F Y, g:i a" }}</time></p>
-        {% endtimezone %}
-        <p><strong>Venue:</strong> {{ event.venue_text }}</p>
-        {% if event.map_url %}<p><a href="{{ event.map_url }}" target="_blank" rel="noopener noreferrer">View location in map</a></p>{% endif %}
-        <p>{{ event.description|linebreaksbr }}</p>
-        {% include "events/includes/registration_panel.html" %}
+      <a class="back-link" href="{% url 'events:list' %}"><span aria-hidden="true">←</span> Back to events</a>
+      <div class="page-heading page-heading--center">
+        <div class="event-detail-kicker">
+          <p class="label-mono">Club activity</p>
+          <span class="event-detail-kicker__separator" aria-hidden="true">·</span>
+          {% if event.is_past %}
+            <p class="status-tag">Past event</p>
+          {% elif registration_available %}
+            <p class="status-tag status-tag--open">Registration open</p>
+          {% else %}
+            <p class="status-tag">Registration unavailable</p>
+          {% endif %}
+        </div>
+        <h1 id="event-title">{{ event.title }}</h1>
       </div>
-      <p class="event-detail-actions"><a class="button button--secondary" href="{% url 'events:list' %}">Back to events</a></p>
+      {# One band under the title: the facts row, then the registration action; the description follows. #}
+      <div class="event-detail">
+        <aside class="event-panel" aria-label="Event details and registration">
+          {% timezone "Australia/Sydney" %}
+            <dl class="event-facts">
+              {% if event.starts_at|date:"Ymd" == event.ends_at|date:"Ymd" %}
+                <div><dt>Date</dt> <dd>{{ event.starts_at|date:"l j F Y" }}</dd></div>
+                <div><dt>Time</dt> <dd><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"g:i a" }}</time> – <time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"g:i a" }}</time></dd></div>
+              {% else %}
+                <div><dt>Starts</dt> <dd><time datetime="{{ event.starts_at|date:'c' }}">{{ event.starts_at|date:"l j F Y, g:i a" }}</time></dd></div>
+                <div><dt>Ends</dt> <dd><time datetime="{{ event.ends_at|date:'c' }}">{{ event.ends_at|date:"l j F Y, g:i a" }}</time></dd></div>
+              {% endif %}
+              <div><dt>Location</dt> <dd>{{ event.venue_text }}{% if event.map_url %} <a href="{{ event.map_url }}" target="_blank" rel="noopener noreferrer">(View in Map)</a>{% endif %}</dd></div>
+            </dl>
+          {% endtimezone %}
+          {% include "events/includes/registration_panel.html" %}
+        </aside>
+        <div class="event-detail__body">
+          <p>{{ event.description|linebreaksbr }}</p>
+        </div>
+      </div>
     </section>
   </div>
 {% endblock %}
