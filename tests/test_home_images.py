@@ -11,6 +11,7 @@ SOURCE_DIRECTORY = PROJECT_ROOT / "static_src" / "images"
 GENERATED_DIRECTORY = PROJECT_ROOT / "static" / "images"
 
 # (source, SHA-256, size, mode, generated pattern, generated widths)
+# An RGBA source listed in OPAQUE_SOURCES has no transparency and is encoded as RGB.
 APPROVED_SOURCES = {
     "logo": (
         "brand/nuldl-club-logo-transparent.png",
@@ -38,13 +39,14 @@ APPROVED_SOURCES = {
     ),
     "hero-specimen": (
         "home/hero-specimen-source.png",
-        "0fa0ed296310f24b07297a492a7b6dd7366d21dbe5d67351f039c864526431c9",
-        (1122, 1402),
+        "95bf86e14599468e3dc55497681be12c573b2b9775ceff3bd823e3f530e63ec8",
+        (1448, 1086),
         "RGBA",
         "home/hero-specimen-{width}.webp",
-        (560, 1120),
+        (1440,),
     ),
 }
+OPAQUE_SOURCES = {"hero-specimen"}
 
 
 @pytest.mark.parametrize("name", APPROVED_SOURCES)
@@ -58,13 +60,16 @@ def test_approved_image_sources_are_preserved_exactly(name):
         assert image.size == size
         assert image.mode == mode
         if mode == "RGBA":
-            assert image.getchannel("A").getextrema() == (0, 255)
+            expected_alpha = (255, 255) if name in OPAQUE_SOURCES else (0, 255)
+            assert image.getchannel("A").getextrema() == expected_alpha
 
 
 @pytest.mark.parametrize("name", APPROVED_SOURCES)
 def test_generated_variants_are_compressed_webp_images_without_metadata(name):
     relative_path, _, size, mode, pattern, widths = APPROVED_SOURCES[name]
     source = SOURCE_DIRECTORY / relative_path
+    if name in OPAQUE_SOURCES:
+        mode = "RGB"
 
     for width in widths:
         generated = GENERATED_DIRECTORY / pattern.format(width=width)

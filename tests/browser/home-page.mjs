@@ -11,6 +11,66 @@ const baseUrl = requireEnvironment("NULDL_LIVE_SERVER_URL");
 const externalRequests = [];
 const pageErrors = [];
 const browser = await chromium.launch({ headless: true });
+const isSpecimenPhoto = (url) => new URL(url).pathname.includes("/images/home/hero-specimen-");
+
+// The background easter egg: a faint photo that a pointer-following light
+// reveals, without blocking the Hero actions.
+const assertSpecimenLight = async (page, specimenRequests) => {
+  const layer = page.locator(".hero-specimen");
+  const lights = page.locator(".hero-specimen__light");
+  assert.equal(await lights.count(), 1);
+  assert.equal(await layer.getAttribute("aria-hidden"), "true");
+  assert.deepEqual(
+    await layer.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return [style.display, style.pointerEvents];
+    }),
+    ["block", "none"],
+  );
+  assert.ok(specimenRequests.length > 0, "Desktop Hero must load the specimen photo.");
+  const opacities = () =>
+    lights.evaluateAll((elements) => elements.map((element) => getComputedStyle(element).opacity));
+  assert.deepEqual(await opacities(), ["0"], "The light must be off until the pointer enters.");
+
+  const figure = await page.locator(".hero-specimen__figure--dim").boundingBox();
+  const hero = await page.locator(".home-hero").boundingBox();
+  const pointer = { x: figure.x + figure.width * 0.57, y: figure.y + figure.height * 0.43 };
+  await page.mouse.move(pointer.x, pointer.y);
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll(".hero-specimen__light")].every(
+        (element) => getComputedStyle(element).opacity === "1",
+      ),
+  );
+  const position = await page.locator(".home-hero").evaluate((element) => [
+    element.style.getPropertyValue("--light-x"),
+    element.style.getPropertyValue("--light-y"),
+  ]);
+  assert.deepEqual(
+    position.map((value) => Math.round(Number.parseFloat(value))),
+    [Math.round(pointer.x - hero.x), Math.round(pointer.y - hero.y)],
+    "The light must follow the pointer.",
+  );
+
+  const blocked = await page.locator(".home-hero__actions a").evaluateAll((links) =>
+    links
+      .filter((link) => {
+        const box = link.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+        return !link.contains(hit);
+      })
+      .map((link) => link.textContent.trim()),
+  );
+  assert.deepEqual(blocked, [], "The specimen layer must not block the Hero actions.");
+
+  await page.mouse.move(hero.x + hero.width / 2, hero.y + hero.height + 40);
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll(".hero-specimen__light")].every(
+        (element) => getComputedStyle(element).opacity === "0",
+      ),
+  );
+};
 
 const assertHomeLayout = async (page, label) => {
   const logo = page.locator(".home-hero__logo");
@@ -81,8 +141,12 @@ try {
       externalRequests,
     );
     const page = await context.newPage();
+    const specimenRequests = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.goto(baseUrl);
+    page.on("request", (request) => {
+      if (isSpecimenPhoto(request.url())) specimenRequests.push(request.url());
+    });
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
 
     await page
       .getByRole("heading", {
@@ -123,6 +187,8 @@ try {
       assert.ok(beginners.top > signup.bottom);
       assert.equal(beginners.left, signup.left);
       assert.ok(hero.logo.top >= hero.content.bottom, "Mobile logo must sit below the title.");
+      assert.equal(await page.locator(".hero-specimen").isVisible(), false);
+      assert.deepEqual(specimenRequests, [], "Mobile must not download the specimen photo.");
     } else {
       assert.equal(beginners.top, signup.top);
       assert.ok(
@@ -142,6 +208,7 @@ try {
       assert.ok(Math.abs(hero.lines[1].width - hero.content.width) < 1);
       assert.ok(hero.logo.left > hero.content.right, "Desktop logo must sit beside the title.");
       assert.ok(hero.logo.width >= 300 && hero.logo.width <= 500);
+      await assertSpecimenLight(page, specimenRequests);
       for (const selector of [".site-nav", ".page-shell", ".site-footer__inner"]) {
         const box = await page.locator(selector).boundingBox();
         assert.equal(box.width, 80 * 16, `${selector} should share the 80rem content width.`);
@@ -154,6 +221,24 @@ try {
     await page.waitForURL("**/accounts/signup/");
     await context.close();
   }
+
+  // A wide touch screen cannot hover, so it gets neither the layer nor the photo.
+  const touchContext = await createLocalContext(
+    browser,
+    baseUrl,
+    { viewport: { width: 1280, height: 800 }, hasTouch: true, isMobile: true },
+    externalRequests,
+  );
+  const touchPage = await touchContext.newPage();
+  const touchRequests = [];
+  touchPage.on("request", (request) => {
+    if (isSpecimenPhoto(request.url())) touchRequests.push(request.url());
+  });
+  await touchPage.goto(baseUrl, { waitUntil: "networkidle" });
+  assert.equal(await touchPage.evaluate(() => matchMedia("(hover: hover)").matches), false);
+  assert.equal(await touchPage.locator(".hero-specimen").isVisible(), false);
+  assert.deepEqual(touchRequests, [], "Touch screens must not download the specimen photo.");
+  await touchContext.close();
 
   const noJsContext = await createLocalContext(
     browser,

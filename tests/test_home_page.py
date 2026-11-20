@@ -113,8 +113,21 @@ def test_home_hero_uses_three_title_lines_tag_and_drawing_title_block(client):
     ]
     text = visible_text(content)
     assert "Research Field Studying chaotic upper-limb interactions since 2026." in text
-    assert "Specimen 001 is kept in the dark. Bring a light." in text
+    assert "Specimen 001" not in text
     assert "Dwg no. NULDL-001 Scale 1:1 Est. 2026" in text
     # The title block is decorative but stays readable by assistive technology.
     title_block = content[content.index('class="home-hero__titleblock"') :]
     assert 'aria-hidden="true"' not in title_block[: title_block.index("</section>")]
+
+
+def test_home_hero_specimen_layer_is_decorative_and_loaded_only_by_css(client):
+    response = client.get(reverse("home"))
+
+    content = response.content.decode()
+    assert '<div class="hero-specimen" aria-hidden="true">' in content
+    # The light reveals only the photo: no force annotations or labels on it.
+    for label in ("Fig. 01", "Contact point", "F = ?", "Direction: nonlinear"):
+        assert label not in content
+    assert "<svg" not in content[content.index('class="hero-specimen"') :][:2000]
+    # The photo is a CSS background so narrow and touch screens never request it.
+    assert "hero-specimen-1440.webp" not in content

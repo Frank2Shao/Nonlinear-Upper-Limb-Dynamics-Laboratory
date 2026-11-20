@@ -211,7 +211,6 @@ try {
     [".home-hero__intro", 4.5],
     [".gold-tag", 4.5],
     [".home-hero__tagline .label-mono", 4.5],
-    [".home-hero__note", 4.5],
     [".drawing-block dt", 4.5],
     [".drawing-block dd", 4.5],
     ["main .button", 4.5],

@@ -35,6 +35,8 @@ class ImageSource:
     alpha_quality: int | None = None
     # Blend strength towards GOLD_HIGHLIGHT, weighted by each pixel's darkness.
     lift_darks: float | None = None
+    # An RGBA source without any transparency, encoded as RGB.
+    opaque: bool = False
 
     def target(self, width: int) -> Path:
         return OUTPUT_DIRECTORY / self.output.format(width=width)
@@ -81,14 +83,16 @@ SOURCES = (
     ImageSource(
         label="Hero specimen photo",
         source=SOURCE_DIRECTORY / "home" / "hero-specimen-source.png",
-        sha256="0fa0ed296310f24b07297a492a7b6dd7366d21dbe5d67351f039c864526431c9",
-        size=(1122, 1402),
+        sha256="95bf86e14599468e3dc55497681be12c573b2b9775ceff3bd823e3f530e63ec8",
+        size=(1448, 1086),
         mode="RGBA",
         output="home/hero-specimen-{width}.webp",
-        # 1x and 2x for the wide-screen-only Hero background layer.
-        widths=(560, 1120),
+        # Covers the whole wide-screen Hero (up to 80rem wide), so one width
+        # close to the source suffices.
+        widths=(1440,),
         quality=78,
-        alpha_quality=80,
+        # The photo sits on its own black ground; the page fades its edges.
+        opaque=True,
     ),
 )
 
@@ -105,6 +109,8 @@ def lift_dark_areas(image: Image.Image, strength: float) -> Image.Image:
 
 
 def render_variant(image: Image.Image, spec: ImageSource, width: int) -> bytes:
+    if spec.opaque:
+        image = image.convert("RGB")
     if spec.lift_darks is not None:
         image = lift_dark_areas(image, spec.lift_darks)
     height = round(image.height * width / image.width)
@@ -136,8 +142,10 @@ def load_source(spec: ImageSource) -> Image.Image:
     if image.format != "PNG" or image.size != spec.size or image.mode != spec.mode:
         raise RuntimeError(f"The approved {spec.label} must remain a {expected}.")
     image.load()
-    if spec.mode == "RGBA" and image.getchannel("A").getextrema() != (0, 255):
-        raise RuntimeError(f"The approved {spec.label} must retain its transparency.")
+    alpha = image.getchannel("A").getextrema() if spec.mode == "RGBA" else None
+    if alpha is not None and alpha != ((255, 255) if spec.opaque else (0, 255)):
+        state = "stay fully opaque" if spec.opaque else "retain its transparency"
+        raise RuntimeError(f"The approved {spec.label} must {state}.")
     return image
 
 

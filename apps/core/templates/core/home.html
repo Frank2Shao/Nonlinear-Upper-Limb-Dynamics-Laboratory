@@ -8,7 +8,20 @@
 
 {% block content %}
   <div class="public-page home-page">
-    <section class="home-hero" aria-labelledby="home-title">
+    {# The pointer only moves two CSS custom properties; the photo layer exists only on wide, hover-capable screens (see .hero-specimen). #}
+    <section
+      class="home-hero"
+      aria-labelledby="home-title"
+      x-data
+      x-on:pointermove="if ($event.pointerType !== 'touch') { const box = $el.getBoundingClientRect(); $el.style.setProperty('--light-x', `${$event.clientX - box.left}px`); $el.style.setProperty('--light-y', `${$event.clientY - box.top}px`); $el.dataset.lit = '' }"
+      x-on:pointerleave="delete $el.dataset.lit"
+    >
+      <div class="hero-specimen" aria-hidden="true">
+        <div class="hero-specimen__figure hero-specimen__figure--dim"></div>
+        <div class="hero-specimen__light">
+          <div class="hero-specimen__figure"></div>
+        </div>
+      </div>
       <div class="home-hero__main">
         <div class="home-hero__content">
           <p class="home-hero__tagline">
@@ -48,7 +61,6 @@
         </picture>
       </div>
       <div class="home-hero__titleblock">
-        <p class="home-hero__note">Specimen 001 is kept in the dark. Bring a light.</p>
         <dl class="drawing-block">
           <div><dt>Dwg no.</dt> <dd>NULDL-001</dd></div>
           <div><dt>Scale</dt> <dd>1:1</dd></div>
