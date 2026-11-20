@@ -1791,3 +1791,27 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已确认 V6（含状态标签与按钮修订），并批准更新 `architecture.md`：新增 3.53 节，注明 3.38 中 `.event-card` 的变化，并更新样式源、Home 与 Events 模板及相关测试的文件职责。V7（第一轮质量门禁）尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V7 — 第一轮质量门禁
+
+### 前置条件检查
+
+- V1–V3、V5–V6 已由项目负责人确认并提交推送（V4 已取消）；工作区干净，Docker PostgreSQL healthy。
+
+### 验证结果
+
+- `scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中完整通过（`Phase 4 end-to-end acceptance passed.`）：
+  - 共享门禁 `scripts/verify_project.py`：`npm ci`、Chromium 安装、`static:build`、`static:check`、`css:watch:smoke`、Ruff lint/format、`makemigrations --check`（No changes detected）、Django check、干净 PostgreSQL 上的完整 pytest（`409 passed`，含全部 Phase 1–4 Playwright 与 Accessibility 门禁）、branch coverage `95%`、Production `check --deploy --fail-level WARNING`（无问题）与 manifest `collectstatic`。
+  - 真实 Development server 上的 Phase 2、Phase 3、Phase 4 desktop/mobile smoke 全部通过。
+- 验收后工作区仍然干净（门禁没有改动任何已跟踪文件）。
+- 走查截图：Development server 上 1440 × 900 与 390 × 844 的全页截图，覆盖 Home、About、Beginners & Safety、Events 列表、Event detail、Members、Log in、Sign up，共 16 张；均无横向溢出与 page error。截图保存在临时目录，不进入仓库，已提交项目负责人走查。
+
+### 当前边界与下一步门槛
+
+- Visual Refresh 第一轮只改了全站共用组件（Header、Footer、按钮、颜色、字体）、Home 与 Events 列表卡片；About、Beginners & Safety、Event detail、Members、认证与 Account、错误页仍是原有布局，只继承了新的颜色、字体与按钮。按 `implementation.md` 九点五，后续按 Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500 的顺序逐页设计确认后再展开步骤。
+- 截图中 Members 的会员与 Events 的活动来自 Development database 中既有的合成数据。
+- 本步没有修改代码。`architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V7 截图并确认第一轮 Visual Refresh 完成，批准更新 `architecture.md`：新增 3.54 节并更新页头状态。后续页面（Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500）需要项目负责人先确认设计，再展开为具体步骤。

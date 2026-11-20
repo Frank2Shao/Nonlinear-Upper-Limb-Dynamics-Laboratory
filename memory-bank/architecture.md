@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 20 日
-**对应进度：** Visual Refresh, Step V6
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（V1–V3、V5–V6 完成，V4 已取消），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V7
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；其余页面待逐页设计），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -641,6 +641,14 @@ ASGI / WSGI ───────────→ config.settings.production
 - 删除 `.session-card`、`.home-events-action`、`.home-page .content-card h3` 与旧 `.event-card h3` 规则。
 - 测试：状态标签断言改为新 class；Events 浏览器测试改为 `View all events` 位于卡片上方、精确匹配标题链接，并断言状态标签与按钮等宽且无背景图；Home 浏览器测试改为 `.feature-card h3` 22px；Accessibility 门禁新增卡片编号、卡片正文与空状态对比度。
 - 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest（含全部 Playwright 与 Accessibility 门禁）`409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；Home 与 Events 列表 1440/390px 截图走查经项目负责人确认。
+
+### 3.54 Visual Refresh V7：第一轮质量门禁
+
+- 第一轮视觉优化（V1–V3、V5–V6）以既有的 `scripts/accept_phase_4.py` 作为质量门禁，没有新增脚本：它在 OS 临时目录建立全新 uv environment，执行共享门禁 `scripts/verify_project.py`（锁定 npm/Chromium 安装、静态资源 build/check/watch、Ruff、migration drift、Django check、干净 PostgreSQL branch coverage 测试、Production deploy check、manifest `collectstatic`），再在真实 Development server 上运行 Phase 2–4 desktop/mobile smoke。
+- 结果：完整 pytest `409 passed`、branch coverage `95%`，`check --deploy --fail-level WARNING` 无问题，三组 smoke 全部通过；验收后工作区没有任何已跟踪文件变化。
+- 人工走查使用 Development server 上 1440 × 900 与 390 × 844 的全页截图，覆盖 Home、About、Beginners & Safety、Events 列表、Event detail、Members、Log in 与 Sign up，均无横向溢出与 page error，经项目负责人确认。
+- 第一轮的范围边界：全站共用 tokens、字体、按钮、Header/Footer，以及 Home 与 Events 列表卡片已经按新视觉实施；About、Beginners & Safety、Event detail、Members、认证与 Account、错误页仍沿用原有布局，只继承新的颜色、字体与按钮。后续按 `implementation.md` 九点五列出的页面顺序逐页设计确认后再展开步骤。
+- 本步没有修改代码、view、URL、业务逻辑或 migration。
 
 ## 四、当前文件职责
 
