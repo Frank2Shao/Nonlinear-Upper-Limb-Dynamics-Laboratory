@@ -4,7 +4,11 @@ from typing import ClassVar
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import FileExtensionValidator, RegexValidator
+from django.core.validators import (
+    FileExtensionValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.models import Exists, OuterRef
 from django.db.models.functions import Lower, Trim
@@ -148,6 +152,17 @@ class MemberProfile(models.Model):
     is_published = models.BooleanField(default=False)
     is_hidden_by_admin = models.BooleanField(default=False)
     executive_role = models.CharField(max_length=100, null=True, blank=True)
+    researcher_number = models.PositiveIntegerField(
+        "Researcher number",
+        null=True,
+        blank=True,
+        unique=True,
+        validators=[MinValueValidator(1)],
+        help_text=(
+            'Assigned by the club. Shown publicly as "Researcher 07" while the '
+            "profile is published. Leave blank for no label."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -173,6 +188,11 @@ class MemberProfile(models.Model):
                 | models.Q(other_social_url__startswith="https://"),
                 name="members_profile_social_url_https",
             ),
+            models.CheckConstraint(
+                condition=models.Q(researcher_number__isnull=True)
+                | models.Q(researcher_number__gte=1),
+                name="members_profile_researcher_number_positive",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -195,6 +215,13 @@ class MemberProfile(models.Model):
         if self.preferred_arm == self.PreferredArm.NOT_SPECIFIED:
             return None
         return self.get_preferred_arm_display()
+
+    @property
+    def researcher_label(self) -> str | None:
+        """Public label for an assigned number, at least two digits; else None."""
+        if self.researcher_number is None:
+            return None
+        return f"Researcher {self.researcher_number:02d}"
 
     def clean(self) -> None:
         self._normalize_optional_fields()

@@ -13,6 +13,7 @@
     <div class="panel stack">
       <ul>
         <li>Display name, or your Username when Display name is empty</li>
+        <li>{% if profile.researcher_label %}Researcher number ({{ profile.researcher_label }}){% else %}Researcher number, if one has been assigned{% endif %}</li>
         <li>Avatar</li>
         <li>Experience level</li>
         <li>Preferred arm</li>

@@ -307,6 +307,7 @@ def test_member_form_excludes_admin_managed_and_timestamp_fields():
     assert "is_published" not in MemberProfileForm.base_fields
     assert "is_hidden_by_admin" not in MemberProfileForm.base_fields
     assert "executive_role" not in MemberProfileForm.base_fields
+    assert "researcher_number" not in MemberProfileForm.base_fields
     assert "created_at" not in MemberProfileForm.base_fields
     assert "updated_at" not in MemberProfileForm.base_fields
 
@@ -316,6 +317,7 @@ def test_member_form_cannot_modify_admin_managed_fields():
         user=create_user(username="form-member"),
         is_hidden_by_admin=True,
         executive_role="President",
+        researcher_number=7,
     )
     form = MemberProfileForm(
         data={
@@ -325,6 +327,7 @@ def test_member_form_cannot_modify_admin_managed_fields():
             "is_published": True,
             "is_hidden_by_admin": False,
             "executive_role": "Changed by member",
+            "researcher_number": "1",
         },
         instance=profile,
     )
@@ -335,14 +338,95 @@ def test_member_form_cannot_modify_admin_managed_fields():
     assert saved.is_published is False
     assert saved.is_hidden_by_admin is True
     assert saved.executive_role == "President"
+    assert saved.researcher_number == 7
 
 
 def test_profile_admin_exposes_only_admin_management_fields_for_editing():
     profile_admin = MemberProfileAdmin(MemberProfile, AdminSite())
 
     assert "is_hidden_by_admin" in profile_admin.list_display
+    assert "researcher_number" in profile_admin.list_display
     assert "is_published" in profile_admin.list_filter
     assert set(profile_admin.fields) - set(profile_admin.readonly_fields) == {
         "is_hidden_by_admin",
         "executive_role",
+        "researcher_number",
     }
+
+
+def test_researcher_number_defaults_to_none_without_a_label():
+    profile = MemberProfile.objects.create(user=create_user(username="no-number"))
+
+    assert profile.researcher_number is None
+    assert profile.researcher_label is None
+
+
+@pytest.mark.parametrize(
+    ("number", "label"),
+    (
+        (1, "Researcher 01"),
+        (7, "Researcher 07"),
+        (42, "Researcher 42"),
+        (100, "Researcher 100"),
+    ),
+)
+def test_researcher_label_uses_at_least_two_digits(number, label):
+    profile = MemberProfile.objects.create(
+        user=create_user(username=f"number-{number}"),
+        researcher_number=number,
+    )
+
+    assert profile.researcher_label == label
+
+
+def test_multiple_profiles_can_leave_researcher_number_blank():
+    first = MemberProfile.objects.create(user=create_user(username="blank-one"))
+    second = MemberProfile.objects.create(user=create_user(username="blank-two"))
+
+    assert first.researcher_number is None
+    assert second.researcher_number is None
+
+
+def test_researcher_number_must_be_unique():
+    MemberProfile.objects.create(
+        user=create_user(username="first-researcher"),
+        researcher_number=3,
+    )
+    duplicate = MemberProfile(
+        user=create_user(username="second-researcher"),
+        researcher_number=3,
+    )
+
+    with pytest.raises(ValidationError) as error:
+        duplicate.save()
+
+    assert "researcher_number" in error.value.message_dict
+
+
+def test_database_rejects_duplicate_researcher_number_written_directly():
+    MemberProfile.objects.create(
+        user=create_user(username="direct-first"),
+        researcher_number=5,
+    )
+    other = MemberProfile.objects.create(user=create_user(username="direct-second"))
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        MemberProfile.objects.filter(pk=other.pk).update(researcher_number=5)
+
+
+def test_researcher_number_rejects_zero():
+    profile = MemberProfile(
+        user=create_user(username="zero-number"), researcher_number=0
+    )
+
+    with pytest.raises(ValidationError) as error:
+        profile.save()
+
+    assert "researcher_number" in error.value.message_dict
+
+
+def test_database_rejects_zero_researcher_number_written_directly():
+    profile = MemberProfile.objects.create(user=create_user(username="direct-zero"))
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        MemberProfile.objects.filter(pk=profile.pk).update(researcher_number=0)

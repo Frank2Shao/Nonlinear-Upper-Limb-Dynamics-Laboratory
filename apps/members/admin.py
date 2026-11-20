@@ -8,6 +8,7 @@ class MemberProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "display_name",
+        "researcher_number",
         "is_published",
         "is_hidden_by_admin",
         "updated_at",
@@ -39,6 +40,7 @@ class MemberProfileAdmin(admin.ModelAdmin):
         "is_published",
         "is_hidden_by_admin",
         "executive_role",
+        "researcher_number",
         "created_at",
         "updated_at",
     )

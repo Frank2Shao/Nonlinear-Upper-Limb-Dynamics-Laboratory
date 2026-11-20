@@ -52,10 +52,12 @@ def post_admin_change(
     *,
     is_hidden: bool,
     executive_role: str = "",
+    researcher_number: str = "",
     **forged_fields,
 ):
     data = {
         "executive_role": executive_role,
+        "researcher_number": researcher_number,
         "_save": "Save",
         **forged_fields,
     }
@@ -112,7 +114,92 @@ def test_authorized_staff_only_sees_admin_managed_fields_as_editable(client):
     assert set(response.context["adminform"].form.fields) == {
         "is_hidden_by_admin",
         "executive_role",
+        "researcher_number",
     }
+
+
+def test_authorized_staff_can_assign_change_and_clear_researcher_number(client):
+    staff = grant_change_permission(
+        create_user(username="researcher-number-staff", is_staff=True)
+    )
+    _member, profile = create_profile(username="numbered-member")
+    client.force_login(staff)
+
+    assigned = post_admin_change(
+        client, profile, is_hidden=False, researcher_number="7"
+    )
+    profile.refresh_from_db()
+    assert assigned.status_code == 302
+    assert profile.researcher_number == 7
+    assert profile.researcher_label == "Researcher 07"
+
+    changed = post_admin_change(
+        client, profile, is_hidden=False, researcher_number="12"
+    )
+    profile.refresh_from_db()
+    assert changed.status_code == 302
+    assert profile.researcher_number == 12
+
+    cleared = post_admin_change(client, profile, is_hidden=False, researcher_number="")
+    profile.refresh_from_db()
+    assert cleared.status_code == 302
+    assert profile.researcher_number is None
+
+
+@pytest.mark.parametrize("number", ("0", "-3", "seven"))
+def test_admin_rejects_invalid_researcher_number(client, number):
+    staff = grant_change_permission(
+        create_user(username="invalid-number-staff", is_staff=True)
+    )
+    _member, profile = create_profile(username="invalid-number-member")
+    client.force_login(staff)
+
+    response = post_admin_change(
+        client, profile, is_hidden=False, researcher_number=number
+    )
+    profile.refresh_from_db()
+
+    assert response.status_code == 200
+    assert "researcher_number" in response.context["adminform"].form.errors
+    assert profile.researcher_number is None
+
+
+def test_admin_rejects_duplicate_researcher_number(client):
+    staff = grant_change_permission(
+        create_user(username="duplicate-number-staff", is_staff=True)
+    )
+    _first_member, first = create_profile(username="first-numbered")
+    first.display_name = "First Member"
+    first.researcher_number = 4
+    first.save()
+    _second_member, second = create_profile(username="second-numbered")
+    client.force_login(staff)
+
+    response = post_admin_change(client, second, is_hidden=False, researcher_number="4")
+    second.refresh_from_db()
+
+    assert response.status_code == 200
+    assert "researcher_number" in response.context["adminform"].form.errors
+    assert second.researcher_number is None
+
+
+def test_admin_changelist_shows_and_sorts_by_researcher_number(client):
+    staff = grant_change_permission(
+        create_user(username="changelist-staff", is_staff=True)
+    )
+    _member, profile = create_profile(username="listed-member")
+    profile.researcher_number = 9
+    profile.save()
+    client.force_login(staff)
+
+    response = client.get(
+        reverse("admin:members_memberprofile_changelist"),
+        {"o": str(MemberProfileAdmin.list_display.index("researcher_number") + 1)},
+    )
+
+    assert response.status_code == 200
+    assert "Researcher number" in response.content.decode()
+    assert list(response.context["cl"].result_list) == [profile]
 
 
 def test_authorized_staff_can_hide_unhide_and_update_executive_role(client):

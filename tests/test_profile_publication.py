@@ -223,6 +223,19 @@ def test_publish_confirmation_explains_public_fields_and_username_fallback(clien
     assert "/members/public-url-member/" in content
     assert "using your Username because no Display name is set" in content
     assert "location, device or other metadata" in content
+    assert "Researcher number, if one has been assigned" in content
+
+
+def test_publish_confirmation_names_the_assigned_researcher_number(client):
+    member, profile = create_member(username="numbered-publisher")
+    profile.researcher_number = 7
+    profile.save()
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_publish")).content.decode()
+
+    assert "Researcher number (Researcher 07)" in content
+    assert "if one has been assigned" not in content
 
 
 @pytest.mark.parametrize(
