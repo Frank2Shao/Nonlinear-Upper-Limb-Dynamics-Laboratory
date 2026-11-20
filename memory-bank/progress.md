@@ -1982,3 +1982,42 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V11 截图并确认，批准更新 `architecture.md`：新增 3.58 节，更新页头状态以及样式源、About 模板与相关测试的文件职责。V12（Beginners & Safety）尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V12 — Beginners & Safety 页
+
+### 前置条件检查
+
+- V11 已由项目负责人确认并提交推送（`0d8560d`）；项目负责人授权开始 V12。
+
+### 实施内容
+
+- `beginners_safety.html`：
+  - 页头改为 `.page-heading`（等宽小标签 `Beginners & Safety`、H1、`.lede`），`public-page--report` 占满共享内容宽度；
+  - 五个区块改为 V11 的 `.report-section`（`aria-hidden` 编号 `01–05` 与 H2）；
+  - `What to Expect` 改为 `<ol class="procedure">`；
+  - 风险说明改为分节正文中的 `.risk-panel`，`Read the Draft Risk Notice`（`data-draft-risk-notice`，仍只在 `draft_risk_notice_visible` 时输出）位于面板内正文下方；
+  - 不确定身体状况的段落加 `.report-note`；
+  - `During Training` 改为 `<ul class="rule-list">`。
+- `static_src/css/site.css`：
+  - 新增 `.procedure`（等宽编号方块，金色细竖线连接相邻方块的中心）、`.risk-panel`（暖色底、金色细边框与顶部金色渐变细线，按钮左对齐）与 `.rule-list`（单一金色细边框、行间细线、金色小方块标记）；
+  - 删除 `.step-list`、`.safety-list`、`.safety-panel`、`.safety-panel__action` 及其在共享卡片表面、末子元素间距与居中操作分组中的条目。`--color-warning` / `--color-warning-surface` 仍由 `.status-banner` 与表单使用。
+- 测试：
+  - `test_public_information_pages.py`：断言页头小标签、5 个分节、各含 5 项的流程与规则列表；
+  - `test_draft_risk_notice.py`：Draft 入口位于 `.risk-panel` 内；
+  - `draft-risk-notice.mjs`：入口改为在面板内容左缘对齐且位于正文下方（取代“面板内居中”）；
+  - `phase2-accessibility.mjs`：必需元素改为 `.procedure`、`.rule-list`、`.risk-panel`；
+  - `public-information.mjs`：宽屏流程方块同列且后四项有 1px 连接线、规则 5 行、风险面板位于分节标题右侧。
+
+### 验证结果
+
+- 完整 pytest（含全部 Playwright 与 Accessibility 门禁）在全新 test database 上 `409 passed`；`static:check`、Ruff lint/format、Django check、`git diff --check` 通过。
+- 截图使用一个只在本地临时存在的测试（Test settings 的 live server，Draft 关闭与 `override_settings` 开启两种状态，截图后删除），覆盖 1440、820、390px，共 6 张，均无横向溢出与 page error。
+
+### 当前边界与下一步门槛
+
+- 没有修改 view、URL、Metadata、文案或 migration；Draft 入口的环境开关逻辑不变。
+- `architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V12 截图并确认，批准更新 `architecture.md`：新增 3.59 节，更新页头状态以及样式源、Beginners & Safety 模板与相关测试的文件职责。V13（第三轮质量门禁）尚未开始，需要项目负责人明确授权。
