@@ -2164,3 +2164,30 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V16 截图并确认，批准更新 `architecture.md`：新增 3.63 节，更新页头进度与状态、3.31 的标题层级说明，以及样式源、详情模板、共享公开字段组件与相关测试的文件职责。V17（第四轮质量门禁）尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V17 — 第四轮质量门禁
+
+### 前置条件检查
+
+- V14–V16 已由项目负责人确认并提交推送（`1553bc4`）；工作区干净，Docker PostgreSQL healthy；项目负责人授权开始 V17。
+
+### 验证结果
+
+- `scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中完整通过（`Phase 4 end-to-end acceptance passed.`）：
+  - 共享门禁 `scripts/verify_project.py`：`npm ci`、Chromium 安装、静态资源 build/check/watch smoke、Ruff lint/format（`All checks passed!`）、`makemigrations --check`（含 V14 的 `members.0002`）、Django check（无问题）、干净 PostgreSQL 上的完整 pytest（`432 passed`）、branch coverage `95%`、Production `check --deploy --fail-level WARNING`（无问题）与 manifest `collectstatic`。
+  - 真实 Development server 上的 Phase 2、Phase 3、Phase 4 desktop/mobile smoke 全部通过。
+- 验收后工作区仍然干净。
+- 走查截图使用一个只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、七名合成会员，头像为程序生成的抽象图，截图后删除），在 1440 × 900 与 390 × 844 下各 7 张，共 14 张：
+  - Members 列表（有/无编号、有/无 Avatar、长名称；被管理员隐藏的 3 号资料不出现）与空状态；
+  - Member detail 的完整、只有 Links、未填写三种组合；
+  - 本人 Preview 与被管理员隐藏时的 Preview（显示中性提示与编号标签）。
+- 全部截图无横向溢出、无 page error；与项目负责人确认的 V15、V16 一致，走查中未发现需要修改的问题。Development database 未写入数据。
+
+### 当前边界与下一步门槛
+
+- 本步没有修改代码。`architecture.md` 尚未更新，需要项目负责人走查截图并批准。
+- 后续页面按认证与 Account → 403/404/500 的顺序，逐页先确认设计再展开步骤；Preview 页面外壳与 Publish/Unpublish 确认页属于认证与 Account 轮次。
+
+### 项目负责人确认
+
+- 项目负责人已走查 V17 的 14 张截图并确认，批准更新 `architecture.md`：新增 3.64 节并更新页头进度与状态。第四轮（Members）完成；认证与 Account 的设计确认尚未开始，需要项目负责人明确授权。

@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 21 日
-**对应进度：** Visual Refresh, Step V16
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V16 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V17
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -742,6 +742,14 @@ ASGI / WSGI ───────────→ config.settings.production
 - 删除 `.profile-public-card` 系列规则及其在共享卡片表面、Avatar、断行与 `max-nav` 分组中的条目，改为对应的 `profile-panel` / `profile-public` 项；长 Username 与 Bio 仍可任意断行。
 - 测试：详情页返回链接、H1/H2 层级、kicker 标签位于 H1 之前、分节编号连续及缺失分节与未分配标签不输出；Preview 共用面板且层级为 H1 → H2 → H3；浏览器测试另断言桌面 Avatar 在身份信息左侧、手机在上方，以及标签位于名称上方。
 - 本步没有修改 view、URL、queryset、Metadata、文案或 migration。完整 pytest `432 passed`（其后仅调整 Preview H2 样式，相关浏览器、Accessibility 与静态资源测试重跑 `28 passed`）；`static:check`、Ruff、Django check 与 `git diff --check` 通过；详情三种组合、Preview 与隐藏状态 Preview 的 1440/820/390px 截图走查经项目负责人确认。
+
+### 3.64 Visual Refresh V17：第四轮质量门禁
+
+- 第四轮（V14 Researcher 编号、V15 Members 列表、V16 Member detail 与 Preview）沿用 V7、V10、V13 的门禁方式，没有新增脚本：`scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中执行共享门禁 `scripts/verify_project.py`，再在真实 Development server 上运行 Phase 2–4 desktop/mobile smoke。
+- 结果：完整 pytest `432 passed`、branch coverage `95%`，Ruff、migration drift（含 `members.0002`）、Django check 与 `check --deploy --fail-level WARNING` 均无问题，三组 smoke 全部通过；验收后工作区没有任何已跟踪文件变化。
+- 人工走查使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、七名合成会员与程序生成的抽象头像，截图后删除），在 1440 × 900 与 390 × 844 下各 7 张：Members 列表（有/无编号与 Avatar、长名称，被管理员隐藏的编号资料不出现）与空状态，Member detail 的完整、只有 Links、未填写三种组合，以及本人 Preview 与隐藏状态 Preview；均无横向溢出与 page error，经项目负责人确认。Development database 未写入数据。
+- 第四轮完成后，Home、Events、About、Beginners & Safety 与 Members（列表、详情、Preview 中的公开字段组件）已按新视觉实施；认证与 Account（含 Preview 页面外壳与 Publish/Unpublish 确认页）、错误页仍沿用原有布局，按认证与 Account → 403/404/500 的顺序逐页确认设计后再展开步骤。
+- 本步没有修改代码、view、URL、业务逻辑或 migration。
 
 ## 四、当前文件职责
 
