@@ -3,13 +3,13 @@
 {% block content %}
   <div class="public-page">
     <section class="public-section" aria-labelledby="events-title">
-      <div class="public-section__header">
-        <p class="eyebrow">Club activities</p>
+      <div class="page-heading">
+        <p class="label-mono">Club activities</p>
         <h1 id="events-title">Events</h1>
       </div>
-      <nav class="button-row" aria-label="Event filters">
-        <a class="button button--secondary" href="{% url 'events:list' %}?view=upcoming"{% if selected == 'upcoming' %} aria-current="page"{% endif %}>Upcoming</a>
-        <a class="button button--secondary" href="{% url 'events:list' %}?view=past"{% if selected == 'past' %} aria-current="page"{% endif %}>Past</a>
+      <nav class="filter-tabs" aria-label="Event filters">
+        <a href="{% url 'events:list' %}?view=upcoming"{% if selected == 'upcoming' %} aria-current="page"{% endif %}>Upcoming</a>
+        <a href="{% url 'events:list' %}?view=past"{% if selected == 'past' %} aria-current="page"{% endif %}>Past</a>
       </nav>
       <div class="event-stack event-list">
         {% for event in events %}

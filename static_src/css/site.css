@@ -609,6 +609,52 @@
     margin-top: 0.25rem;
   }
 
+  /* Page heading: mono label above a large title (Events list and detail). */
+  .page-heading {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .page-heading > * {
+    margin: 0;
+  }
+
+  .page-heading h1 {
+    font-size: clamp(2.75rem, 7vw, 4.5rem);
+    line-height: 0.95;
+  }
+
+  /* Text tabs over a gold hairline; the current tab matches the Header's
+     current-page style. */
+  .filter-tabs {
+    display: flex;
+    gap: clamp(1.5rem, 4vw, 2rem);
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-gold-line);
+  }
+
+  .filter-tabs a {
+    margin-bottom: -1px;
+    padding-block: 0.75rem;
+    border-bottom: 2px solid transparent;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .filter-tabs a:hover {
+    color: var(--color-gold-pale);
+  }
+
+  .filter-tabs a[aria-current] {
+    border-bottom-color: var(--color-gold);
+    color: var(--color-gold);
+  }
+
   /* Numbered Home feature cards with a gold top edge. */
   .feature-grid {
     display: grid;
@@ -710,6 +756,11 @@
     font-weight: 800;
   }
 
+  /* Past events recede; the status label still says "Past event". */
+  .event-card--past .event-card__day {
+    color: var(--color-subtle);
+  }
+
   .event-card__title {
     grid-area: title;
     align-self: end;
@@ -794,7 +845,6 @@
     text-transform: uppercase;
   }
 
-  .event-list,
   .event-detail-actions {
     margin-top: 1.5rem;
   }

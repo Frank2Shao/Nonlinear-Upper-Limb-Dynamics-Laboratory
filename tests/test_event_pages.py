@@ -61,6 +61,20 @@ def test_listing_filters_after_sydney_midnight_independent_of_active_timezone(cl
         assert [item.slug for item in invalid_filter.context["events"]] == ["later"]
         assert ">All</a>" not in invalid_filter.content.decode()
         assert "Past event" in past.content.decode()
+        # Past cards are marked so their date recedes; upcoming ones are not.
+        assert 'class="event-card event-card--past"' in past.content.decode()
+        assert "event-card--past" not in upcoming.content.decode()
+        # The filter is a tab list of plain links; the current view is marked.
+        for response, current in ((upcoming, "upcoming"), (past, "past")):
+            tabs = re.search(
+                r'<nav class="filter-tabs" aria-label="Event filters">(.*?)</nav>',
+                response.content.decode(),
+                re.S,
+            )
+            assert tabs, "Events must render the filter tabs."
+            assert re.findall(r'\?view=(\w+)" aria-current="page"', tabs[1]) == [
+                current
+            ]
 
 
 def test_home_shows_only_three_public_upcoming_events_and_links(client):

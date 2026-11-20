@@ -1,6 +1,6 @@
 {% load tz %}
 {% timezone "Australia/Sydney" %}
-  <article class="event-card">
+  <article class="event-card{% if event.is_past %} event-card--past{% endif %}">
     {# The date block repeats the Date row below, so assistive technology skips it. #}
     <div class="event-card__date" aria-hidden="true">
       <span class="event-card__weekday">{{ event.starts_at|date:"D" }}</span>
