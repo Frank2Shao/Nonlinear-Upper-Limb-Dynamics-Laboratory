@@ -14,7 +14,7 @@ const pageErrors = [];
 const browser = await chromium.launch({ headless: true });
 
 const assertReadableElements = async (page, label) => {
-  const clipped = await page.locator("h1, h2, p, li, .button").evaluateAll(
+  const clipped = await page.locator("h1, h2, h3, p, li, .button").evaluateAll(
     (elements) =>
       elements
         .filter((element) => {
@@ -56,36 +56,42 @@ try {
       .getAttribute("aria-current"),
     "page",
   );
+  // Report sections: title column on the left, body reaching the right edge.
+  const desktopLayout = await desktopPage.locator(".report-section").first().evaluate((section) => {
+    const page = section.closest(".public-page").getBoundingClientRect();
+    const label = section.querySelector(".report-section__label").getBoundingClientRect();
+    const body = section.querySelector(".report-section__body").getBoundingClientRect();
+    return { labelRight: label.right, bodyLeft: body.left, bodyRight: body.right, pageRight: page.right };
+  });
+  assert.ok(desktopLayout.labelRight < desktopLayout.bodyLeft, JSON.stringify(desktopLayout));
+  assert.ok(Math.abs(desktopLayout.bodyRight - desktopLayout.pageRight) <= 1, JSON.stringify(desktopLayout));
+  const featureColumns = await desktopPage.locator(".feature-card").evaluateAll(
+    (cards) => new Set(cards.map((card) => Math.round(card.getBoundingClientRect().left))).size,
+  );
+  assert.equal(featureColumns, 2, "What We Do cards must sit two per row on desktop.");
   const joinAction = desktopPage.getByRole("link", { name: "Join", exact: true });
   const joinMetrics = await joinAction.evaluate((element) => {
     const rectangle = element.getBoundingClientRect();
-    const parentRectangle = element.parentElement.getBoundingClientRect();
+    const pageRectangle = element.closest(".public-page").getBoundingClientRect();
     return {
       fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
       height: rectangle.height,
-      widthRatio: rectangle.width / parentRectangle.width,
+      width: rectangle.width,
       horizontalOffset: Math.abs(
-        rectangle.left + rectangle.width / 2 -
-          (parentRectangle.left + parentRectangle.width / 2),
+        rectangle.left + rectangle.width / 2 - (pageRectangle.left + pageRectangle.width / 2),
       ),
-      parentBorderWidth: getComputedStyle(element.parentElement).borderTopWidth,
     };
   });
-  assert.ok(joinMetrics.fontSize >= 32, "About Join text must be doubled in size.");
   assert.ok(
-    joinMetrics.height >= 74 && joinMetrics.height <= 76,
-    `About Join button height must be reduced by approximately fifteen percent: ${JSON.stringify(joinMetrics)}`,
+    joinMetrics.fontSize >= 21 && joinMetrics.fontSize <= 23,
+    `About Join text must match the Home Hero buttons: ${JSON.stringify(joinMetrics)}`,
   );
+  assert.ok(joinMetrics.height >= 56, `About Join must be at least 56px tall: ${JSON.stringify(joinMetrics)}`);
   assert.ok(
-    Math.abs(joinMetrics.widthRatio - 0.9) <= 0.01,
-    "About Join button must fill ninety percent of the content width.",
+    joinMetrics.width >= 250 && joinMetrics.width <= 257,
+    `About Join must be about 16rem wide: ${JSON.stringify(joinMetrics)}`,
   );
-  assert.ok(joinMetrics.horizontalOffset <= 1, "About Join button must be centred.");
-  assert.equal(
-    joinMetrics.parentBorderWidth,
-    "0px",
-    "About Join wrapper must not have the former gold border.",
-  );
+  assert.ok(joinMetrics.horizontalOffset <= 1, "About Join button must be centred on the page.");
   await desktopNavigation
     .getByRole("link", { name: "Beginners & Safety", exact: true })
     .focus();
@@ -108,6 +114,18 @@ try {
   mobilePage.on("pageerror", (error) => pageErrors.push(error.message));
   await mobilePage.goto(`${baseUrl}/about/`);
   await mobilePage.waitForFunction(() => Boolean(window.Alpine));
+  const mobileLayout = await mobilePage.locator(".report-section").first().evaluate((section) => {
+    const label = section.querySelector(".report-section__label").getBoundingClientRect();
+    const body = section.querySelector(".report-section__body").getBoundingClientRect();
+    return { labelBottom: label.bottom, bodyTop: body.top };
+  });
+  assert.ok(mobileLayout.labelBottom <= mobileLayout.bodyTop, JSON.stringify(mobileLayout));
+  const mobileJoin = await mobilePage
+    .getByRole("link", { name: "Join", exact: true })
+    .evaluate((element) => element.getBoundingClientRect().width);
+  assert.ok(mobileJoin >= 250 && mobileJoin <= 257, `Mobile About Join keeps its 16rem width: ${mobileJoin}`);
+  await assertNoHorizontalOverflow(mobilePage, "Mobile About page");
+  await assertReadableElements(mobilePage, "Mobile About page");
   const disclosure = mobilePage.locator("details.nav-disclosure");
   const toggle = mobilePage.locator("summary.nav-toggle");
   assert.equal(await disclosure.getAttribute("open"), null);
@@ -139,12 +157,14 @@ try {
   );
   const zoomPage = await zoomContext.newPage();
   zoomPage.on("pageerror", (error) => pageErrors.push(error.message));
-  await zoomPage.goto(`${baseUrl}/beginners-safety/`);
-  await zoomPage.evaluate(() => {
-    document.documentElement.style.fontSize = "200%";
-  });
-  await assertNoHorizontalOverflow(zoomPage, "Two-hundred-percent text zoom");
-  await assertReadableElements(zoomPage, "Two-hundred-percent text zoom");
+  for (const path of ["/about/", "/beginners-safety/"]) {
+    await zoomPage.goto(`${baseUrl}${path}`);
+    await zoomPage.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    await assertNoHorizontalOverflow(zoomPage, `Two-hundred-percent text zoom ${path}`);
+    await assertReadableElements(zoomPage, `Two-hundred-percent text zoom ${path}`);
+  }
   await zoomContext.close();
 
   const noJsContext = await createLocalContext(
@@ -157,6 +177,10 @@ try {
     externalRequests,
   );
   const noJsPage = await noJsContext.newPage();
+  await noJsPage.goto(`${baseUrl}/about/`);
+  await noJsPage.getByRole("link", { name: "Join", exact: true }).waitFor();
+  await assertNoHorizontalOverflow(noJsPage, "No-JavaScript About page");
+  await assertReadableElements(noJsPage, "No-JavaScript About page");
   await noJsPage.goto(`${baseUrl}/beginners-safety/`);
   for (const text of [
     "Beginners Are Welcome",

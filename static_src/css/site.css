@@ -425,13 +425,11 @@
   }
 
   .public-page__action,
-  .public-page__join-action,
   .safety-panel__action {
     display: flex;
     align-items: center;
   }
 
-  .public-page__join-action,
   .safety-panel__action {
     justify-content: center;
   }
@@ -568,12 +566,6 @@
     margin-bottom: clamp(1.25rem, 4vw, 2rem);
   }
 
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
-    gap: 1rem;
-  }
-
   .content-card {
     padding: clamp(1.25rem, 3vw, 1.75rem);
   }
@@ -623,6 +615,86 @@
   .page-heading h1 {
     font-size: clamp(2.75rem, 7vw, 4.5rem);
     line-height: 0.95;
+  }
+
+  /* Report pages (About, Beginners & Safety): page heading, then numbered
+     sections, each under a gold hairline. */
+  .public-page--report {
+    gap: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .public-page--report .page-heading {
+    margin-bottom: 0;
+  }
+
+  .public-page--report .page-heading .lede {
+    margin-top: 0.5rem;
+  }
+
+  .report-section {
+    display: grid;
+    gap: 1.25rem;
+    padding-top: clamp(1.5rem, 4vw, 2rem);
+    border-top: 1px solid var(--color-gold-line);
+  }
+
+  /* Index and title share a line here; at --breakpoint-hero they stack in
+     the left column. */
+  .report-section__label {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .report-section__label > *,
+  .report-section__body > * {
+    margin: 0;
+  }
+
+  .report-section__index {
+    color: var(--color-gold);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+  }
+
+  .report-section__label h2 {
+    font-size: clamp(1.875rem, 4vw, 2.5rem);
+    line-height: 1;
+  }
+
+  .report-section__body {
+    display: grid;
+    gap: 1rem;
+  }
+
+  /* A clarifying paragraph, set off by a gold rule. */
+  .report-note {
+    padding-left: 1rem;
+    border-left: 2px solid var(--color-gold-line);
+    color: var(--color-muted);
+  }
+
+  /* Numbered cards inside a section: two per row when the body is wide. */
+  .report-section .feature-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  }
+
+  .report-section .feature-card {
+    padding: 1.5rem 1.25rem 1.25rem;
+  }
+
+  .report-section .feature-card h3 {
+    font-size: 1.25rem;
+    line-height: 1.15;
+  }
+
+  /* Closing action, centred under a gold hairline. */
+  .report-action {
+    display: grid;
+    justify-items: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-gold-line);
   }
 
   /* Text tabs over a gold hairline; the current tab matches the Header's
@@ -1053,10 +1125,6 @@
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  .public-card-list .content-card {
-    font-weight: 600;
   }
 
   .content-section > :last-child,
@@ -1494,12 +1562,13 @@
     font-size: 0.875rem;
   }
 
-  /* Oversized call to action; declared after .button so its sizing wins. */
+  /* Page call to action at Home Hero button size; declared after .button so
+     its sizing wins. */
   .button--hero {
-    width: 90%;
-    min-height: 4.675rem;
-    padding: 0.94rem 2.2rem;
-    font-size: 2rem;
+    width: min(100%, 16rem);
+    min-height: 3.5rem;
+    padding: 0.75rem 2rem;
+    font-size: 1.375rem;
   }
 
   /* Gold material fill. The lightened texture keeps every pixel at 4.5:1 or
@@ -1666,6 +1735,17 @@
       grid-auto-columns: minmax(0, 1fr);
       grid-auto-flow: column;
       gap: 0.625rem;
+    }
+
+    /* Title column 1 part, body 2 parts, the body reaching the right edge. */
+    .report-section {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 3rem;
+    }
+
+    .report-section__label {
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
     .home-hero__media {
@@ -1838,6 +1918,11 @@
     .nav-link,
     .button {
       width: 100%;
+    }
+
+    /* The page call to action keeps its own width on narrow screens too. */
+    .button--hero {
+      width: min(100%, 16rem);
     }
 
     .button-row {

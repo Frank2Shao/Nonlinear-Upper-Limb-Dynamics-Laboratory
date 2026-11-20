@@ -53,6 +53,10 @@ def test_about_page_uses_approved_content_metadata_and_heading_order(client):
         (1, "About NULDL Armwrestling Club"),
         (2, "Our Purpose"),
         (2, "What We Do"),
+        (3, "Beginner induction sessions"),
+        (3, "Regular supervised practice pulls"),
+        (3, "Technique and rules workshops"),
+        (3, "Internal competitions"),
         (2, "Who Can Participate?"),
         (2, "How We Train"),
     ]
@@ -68,7 +72,9 @@ def test_about_page_uses_approved_content_metadata_and_heading_order(client):
         assert approved_text in content
     assert "Social armwrestling sessions" not in content
     assert "Collaborative activities that support the club’s purpose" not in content
-    assert content.count('class="content-card"') == 4
+    assert '<p class="label-mono">About the club</p>' in content
+    assert content.count('class="feature-card"') == 4
+    assert content.count('class="report-section"') == 4
 
 
 def test_beginners_safety_page_uses_approved_content_metadata_and_headings(client):
