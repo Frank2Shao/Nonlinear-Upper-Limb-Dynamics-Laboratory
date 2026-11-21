@@ -2191,3 +2191,77 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 项目负责人确认
 
 - 项目负责人已走查 V17 的 14 张截图并确认，批准更新 `architecture.md`：新增 3.64 节并更新页头进度与状态。第四轮（Members）完成；认证与 Account 的设计确认尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh 第五轮 — 认证与 Account 设计确认
+
+- 项目负责人授权开始认证与 Account 的设计确认。以 mockup（1440 与 390px，合成会员与程序生成的抽象头像，临时目录，不进入仓库）提出 Log in、Join the Club、密码重置、Account、Edit Profile、Profile Preview 与 Publish Profile 设计，并附现有页面截图对照：
+  - 共用表单字段改为等宽大写 Label、直角金色细边框输入框，Checkbox 放在 Label 前同一行；
+  - 认证页面左侧页头、右侧带顶部金色渐变细线的访问面板，窄屏上下排列；
+  - Account 改为四个编号报告分节与图纸式表格，资料摘要显示发布状态标签与 Researcher 标签；
+  - Edit Profile 一张表单分为三个编号分节，末尾操作栏；Preview 的公开组件放入 `Public view` 虚线框；Publish 确认页分为公开字段规则列表与公开页面表格。
+- 项目负责人确认设计，同时确认其中的文案变动：新增 `Member access`、`Membership`、`Member settings`、`Private preview`、`Publication confirmation` 页头小标签，Edit Profile 的 `Name and avatar`、`About you`、`Links` 分节标题，`Public view`、`What becomes public`、`Your public page`、`Public name`、`Profile URL`；Log in 页删除重复的 `Forgot password?` 按钮（保留 allauth 的 `Forgot your password?` 链接）；去掉 Label 末尾冒号；Account 显示发布状态与 Researcher 标签。
+- 规则写入 `design_document.md`：新增 7.11（认证与 Account 版式），7.8 的 Account 结构描述改为引用 7.11。`implementation.md` 新增第五轮步骤 V18（共用表单字段与认证页面）、V19（Account）、V20（Edit Profile、Preview 外壳与 Publish/Unpublish）、V21（第五轮质量门禁）。
+- 本次只修改文档，没有修改代码。V18 尚未开始，需要项目负责人明确授权。
+
+## Visual Refresh Step V18 — 共用表单字段与认证页面
+
+### 前置条件检查
+
+- 项目负责人已确认第五轮设计（`design_document.md` 7.11）并授权开始 V18；已完整阅读 `architecture.md` 与 `design_document.md`。
+
+### 实施内容
+
+- 字段 Label 去掉末尾冒号：
+  - 新增 `apps/core/templatetags/form_labels.py` 的 `plain_label` filter，以 `label_suffix=""` 输出 label 或 legend；
+  - `templates/includes/forms/field.html` 改为 Django `django/forms/field.html`（即 `as_field_group` 所用模板）的项目副本，只把 label 换成该 filter，id、`aria-invalid` 与 `aria-describedby` 仍由 BoundField 提供；
+  - 用临时脚本比较 Login、Reset、Signup（含错误）与 Profile 表单全部字段：新旧输出除冒号外完全一致；
+  - Django Admin 不经过该模板，保留冒号。
+- `static_src/css/site.css` 的共用字段样式：
+  - Label 为等宽大写小字、次要文字色；
+  - 输入框、下拉框与多行文本框为直角、页面底色、新 token `--color-input-border`（`#8a6c30`，不透明金色）细边框，悬停时为金色；错误时的红色边框优先；
+  - Checkbox 放在 Label 前同一行，帮助文字与错误整行显示；
+  - 7.11 写的是“半透明金色细边框”；为满足 WCAG 1.4.11（输入框边界对背景至少 3:1），输入框改用不透明的较亮金色：对页面底色 4.0:1，对卡片表面 3.6:1。原 30% 金色细线只有约 1.9:1。原 `--color-input` token 不再使用，已删除。
+- 访问页面：
+  - `templates/account/_page.html` 改为 `.access-page`：`.page-heading`（`label-mono` 小标签、`page-title` H1、intro）加 `.access-panel`（金色细边框、顶部金色渐变细线、卡片表面）；
+  - 宽于 `--breakpoint-hero` 时为 `1fr : 30rem` 两列，窄屏上下排列；
+  - 面板内主按钮占满宽度；其他入口放在 `.access-panel__alt`（金色细线之下，按钮同样占满宽度）；
+  - 面板内的文字链接（密码重置帮助链接、`Join the Club`、`Log in` 等）保证 24px 触控目标。
+- 套用到全部 allauth 页面：
+  - `panel_form.html` 与 `code_form.html` 去掉旧 `.panel` 包裹；
+  - Login 删除重复的 `Forgot password?` 按钮，`Log in by email code` 与 `Need an account?` 移到分隔线下；
+  - Signup、Magic Code 请求、Password reset 的返回或切换链接移到分隔线下；
+  - 两个验证码页的换邮箱 details 与 Cancel 移到分隔线下；
+  - Password change 去掉 `.panel`；
+  - 只有单个按钮的页面（Account inactive、Reset done、Reset 链接失效、Reset 完成）把按钮直接放进面板。
+- 文案、URL、字段与顺序、allauth 流程、Alpine USYD 条件字段均未改动。Account 与 Edit Profile 只随共用字段样式变化，版式留给 V19、V20。
+
+### 测试
+
+- `test_authentication_templates.py` 新增：
+  - 六个公开认证页与两个会员页使用页头加单个访问面板；
+  - Login 只保留一个指向 Password reset 的链接（allauth 的 `Forgot your password?`），`Log in by email code` 与注册链接位于分隔线区域；
+  - 站点表单 Label 没有冒号；
+  - Django Admin Label 保留冒号。
+- `test_static_assets.py`：`--color-input-border` 对页面底色与卡片表面至少 3:1。
+- `authentication-ui.mjs`：在 1440 与 390px 下检查 Login、Signup、Magic Code 请求与 Password reset：
+  - 无溢出，`main` 内触控目标至少 24px；
+  - 宽屏面板在页头右侧且不超过 30rem，手机在页头下方；
+  - 主按钮与表单同宽；
+  - Label 为等宽大写且无冒号；
+  - Remember me 的 checkbox 在 Label 前同一行；
+  - `Log in by email code` 占满面板宽度。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `448 passed`。
+- `static:check`、Ruff lint/format、Django check、`makemigrations --check`（无变化）与 `git diff --check` 通过。
+- 走查截图使用只在本地临时存在的测试（Test settings 的 live server、一名合成会员，截图后删除），共 25 张，均无横向溢出、无冒号 Label、无 page error：
+  - 1440 × 900 下 15 张：Login（含错误）、Signup（含 USU ID 服务端错误）、Verify email、Magic Code 请求与确认、Password reset 及完成页、失效 reset 链接、Account inactive、Logout、Password change、Account、Edit Profile；
+  - 390 × 844 下 10 张：除 Verify email、Reset 完成页、失效链接、Account inactive 与 Logout 外的同一组页面。
+
+### 当前边界与下一步门槛
+
+- 项目负责人已走查截图并批准 V18，包括输入框使用不透明金色边框的差异；`design_document.md` 7.11 已同步该写法。
+- 走查中发现：新增 templatetags 包后，已在运行的 Development server 会报 `'form_labels' is not a registered tag library`；Django 只在启动时登记模板标签库，重启后正常，代码无需修改。
+- 项目负责人确认 Account 页面的 `Log out` 继续直接 POST 登出，不增加确认页。
+- `architecture.md` 已新增 3.65 并更新对应文件职责。V19（Account）尚未开始。

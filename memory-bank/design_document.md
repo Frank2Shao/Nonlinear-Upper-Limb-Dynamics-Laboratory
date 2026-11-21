@@ -579,7 +579,7 @@ Registered Member 选择 Cancel registration
 
 ### 7.8 Phase 3 会员资料页面
 
-- Account 页面保留 Account details、USYD and USU details 与 Security 三个主卡片；Account details 内展示本人 Profile 摘要、公开状态和 Edit、Preview、Publish/Unpublish 入口；
+- Account 页面展示 Account details、本人 Profile 摘要（含公开状态和 Edit、Preview、Publish/Unpublish 入口）、USYD and USU details 与 Security；Visual Refresh 第五轮起分为四个编号分节，版式见 7.11；
 - Account 的 Profile 摘要说明 Username 始终属于公开 URL；其他可选资料只在提供时公开，不希望展示时应留空、选择 `Not specified` 或删除 Avatar；
 - 会员资料编辑、Preview、Publish 和 Unpublish 使用独立命名 URL；编辑保存成功后返回 Account，Preview 提供返回 Account 的普通链接；
 - 编辑表单包含 Display name、Avatar、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL，不包含管理员字段或直接发布 checkbox；
@@ -623,6 +623,35 @@ Registered Member 选择 Cancel registration
   - 信息面板（半透明金色细边框、顶部金色渐变细线）：宽屏左侧为方形 Avatar 或首字母 fallback，右侧依次为等宽金色小标签 `Member profile`、装饰性间隔点与 Researcher 标签、大标题（公开名称）、等宽 `@username`，以及图纸式资料格；窄屏时 Avatar 在上；
   - `Bio` 与 `Links` 使用 7.9 的报告分节（编号对辅助技术隐藏）；没有内容的分节不显示，编号按实际出现的分节连续排列；
 - 会员本人的 Preview 与公开 detail 使用同一组件，因此同样显示 Researcher 标签。
+
+### 7.11 认证与 Account 版式
+
+以下规则来自项目负责人在 Visual Refresh 第五轮确认的 mockup；表单字段、顺序、验证与流程仍以 6.1–6.5、7.2 和 7.8 为准，除本节列出的新增短文案外不改动现有文案。
+
+- 表单字段（全站共用）：
+  - Label 改为等宽大写小字（次要文字色），与图纸式信息行一致；去掉 Django 默认附加的末尾冒号（`Username:` 改为 `Username`）；
+  - 输入框、下拉框和多行文本框为直角，使用页面底色和不透明金色细边框（`#8a6c30`，使边框对页面底色与面板表面均达到 3:1，满足 WCAG 1.4.11），悬停时边框变为金色；Focus、错误提示和帮助文字的语义与位置不变；
+  - Checkbox 放在其 Label 前方同一行，帮助文字与错误提示在下方整行显示；
+- 认证页面（Log in、Join the Club、Verify email、Log in by email code、密码重置与修改等 allauth 页面）：
+  - 页头与其他页面一致：等宽金色小标签、大标题与介绍文字，左对齐（Log in 为 `Member access`，Join the Club 为 `Membership`）；
+  - 表单放在“访问面板”中（半透明金色细边框、顶部金色渐变细线）；宽屏（≥ `--breakpoint-hero`）时页头在左、面板在右（面板宽约 `30rem`），窄屏时页头在上、面板在下；
+  - 面板内的主按钮占满面板宽度；其他入口在一条金色细线之下：Log in 页为占满宽度的 `Log in by email code` 次要按钮与 `Need an account? Join the Club.`，Join the Club 页为 `Already have an account? Log in.`；
+  - Log in 页删除重复的 `Forgot password?` 按钮，保留 Password 字段旁 allauth 自带的 `Forgot your password?` 链接；
+- Account：
+  - 页头为等宽小标签 `Member settings` 与 H1 `Account`；内容改为 7.9 的报告分节：`01 Account details`、`02 Public member profile`、`03 USYD and USU details`、`04 Security`，取代 7.8 原先的三张主卡片；
+  - Account details 与 Profile 资料以图纸式表格展示（等宽大写标签列为低优先级文字色，数值为主要文字色，行间以金色细线分隔；窄屏时标签在数值上方）；
+  - `Public member profile` 顶部为资料摘要：方形 Avatar 或首字母 fallback，右侧依次为发布状态标签（`Published` 为金色文字，其余为次要文字色，均为不填充细描边）与已分配的 Researcher 标签、公开名称、等宽公开路径 `/members/<username>/`；其下为资料表格、7.8 的 Username/可选资料说明（补充说明样式）和 Edit、Preview、Publish/Unpublish 入口；
+  - `USYD and USU details` 表单与 `Security`（`Change password`、`Log out`）的按钮左对齐、不拉伸；
+- Edit Profile：
+  - 页头为等宽小标签 `Member profile` 与 H1 `Edit Profile`；同一张表单分为三个报告分节：`01 Name and avatar`（Display name、Avatar 编辑区）、`02 About you`（Bio；Experience level 与 Preferred arm 宽屏并排）、`03 Links`（Instagram Username、Other social URL）；
+  - 宽屏时 Avatar 编辑区左侧为当前 Avatar 方图，右侧为上传、删除与 metadata 提示；窄屏时纵向排列；
+  - 表单末尾在金色细线之下放 `Save changes` 主按钮与 `Preview profile` 次要按钮；
+- Profile Preview：
+  - 页头为等宽小标签 `Private preview` 与 H1 `Profile Preview`；公开组件（7.10）放在半透明金色虚线框中，框顶一行为等宽金色 `Public view` 与该资料的公开路径，以区别于真实公开页面；
+  - 管理员隐藏提示与操作按钮放在虚线框之外；
+- Publish 与 Unpublish 确认页：
+  - 页头为等宽小标签 `Publication confirmation` 与 H1；Publish 页分为 `01 What becomes public`（公开字段改用 7.9 的分行规则列表）与 `02 Your public page`（图纸式表格列出 `Public name` 与 `Profile URL`，其下为 Avatar metadata 警示与 Username 回退说明）；Unpublish 页使用相同的页头、分节与表格写法；
+  - 确认按钮与返回链接在分节之后左对齐。
 
 ## 八、状态与异常处理
 

@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 21 日
-**对应进度：** Visual Refresh, Step V17
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V18
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -751,6 +751,17 @@ ASGI / WSGI ───────────→ config.settings.production
 - 第四轮完成后，Home、Events、About、Beginners & Safety 与 Members（列表、详情、Preview 中的公开字段组件）已按新视觉实施；认证与 Account（含 Preview 页面外壳与 Publish/Unpublish 确认页）、错误页仍沿用原有布局，按认证与 Account → 403/404/500 的顺序逐页确认设计后再展开步骤。
 - 本步没有修改代码、view、URL、业务逻辑或 migration。
 
+### 3.65 Visual Refresh V18：共用表单字段与认证页面（第五轮）
+
+- 站点表单的字段 Label 不再带末尾冒号。`apps/core/templatetags/form_labels.py` 的 `plain_label` filter 以 `label_suffix=""` 输出 label 或 legend；`templates/includes/forms/field.html` 是 Django `django/forms/field.html`（`as_field_group` 所用模板）的项目副本，只替换 label 的输出方式，id、`aria-invalid`、`aria-describedby`、help text 与 error 仍由 BoundField 提供，新旧输出除冒号外一致。Django Admin 自行渲染 label，不经过该模板，保留冒号。
+- 共用字段样式：Label 为等宽大写小字、次要文字色；输入框、下拉框与多行文本框为直角、页面底色，边框使用 token `--color-input-border`（`#8a6c30`，不透明金色），悬停时为 `--color-gold`，错误时的红色边框优先；Checkbox 由 `.field:has(> input[type="checkbox"])` 排成 Label 前同一行。
+- 7.11 原写“半透明金色细边框”，但 30% 金色细线对背景只有约 1.9:1，达不到 WCAG 1.4.11 的 3:1；经项目负责人确认改用不透明金色（对页面底色 4.0:1、对卡片表面 3.6:1），由 `test_static_assets.py` 的 contrast 测试守护。原 `--color-input` token 已删除。
+- `templates/account/_page.html` 改为 `.access-page`：`.page-heading`（`label-mono` 小标签、`page-title` H1、intro）加单个 `.access-panel`（卡片表面、金色细边框、顶部金色渐变细线）。宽于 `--breakpoint-hero` 时为 `1fr : 30rem` 两列，否则上下排列。面板内主按钮占满宽度；替代入口放在 `.access-panel__alt`（金色细线之下，按钮同样占满宽度）；面板内文字链接保证 24px 触控目标。
+- 全部 allauth 页面套用该骨架：`panel_form.html` 与 `code_form.html` 去掉旧 `.panel` 包裹；Login 删除重复的 `Forgot password?` 按钮，只保留 allauth 在 Password 字段 help text 中的 `Forgot your password?` 链接；其余页面的切换、返回、换邮箱与 Cancel 入口移入 `.access-panel__alt`；只有单个按钮的页面直接把按钮放进面板。
+- 文案、URL、字段与顺序、allauth 流程、Alpine USYD/USU ID 条件字段与 POST logout 边界均未改变；Account 页面的 `Log out` 按钮经项目负责人确认继续直接 POST 登出，不经过确认页。Account 与 Edit Profile 只随共用字段样式变化，版式留给 V19、V20。
+- 新增 templatetags 包后必须重启已在运行的 Development server：Django 只在启动时登记模板标签库，autoreloader 不会发现尚未导入的新模块。
+- 测试：访问页面结构、Login 只有一个 Password reset 链接、站点 Label 无冒号与 Admin 保留冒号、输入框边框 contrast；浏览器测试在 1440/390px 下检查 Login、Signup、Magic Code 请求与 Password reset 的版式、主按钮宽度、Label 字体与大小写、Checkbox 位置、替代入口宽度、24px 触控目标与无溢出。完整 pytest `448 passed`；`static:check`、Ruff、Django check、`makemigrations --check` 与 `git diff --check` 通过；25 张合成数据截图走查经项目负责人确认。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -773,7 +784,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About、Beginners & Safety）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片、居中页面操作、连线编号流程、带金色顶线的风险面板与单框规则列表、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 列表页头与金色细边框网格卡片（Researcher 标签、整卡点击与卡片外框 Focus、图纸式资料格 `.member-facts`）、Member detail 与 Preview 共用的信息面板（Researcher 标签 kicker、面板内横向资料格）与编号分节、返回链接、Members empty state、连续字符断行、24px Profile 触控目标、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About、Beginners & Safety）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片、居中页面操作、连线编号流程、带金色顶线的风险面板与单框规则列表、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 列表页头与金色细边框网格卡片（Researcher 标签、整卡点击与卡片外框 Focus、图纸式资料格 `.member-facts`）、Member detail 与 Preview 共用的信息面板（Researcher 标签 kicker、面板内横向资料格）与编号分节、返回链接、Members empty state、连续字符断行、24px Profile 触控目标、共用表单字段（等宽大写 Label、直角页面底色输入框与不透明金色 `--color-input-border` 边框、Checkbox 同行）、认证访问页面（页头加 `30rem` 访问面板、面板内占满宽度的按钮、分隔线下的替代入口与 24px 文字链接）、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -822,10 +833,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、Hero（对辅助技术隐藏的背景照片与指针光照层及其 Alpine 坐标更新、材质标签与等宽 eyebrow、三行金色 H1、介绍、等宽按钮行、右侧响应式 Logo、图纸标题栏）、认证状态分支 CTA、页内新手入口与四张编号功能卡片，以及标题区带 `View all events` 的最多三条 Upcoming Event 预览和 empty state。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About 与页面 Metadata：等宽小标签页头，四个带编号的报告分节（组织目的、以编号功能卡片呈现的活动内容、含补充说明的参与资格、训练方式），以及只向 Anonymous 显示、在页面末尾居中的 Hero 尺寸 `Join`。 |
 | `apps/core/templates/core/beginners_safety.html` | 提供正式英文 Beginners & Safety 与页面 Metadata：等宽小标签页头，五个带编号的报告分节（连线编号的入门流程、风险面板、含补充说明的参与前提示、单框规则列表、共同责任）；仅在环境允许时于风险面板内增加 Draft Risk Notice 次级入口，不替代正式 Risk Notice，页面不提供招新按钮。 |
-| `templates/account/_page.html` | allauth 页面共用骨架：eyebrow、唯一 H1（`page-title`）、可选 intro 与页面主体。 |
-| `templates/account/includes/panel_form.html` | 输出带全部字段、CSRF、redirect 字段和单个提交按钮的 panel 表单，供登录、重置、设置/确认密码与验证码请求页复用。 |
-| `templates/account/includes/code_form.html` | Email verification 与 Magic Code 共用的一次性 code 输入、确认与重发按钮。 |
+| `templates/account/_page.html` | allauth 页面共用骨架 `.access-page`：等宽小标签、唯一 H1（`page-title`）与可选 intro 组成的页头，加承载页面主体的单个 `.access-panel`；宽屏左右排列，窄屏上下排列。 |
+| `templates/account/includes/panel_form.html` | 输出带全部字段、CSRF、redirect 字段和单个占满面板宽度的提交按钮的表单，供登录、重置、设置/确认密码与验证码请求页复用；外框由 `_page.html` 的访问面板提供。 |
+| `templates/account/includes/code_form.html` | Email verification 与 Magic Code 共用的一次性 code 输入、确认与重发按钮；外框由访问面板提供。 |
 | `templates/account/includes/cancel_sign_in_form.html` | 以 POST logout 放弃当前 code 阶段并返回登录页。 |
+| `apps/core/templatetags/form_labels.py` | `plain_label` filter：以 `label_suffix=""` 输出 BoundField 的 label 或 legend，供站点字段模板去掉末尾冒号。 |
 | `apps/core/context_processors.py` | 将当前请求解析到的 view name 或 Events namespace 映射为 `nav_section`，供 Header 统一输出 `aria-current="page"`。 |
 | `apps/core/templates/core/errors/_error_page.html` | 三个错误页共用的基模板，提供 status code、标题、说明与 Return Home 操作的固定结构。 |
 | `apps/core/templates/core/errors/403.html` | 继承错误页基模板，使用共享页面壳呈现中性 Access Denied 状态和 Return Home 操作，保持 HTTP 403。 |
@@ -846,11 +858,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/accounts/urls.py` | 将项目 Account view 暴露为命名路由 `account`，路径为 `/account/`。 |
 | `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，使用三个主卡片显示只读账户、Profile 摘要与发布操作、USYD/USU form、Password change 和 POST logout；使用 Alpine 条件显示 USU ID并保留无 JavaScript 普通 POST。 |
 | `templates/includes/forms/form_errors.html` | 输出 form 非字段错误的可聚焦 alert summary，供认证、Account 与 Profile 编辑模板复用。 |
-| `templates/includes/forms/field.html` | 通过 Django `as_field_group` 输出单个字段及其 label、help text、error 与 ARIA 关联。 |
+| `templates/includes/forms/field.html` | Django `django/forms/field.html`（`as_field_group` 所用模板）的项目副本：输出单个字段及其不带冒号的 label、help text、error 与 ARIA 关联。 |
 | `templates/includes/forms/form_fields.html` | 组合 form-level error 与全部 visible/hidden fields，减少认证模板间的字段呈现差异。 |
 | `apps/accounts/templates/accounts/includes/usyd_fields.html` | 输出 Signup 与 Account 共用的 USYD checkbox 和条件显示的 USU ID 字段；Alpine state 由外层 form 声明。 |
 | `templates/account/signup.html` | 呈现项目 Signup 页面，并用 Alpine 渐进增强 USYD/USU ID 条件输入，保留服务端 POST 回退。 |
-| `templates/account/login.html` | 呈现 Username/Password 登录与 Magic Code、Password reset、Signup 入口。 |
+| `templates/account/login.html` | 呈现 Username/Password 登录；Password reset 入口只保留 allauth 的字段帮助链接，Magic Code 与 Signup 入口位于面板分隔线之下。 |
 | `templates/account/request_login_code.html` | 呈现 Magic Code Email 请求 form，并维持 allauth enumeration-prevention 流程。 |
 | `templates/account/confirm_login_code.html` | 呈现数字 Magic Code 确认与重发操作，复用不回显 code widget。 |
 | `templates/account/confirm_email_verification_code.html` | 呈现注册 Email 数字验证码确认与重发操作，复用不回显 code widget。 |
@@ -972,8 +984,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_error_pages_browser.py` | 以隔离错误 URLConf 启动真实测试站点并调用 Step 25 Playwright scenario。 |
 | `tests/test_phase2_accessibility_browser.py` | 在 `DEBUG=False` 下开启 Draft 并复用隔离错误 URLConf，以真实静态 live server 调用 Step 27 统一 accessibility Playwright scenario。 |
 | `tests/test_public_metadata_sitemap_footer.py` | 验证三个正式宣传页的准确 Metadata/Open Graph、环境派生 URL、无硬编码 canonical host、含 Members 列表且排除个人 detail 与 Draft 的 sitemap XML 精确 allowlist，以及 Footer 的获准 Instagram 与禁止内容边界。 |
-| `tests/test_authentication_templates.py` | 验证项目认证模板覆盖、共享页面壳、Alpine/no-JavaScript 边界、ARIA error 关联、数字 code attributes 及 Password/code 不回显。 |
-| `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 与 `package.json` 运行依赖一致及 SHA-256、无第三方 CDN、构建产物中的 design tokens、本地字体与 focus/reduced-motion、从 `@theme` 读取的关键颜色与金色材质 contrast，材质图作为大号展示文字时的最暗像素 contrast、按钮材质每个像素对近黑文字的 contrast，以及构建 CSS 引用的图片均存在。 |
+| `tests/test_authentication_templates.py` | 验证项目认证模板覆盖、共享页面壳与页头加访问面板结构、Login 唯一 Password reset 链接与分隔线下的替代入口、站点 Label 无冒号而 Admin 保留冒号、Alpine/no-JavaScript 边界、ARIA error 关联、数字 code attributes 及 Password/code 不回显。 |
+| `tests/test_static_assets.py` | 验证 static/template settings、vendor manifest 与 `package.json` 运行依赖一致及 SHA-256、无第三方 CDN、构建产物中的 design tokens、本地字体与 focus/reduced-motion、从 `@theme` 读取的关键颜色与金色材质 contrast，材质图作为大号展示文字时的最暗像素 contrast、按钮材质每个像素对近黑文字的 contrast，输入框边框对页面底色与卡片表面的 contrast，以及构建 CSS 引用的图片均存在。 |
 | `tests/test_authentication_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Node Playwright；显式按 UTF-8 捕获输出，失败时保留真实浏览器诊断。 |
 | `tests/test_phase1_browser_flows.py` | 编排 Phase 1 Signup/verification、Password login/Account update、Magic Code 和 Admin USU review 浏览器流程，并从隔离的 Playwright storage state 读取服务端 Session code 以继续真实流程。 |
 | `tests/test_acceptance.py` | 以参数化方式验证四个阶段验收入口的完整命令序列、smoke 失败时输出 server log 并停止 server、缺少 uv 时失败、terminate/kill 清理、脚本直接执行时的导入，以及 README 列出各阶段验收与门禁命令。 |
@@ -981,7 +993,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_quality_security.py` | 验证敏感文件及高置信凭据扫描、测试外部网络阻断、认证与身份日志隐私、Anonymous 页面和 Members 公开响应的私有字段隔离、Phase 3 不收集年龄/监护人资料，以及 HttpOnly Session cookie。 |
 | `tests/test_quality_gate.py` | 验证统一门禁不会吞掉子命令失败，非零退出会作为验收失败传播。 |
 | `tests/browser/browser-support.mjs` | 为 Playwright scenarios 提供必填环境变量读取、只允许当前 live-server origin 的 browser context、外部请求断言，以及共享的会话 cookie、溢出、页面边界、landmark、可见内容、触控目标与 Focus 断言。 |
-| `tests/browser/authentication-ui.mjs` | 在 Chromium 中执行小屏、键盘、Alpine、整串 code 输入、无 JavaScript fallback 和服务端错误焦点的端到端断言，并复用同源网络隔离。 |
+| `tests/browser/authentication-ui.mjs` | 在 Chromium 中执行小屏、键盘、Alpine、整串 code 输入、无 JavaScript fallback 和服务端错误焦点的端到端断言，并在 1440/390px 下检查访问页面版式、主按钮与替代入口宽度、等宽大写无冒号 Label、Checkbox 位置、24px 触控目标与无溢出；复用同源网络隔离。 |
 | `tests/browser/phase1-core-flows.mjs` | 在 Chromium 中执行 Phase 1 注册验证、两种登录、账户更新、登出和 Admin USU review 操作，所有场景均使用同源网络限制。 |
 | `tests/browser/development-server-smoke.mjs` | 对真实 Development server 执行 desktop/mobile Home、Signup、Login、Account redirect、CSS、布局、page error、同源请求和 Branding smoke checks。 |
 | `tests/browser/phase2-development-smoke.mjs` | 对真实 Development server 执行 Phase 2 desktop/mobile 正式页面、Draft 分支、错误页、认证入口、CSS、布局、page error 和同源请求 smoke checks。 |

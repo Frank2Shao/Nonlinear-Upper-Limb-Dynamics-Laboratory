@@ -564,6 +564,17 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V16 | Member detail 与本人 Preview。顶部 `← Back to members`；信息面板（Avatar、`Member profile` · Researcher 标签、H1、`@username`、资料格）；`Bio` 与 `Links` 为报告分节，缺失内容的分节不显示且编号连续；Preview 共用同一组件（H2 版本保持 Heading 层级）。更新依赖旧结构的测试。验证有/无编号、Avatar、Bio、Links 的组合，Preview 与隐藏提示，未发布/隐藏 404 不变，Heading 顺序、desktop/mobile、200% 放大、键盘、外链属性、无溢出与对比度。 |
 | V17 | 第四轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交 Members 列表、详情与 Preview（含有/无编号与 Avatar）的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
 
+### Visual Refresh 第五轮：认证与 Account
+
+**展开条件：** 第四轮 V14–V17 已验收；项目负责人已确认认证、Account、Edit Profile、Preview 与 Publish/Unpublish 的设计 mockup（规则见 `design_document.md` 7.11）。约束与前几轮相同：不改变业务逻辑、权限、URL、Metadata、表单字段与顺序、验证规则或 migration；allauth 流程、频率限制与防枚举行为保持不变；USYD/USU 条件字段的 Alpine 与无 JavaScript 回退保持不变。7.11 列出的新增短文案、Log in 页删除重复的 `Forgot password?` 按钮和去掉 Label 末尾冒号是本轮仅有的文案变动。
+
+| 步骤 | 实施与验收 |
+| --- | --- |
+| V18 | 共用表单字段与认证页面。全站 `.field` 改为等宽大写 Label、直角金色细边框输入框与同一行 Checkbox；去掉 Label 末尾冒号（只改 label suffix，不改字段）；建立访问面板与认证页两栏版式，套用到 Log in、Join the Club、Verify email、Log in by email code 与密码重置/修改等 allauth 模板；Log in 页删除重复的 `Forgot password?` 按钮。更新依赖旧结构与冒号的测试。验证注册（含 USYD 条件字段、无 JavaScript）、密码登录与错误、验证码登录、密码重置各页，Heading 顺序、Label 关联、错误提示位置、desktop/mobile、200% 放大、键盘 Focus、24px 触控目标、无溢出与对比度。 |
+| V19 | Account 页。页头与四个报告分节；图纸式表格展示账户与 Profile 资料；资料摘要（Avatar、发布状态标签、Researcher 标签、公开名称、公开路径）与操作入口；USYD/USU 表单与 Security 按钮左对齐。更新依赖旧结构的测试。验证已发布/未发布/管理员隐藏、有/无编号与 Avatar、USU 各审核状态、非 USYD 用户、Heading 顺序、隐私边界不变、desktop/mobile、200% 放大、键盘、无溢出与对比度。 |
+| V20 | Edit Profile、Preview 外壳与 Publish/Unpublish 确认页。编辑表单分为三个报告分节与末尾操作栏（Avatar 编辑区宽屏两列）；Preview 页头与 `Public view` 虚线框，隐藏提示与按钮在框外；Publish/Unpublish 确认页的分节、规则列表、`Public name`/`Profile URL` 表格与警示。更新依赖旧结构的测试。验证编辑保存与错误回显、Avatar 上传/删除、Preview 的已发布/未发布/隐藏状态、Publish 与 Unpublish 的 POST、CSRF 与幂等不变、Username 回退说明、Heading 顺序、desktop/mobile、200% 放大、键盘、无溢出与对比度。 |
+| V21 | 第五轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交认证页面、Account、Edit Profile、Preview 与 Publish/Unpublish 的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
+
 ## 十、Phase 6 概要：上线与运维
 
 **展开条件：** Phase 1–4 已验收，hosting、SMTP、media storage、monitoring 和数据保留决策已确认。
