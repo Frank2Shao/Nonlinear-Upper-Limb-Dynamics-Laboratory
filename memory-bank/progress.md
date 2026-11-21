@@ -2265,3 +2265,52 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 - 走查中发现：新增 templatetags 包后，已在运行的 Development server 会报 `'form_labels' is not a registered tag library`；Django 只在启动时登记模板标签库，重启后正常，代码无需修改。
 - 项目负责人确认 Account 页面的 `Log out` 继续直接 POST 登出，不增加确认页。
 - `architecture.md` 已新增 3.65 并更新对应文件职责。V19（Account）尚未开始。
+
+## Visual Refresh Step V19 — Account 页面
+
+### 前置条件检查
+
+- 项目负责人已批准 V18 并授权开始 V19；已完整阅读 `architecture.md` 与 `design_document.md`；Account 版式以 7.11 及第五轮确认的 mockup 为准。
+
+### 实施内容
+
+- `apps/accounts/templates/accounts/account.html` 改为报告页结构，取代原先窄栏中的三张 `.panel` 卡片：
+  - 页头为 `label-mono` 小标签 `Member settings` 与 H1 `Account`；
+  - 四个 `.report-section`：`01 Account details`、`02 Public member profile`、`03 USYD and USU details`、`04 Security`，节标题均为 H2（原 `Public member profile` 为 H3）；
+  - 没有 MemberProfile 时第二节不输出，编号按实际顺序连续（`01`–`03`）。
+- 新增图纸式表格 `.facts-table`（等宽大写标签列为低优先级文字色，数值为主文字色，行间金色细线）：
+  - Account details 列出 Username、Email、Email verification、USU review status；
+  - Profile 资料列出 Bio、Experience level、Preferred arm、Instagram Username、Other social URL，空值仍为 `Not provided` / `Not specified`；
+  - 窄于 `--breakpoint-hero` 时标签在数值上方。
+- 资料摘要 `.account-summary`：
+  - 左侧 6rem 方形 Avatar（alt 仍为 `Current avatar for …`），没有 Avatar 时为对辅助技术隐藏的首字母 fallback；
+  - 右侧依次为发布状态标签（`Published` 为 `status-tag--open` 金色文字，`Not published` 与 `Unavailable on public pages` 为次要文字色，均不填充）与已分配时的 Researcher `gold-tag`、公开名称（Display name 为空时回退 Username）、等宽公开路径 `/members/<username>/`（由 `members:detail` 反向解析）；
+  - 按 mockup，原表格中的 `Publication status`、`Display name` 与 `Avatar` 三行由摘要取代。
+- Username/可选资料说明改用 `.report-note`；Edit、Preview、Publish/Unpublish 入口不变。
+- USYD/USU 表单与 Security 按钮在宽屏左对齐、保持自身宽度；手机上沿用全站规则占满宽度（与 mockup 一致）。`Log out` 仍为直接 POST。
+- CSS：删除只被旧 Account 使用的 `.definition-list` 与 `.account-profile-summary` 规则（含共享 Avatar 与断行分组中的条目），以及因此不再使用的 `--color-separator` token；新增 `.facts-table`、`.account-summary` 系列与报告分节内表单按钮左对齐规则。
+- view、URL、form、Alpine 条件字段、隐私边界、文案与 migration 均未改动。
+
+### 测试
+
+- `test_account_page.py`：
+  - 页头小标签与 H1、四个编号分节的顺序与标题、两张 facts 表格、不再使用 `.panel`；
+  - 没有 Profile 时分节编号 `01`–`03` 连续；
+  - 摘要中的 `Published` 金色标签位于 Researcher 标签之前、公开名称、公开路径与首字母 fallback；
+  - 未发布与管理员隐藏为普通标签、未分配编号时不输出 Researcher 标签、名称回退 Username；
+  - 原有 Profile 摘要测试改为 H2 标题，去掉已不存在的 `Not provided` Avatar 行。
+- `phase3-accessibility.mjs`：`Public member profile` 改为 H2；桌面断言表格标签与数值同行、Avatar 在摘要左侧、`Update account` 左对齐且不拉伸、状态标签为等宽字体；手机断言标签在数值上方、Avatar 仍在摘要左侧。
+- `phase1-core-flows.mjs`：Username 与 `Pending` 的查找限定在 `Account details` 区域（摘要的名称回退也会显示 Username）。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `453 passed`。
+- `static:check`、Ruff lint/format、Django check、`makemigrations --check`（无变化）与 `git diff --check` 通过。
+- 走查截图使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、四名合成会员与程序生成的抽象头像，截图后删除），共 12 张，均无横向溢出与 page error：
+  - 1440 × 900 与 390 × 844 各 5 张：已发布含编号与 Avatar（USU Pending）、未发布无 Avatar 且非 USYD、管理员隐藏含编号（USU Verified）、未发布长名称（USU Rejected）、USU ID 服务端错误；
+  - 另有 820px 已发布与 640px 视口 200% 字号已发布各 1 张。
+- USU 错误截图中 `Skip to main content` 出现在页面中部：经检查焦点正确落在 USU ID 字段，跳转链接仍位于视口上方隐藏，是全页截图对 fixed 元素的绘制方式，不是页面问题。
+
+### 当前边界与下一步门槛
+
+- 项目负责人已走查截图并批准 V19；`architecture.md` 已新增 3.66 并更新对应文件职责。V20（Edit Profile、Preview 外壳与 Publish/Unpublish）尚未开始。

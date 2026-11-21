@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 21 日
-**对应进度：** Visual Refresh, Step V18
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18 完成），Phase 6 尚未开始
+**对应进度：** Visual Refresh, Step V19
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V19 完成），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -762,6 +762,16 @@ ASGI / WSGI ───────────→ config.settings.production
 - 新增 templatetags 包后必须重启已在运行的 Development server：Django 只在启动时登记模板标签库，autoreloader 不会发现尚未导入的新模块。
 - 测试：访问页面结构、Login 只有一个 Password reset 链接、站点 Label 无冒号与 Admin 保留冒号、输入框边框 contrast；浏览器测试在 1440/390px 下检查 Login、Signup、Magic Code 请求与 Password reset 的版式、主按钮宽度、Label 字体与大小写、Checkbox 位置、替代入口宽度、24px 触控目标与无溢出。完整 pytest `448 passed`；`static:check`、Ruff、Django check、`makemigrations --check` 与 `git diff --check` 通过；25 张合成数据截图走查经项目负责人确认。
 
+### 3.66 Visual Refresh V19：Account 页面（第五轮）
+
+- `accounts/account.html` 改为报告页结构，取代 3.34 记录的窄栏三张主卡片：`.page-heading`（`label-mono` 小标签 `Member settings`、H1 `Account`）加四个 `.report-section`：`01 Account details`、`02 Public member profile`、`03 USYD and USU details`、`04 Security`，节标题均为 H2（原 Profile 摘要为 H3）。没有 MemberProfile 时第二节不输出，编号由模板按实际顺序连续给出。
+- `.facts-table` 是私有设置用的图纸式表格：`dl` 中每行一个 `div`，等宽大写标签列为 `--color-subtle`、数值为 `--color-cream`，行间以金色底上的 1px 间隙形成分隔线；`@variant max-hero` 下标签位于数值上方。Account details 列出 Username、Email、Email verification 与 USU review status；Profile 表格列出 Bio、Experience level、Preferred arm、Instagram Username 与 Other social URL，空值仍为 `Not provided` / `Not specified`。V20 的 Publish/Unpublish 确认页将复用该组件。
+- `.account-summary` 取代原表格中的 Publication status、Display name 与 Avatar 三行：6rem 方形 Avatar（alt `Current avatar for …`）或对辅助技术隐藏的首字母 fallback；`.profile-kicker` 中的发布状态 `.status-tag`（`Published` 加 `status-tag--open`，`Not published` 与 `Unavailable on public pages` 为普通标签）与已分配时的 Researcher `gold-tag`；以 `resolved_display_name` 显示的公开名称；由 `members:detail` 反向解析的等宽公开路径。管理员隐藏优先于发布状态的判断顺序不变。
+- Username/可选资料说明使用 `.report-note`；Edit、Preview 与共享 Publish/Unpublish 入口不变。报告分节内 `form.stack` 的提交按钮宽屏左对齐、保持自身宽度，`max-nav` 下仍按全站规则占满宽度；Security 的 `Log out` 仍为直接 CSRF POST。
+- 删除只被旧 Account 使用的 `.definition-list`、`.account-profile-summary` 规则及其在共享 Avatar、断行与 `max-nav` 分组中的条目，并删除因此不再使用的 `--color-separator` token。
+- view、URL、`AccountIdentityForm`、Alpine USYD/USU 条件字段、本人数据隔离、审核信息不输出的隐私边界、文案与 migration 均未改变。
+- 测试：页头与四个编号分节、无 Profile 时编号连续、摘要标签顺序与样式、名称回退 Username、未分配编号不输出标签；浏览器测试断言桌面表格标签与数值同行、Avatar 在摘要左侧、`Update account` 左对齐不拉伸，手机标签在数值上方。Phase 1 浏览器流程中 Username 的查找限定在 `Account details` 区域。完整 pytest `453 passed`；`static:check`、Ruff、Django check、`makemigrations --check` 与 `git diff --check` 通过；12 张合成数据截图（已发布/未发布/管理员隐藏、有无编号与 Avatar、USU Pending/Verified/Rejected 与非 USYD、服务端错误、820px 与 200% 字号）走查经项目负责人确认。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -784,7 +794,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_2.py` | Step 28 验收入口：以共享项目门禁运行 Phase 2 desktop/mobile Development smoke。 |
 | `scripts/accept_phase_3.py` | Step 36 验收入口：以共享项目门禁依次运行 Phase 2/3 desktop/mobile Development smoke。 |
-| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About、Beginners & Safety）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片、居中页面操作、连线编号流程、带金色顶线的风险面板与单框规则列表、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account Profile 摘要、Members 列表页头与金色细边框网格卡片（Researcher 标签、整卡点击与卡片外框 Focus、图纸式资料格 `.member-facts`）、Member detail 与 Preview 共用的信息面板（Researcher 标签 kicker、面板内横向资料格）与编号分节、返回链接、Members empty state、连续字符断行、24px Profile 触控目标、共用表单字段（等宽大写 Label、直角页面底色输入框与不透明金色 `--color-input-border` 边框、Checkbox 同行）、认证访问页面（页头加 `30rem` 访问面板、面板内占满宽度的按钮、分隔线下的替代入口与 24px 文字链接）、响应式导航、focus 和 reduced-motion。 |
+| `static_src/css/site.css` | Tailwind CSS v4 项目样式源，声明 template source、local fonts（含 JetBrains Mono）、集中管理的全部颜色（含金色材质色阶、浮雕与近黑文字、网格线、低优先级文字和金色细边框）、字体（含等宽族）与圆角 tokens、坐标网格页面背景、共享内容宽度、金色材质主按钮/渐变描边次要按钮/安静按钮/Header 紧凑按钮、金色展示文字及其 forced-colors 回退、金色渐变分隔线、等宽标签与材质标签、共享卡片表面/头像/断行分组规则、全局基础规则、公开页面、Home（含 Hero 文字栏/Logo 分组、等宽按钮行、图纸标题栏，以及仅宽屏可悬停时渲染的背景照片、边缘渐隐与指针光照遮罩）、共用区块标题与页头（含居中变体）、Events 筛选标签页、活动详情返回链接/状态小标签行/通栏信息面板与报名区、报告页（About、Beginners & Safety）的左对齐页头、带编号的两列报告分节、补充说明段落、分节内功能卡片、居中页面操作、连线编号流程、带金色顶线的风险面板与单框规则列表、报名 dialog 与 Risk Notice 正文区、Home 编号功能卡片、Events 网格活动卡片（日期块、图纸式信息行、不填充的状态标签与等宽详情按钮）与报名 dialog、Profile、Account 页（私有设置图纸式表格 `.facts-table`、带状态与 Researcher 标签的资料摘要、报告分节内左对齐的表单按钮）、Members 列表页头与金色细边框网格卡片（Researcher 标签、整卡点击与卡片外框 Focus、图纸式资料格 `.member-facts`）、Member detail 与 Preview 共用的信息面板（Researcher 标签 kicker、面板内横向资料格）与编号分节、返回链接、Members empty state、连续字符断行、24px Profile 触控目标、共用表单字段（等宽大写 Label、直角页面底色输入框与不透明金色 `--color-input-border` 边框、Checkbox 同行）、认证访问页面（页头加 `30rem` 访问面板、面板内占满宽度的按钮、分隔线下的替代入口与 24px 文字链接）、响应式导航、focus 和 reduced-motion。 |
 | `static/css/site.css` | 由 Tailwind CLI 从 `static_src/css/site.css` 生成的 minified 浏览器样式；作为部署输入提交，不手工编辑。 |
 | `static_src/images/brand/nuldl-club-logo-transparent.png` | 当前 Home Logo 的透明 PNG 源文件；由固定 SHA-256 保护，不直接作为响应式页面资产。 |
 | `static/images/brand/nuldl-club-logo-480.webp` | 从获准源图生成的 480 × 480 WebP，供窄屏 Home Hero 使用。 |
@@ -856,7 +866,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `apps/accounts/forms.py` | 定义共享 USYD/USU 字段与校验的 `UsuIdentityFields` 基类，以及基于它的 Account 身份更新与 allauth signup forms，另含 Magic Code request 及两类 code confirmation forms；通过字段白名单与既有 service 隔离只读/审核字段，并为 USYD 渐进增强和不回显数字 code 提供 widget attributes。 |
 | `apps/accounts/views.py` | 提供登录保护的 Account GET/POST view，固定使用当前 User，查询本人 Email verification status 与 MemberProfile 摘要，并在成功更新后执行 redirect-after-POST。 |
 | `apps/accounts/urls.py` | 将项目 Account view 暴露为命名路由 `account`，路径为 `/account/`。 |
-| `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，使用三个主卡片显示只读账户、Profile 摘要与发布操作、USYD/USU form、Password change 和 POST logout；使用 Alpine 条件显示 USU ID并保留无 JavaScript 普通 POST。 |
+| `apps/accounts/templates/accounts/account.html` | 继承全局页面壳，以等宽小标签页头与连续编号的报告分节呈现：图纸式表格中的只读账户信息；Profile 摘要（Avatar 或首字母 fallback、发布状态与 Researcher 标签、公开名称与路径）、资料表格、公开说明与 Edit/Preview/Publish 操作；USYD/USU form；Password change 与直接 POST logout。使用 Alpine 条件显示 USU ID 并保留无 JavaScript 普通 POST。 |
 | `templates/includes/forms/form_errors.html` | 输出 form 非字段错误的可聚焦 alert summary，供认证、Account 与 Profile 编辑模板复用。 |
 | `templates/includes/forms/field.html` | Django `django/forms/field.html`（`as_field_group` 所用模板）的项目副本：输出单个字段及其不带冒号的 label、help text、error 与 ARIA 关联。 |
 | `templates/includes/forms/form_fields.html` | 组合 form-level error 与全部 visible/hidden fields，减少认证模板间的字段呈现差异。 |
@@ -968,7 +978,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_email_verification.py` | 验证待确认状态、正确、错误、过期与重复验证码、重发与即时限流、幂等 Profile 创建，以及日志不泄露完整 Email 或验证码。 |
 | `tests/test_password_authentication.py` | 验证密码登录、通用凭据错误、未验证与停用账户、站内及外部 redirect、Password reset 枚举保护与密码更新，以及 GET/POST logout 边界。 |
 | `tests/test_magic_code_authentication.py` | 验证 Magic Code 的有效、错误、过期、单次使用、重发、请求限制、账户资格、enumeration prevention、密码登录独立性及敏感日志边界。 |
-| `tests/test_account_page.py` | 验证 Account 访问控制、本人数据隔离、Email verification、Profile 摘要与状态操作、三卡片结构、USYD/USU ID 状态转换、只读字段防伪造、Password change 和 POST logout。 |
+| `tests/test_account_page.py` | 验证 Account 访问控制、本人数据隔离、Email verification、页头与连续编号的四个报告分节（无 Profile 时三个）、Profile 摘要的状态标签、Researcher 标签、名称回退与公开路径、状态操作、USYD/USU ID 状态转换、只读字段防伪造、Password change 和 POST logout。 |
 | `tests/test_user_admin.py` | 验证 UserAdmin 配置、四类角色权限差异、Verify/Reject、直接编辑防护、重新提交、审核人停用及前台敏感信息边界。 |
 | `tests/test_global_templates.py` | 验证全局页面壳、metadata/head blocks、完整品牌、Anonymous/Member Header、当前导航、已实施公开页面链接、无失效链接、skip link、landmarks、唯一 H1/title、消息播报、本地 Alpine 和普通导航/form 基线。 |
 | `tests/test_public_foundation_browser.py` | 以 Django `StaticLiveServerTestCase` 启动真实测试站点并调用 Step 21 公开页面 Playwright scenario。 |
@@ -994,7 +1004,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/test_quality_gate.py` | 验证统一门禁不会吞掉子命令失败，非零退出会作为验收失败传播。 |
 | `tests/browser/browser-support.mjs` | 为 Playwright scenarios 提供必填环境变量读取、只允许当前 live-server origin 的 browser context、外部请求断言，以及共享的会话 cookie、溢出、页面边界、landmark、可见内容、触控目标与 Focus 断言。 |
 | `tests/browser/authentication-ui.mjs` | 在 Chromium 中执行小屏、键盘、Alpine、整串 code 输入、无 JavaScript fallback 和服务端错误焦点的端到端断言，并在 1440/390px 下检查访问页面版式、主按钮与替代入口宽度、等宽大写无冒号 Label、Checkbox 位置、24px 触控目标与无溢出；复用同源网络隔离。 |
-| `tests/browser/phase1-core-flows.mjs` | 在 Chromium 中执行 Phase 1 注册验证、两种登录、账户更新、登出和 Admin USU review 操作，所有场景均使用同源网络限制。 |
+| `tests/browser/phase1-core-flows.mjs` | 在 Chromium 中执行 Phase 1 注册验证（在 `Account details` 区域确认 Username 与 Pending 状态）、两种登录、账户更新、登出和 Admin USU review 操作，所有场景均使用同源网络限制。 |
 | `tests/browser/development-server-smoke.mjs` | 对真实 Development server 执行 desktop/mobile Home、Signup、Login、Account redirect、CSS、布局、page error、同源请求和 Branding smoke checks。 |
 | `tests/browser/phase2-development-smoke.mjs` | 对真实 Development server 执行 Phase 2 desktop/mobile 正式页面、Draft 分支、错误页、认证入口、CSS、布局、page error 和同源请求 smoke checks。 |
 | `tests/browser/phase3-development-smoke.mjs` | 对真实 Development server 执行 Phase 3 desktop/mobile Members、Anonymous Profile redirect、不可见详情、Development media、CSS、布局、page error 和同源请求 smoke checks。 |
@@ -1008,7 +1018,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/browser/phase2-accessibility.mjs` | 在 Chromium 中统一验证全部 Phase 2 公开与错误页面的语义、Heading、link name、Focus、键盘顺序、触控目标、reflow、200% 放大、对比度、reduced motion、替代文本、无 JavaScript、错误与同源网络边界；导航顺序包含已上线的 Members 入口；按钮对比度读取 `::after`/`::before` 填充层，覆盖主按钮、描边按钮与 Header 按钮；Home 对比度覆盖 Hero 介绍、材质标签、eyebrow 与图纸标题栏（光照未点亮状态），以及功能卡片编号、正文与活动空状态。 |
 | `tests/browser/avatar-edit.mjs` | 在 Chromium desktop/mobile 中验证当前 Avatar 加载、方形裁切、metadata 提示、删除控件、键盘 Focus、上传错误保持及同源网络边界。 |
 | `tests/browser/member-directory.mjs` | 在 Chromium desktop/mobile/no-JavaScript 场景验证公开 Members cards、左侧紧凑 Avatar、右侧摘要、名称正上方的 Researcher 标签、桌面并排卡片、整卡 Focus 外框与整卡点击、稳定顺序、详情导航、详情信息面板桌面左右/手机上下布局与名称上方的标签、robots、安全外链、Focus、无溢出、page error 和同源网络边界。 |
-| `tests/browser/phase3-accessibility.mjs` | 在 Chromium 中统一验证 Account/Profile/Members 全流程的 desktop/mobile、200% content zoom、键盘 Focus、24px 触控目标、表单错误关联、连续长内容重排、禁用 JavaScript 提交与返回 Account、reduced motion、page error 和同源网络边界。 |
+| `tests/browser/phase3-accessibility.mjs` | 在 Chromium 中统一验证 Account/Profile/Members 全流程的 desktop/mobile、200% content zoom、键盘 Focus、24px 触控目标、表单错误关联、连续长内容重排、禁用 JavaScript 提交与返回 Account、Account 表格与资料摘要的 desktop/mobile 版式及宽屏左对齐按钮、reduced motion、page error 和同源网络边界。 |
 | `memory-bank/design_document.md` | 产品与体验设计的权威来源，定义用户、页面、流程、权限、业务规则、隐私、Accessibility、内容和 Branding 边界。 |
 | `memory-bank/tech_stack.md` | 技术决策的权威来源，定义框架、版本策略、单体架构、环境、安全、部署和运维边界。 |
 | `memory-bank/implementation.md` | 代码实施顺序的权威来源，将当前 Phase 拆分为一次只执行一个的可验证步骤，并规定模型、配置、测试和 migration 要求。 |
