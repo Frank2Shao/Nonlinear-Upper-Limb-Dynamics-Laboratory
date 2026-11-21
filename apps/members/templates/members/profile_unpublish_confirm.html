@@ -3,17 +3,34 @@
 {% block title %}Unpublish Profile | NULDL Armwrestling Club{% endblock %}
 
 {% block content %}
-  <section class="content-narrow" aria-labelledby="profile-unpublish-title">
-    <p class="eyebrow">Publication confirmation</p>
-    <h1 id="profile-unpublish-title">Unpublish Profile</h1>
-    <p>Unpublishing removes your profile from public member pages. Your saved profile information remains available for you to edit and preview.</p>
+  <div class="public-page public-page--report">
+    <header class="page-heading">
+      <p class="label-mono">Publication confirmation</p>
+      <h1 id="profile-unpublish-title">Unpublish Profile</h1>
+      <p class="lede">Unpublishing removes your profile from public member pages. Your saved profile information remains available for you to edit and preview.</p>
+    </header>
 
     {% include "members/includes/profile_hidden_notice.html" with profile=profile %}
 
-    <form class="button-row panel" method="post">
+    <section class="report-section" aria-labelledby="unpublish-page-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">01</span>
+        <h2 id="unpublish-page-title">Your public page</h2>
+      </div>
+      <div class="report-section__body">
+        <dl class="facts-table">
+          <div><dt>Public name</dt><dd>{{ profile.resolved_display_name }}</dd></div>
+          <div><dt>Profile URL</dt><dd><code>{% url 'members:detail' username=profile.user.username %}</code></dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <form class="report-action report-action--start" method="post">
       {% csrf_token %}
-      <button class="button" type="submit">Unpublish profile</button>
-      <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Keep profile published</a>
+      <div class="button-row">
+        <button class="button" type="submit">Unpublish profile</button>
+        <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Keep profile published</a>
+      </div>
     </form>
-  </section>
+  </div>
 {% endblock %}

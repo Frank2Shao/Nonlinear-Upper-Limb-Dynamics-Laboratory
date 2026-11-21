@@ -3,33 +3,55 @@
 {% block title %}Publish Profile | NULDL Armwrestling Club{% endblock %}
 
 {% block content %}
-  <section class="content-narrow" aria-labelledby="profile-publish-title">
-    <p class="eyebrow">Publication confirmation</p>
-    <h1 id="profile-publish-title">Publish Profile</h1>
-    <p>Publishing makes the following profile fields public when the Members pages are available:</p>
+  <div class="public-page public-page--report">
+    <header class="page-heading">
+      <p class="label-mono">Publication confirmation</p>
+      <h1 id="profile-publish-title">Publish Profile</h1>
+      <p class="lede">Publishing makes the following profile fields public when the Members pages are available:</p>
+    </header>
 
     {% include "members/includes/profile_hidden_notice.html" with profile=profile %}
 
-    <div class="panel stack">
-      <ul>
-        <li>Display name, or your Username when Display name is empty</li>
-        <li>{% if profile.researcher_label %}Researcher number ({{ profile.researcher_label }}){% else %}Researcher number, if one has been assigned{% endif %}</li>
-        <li>Avatar</li>
-        <li>Experience level</li>
-        <li>Preferred arm</li>
-        <li>Bio</li>
-        <li>Instagram Username</li>
-        <li>Other HTTPS social URL</li>
-      </ul>
-      <p>Your Username will be part of your public profile URL: <code>{{ public_profile_path }}</code></p>
-      <p>Your public name will be <strong>{{ profile.resolved_display_name }}</strong>{% if not profile.display_name %}, using your Username because no Display name is set{% endif %}.</p>
-      <p class="status-banner">Avatar files are published as provided and may contain location, device or other metadata.</p>
-    </div>
+    <section class="report-section" aria-labelledby="publish-fields-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">01</span>
+        <h2 id="publish-fields-title">What becomes public</h2>
+      </div>
+      <div class="report-section__body">
+        <ul class="rule-list">
+          <li>Display name, or your Username when Display name is empty</li>
+          <li>{% if profile.researcher_label %}Researcher number ({{ profile.researcher_label }}){% else %}Researcher number, if one has been assigned{% endif %}</li>
+          <li>Avatar</li>
+          <li>Experience level</li>
+          <li>Preferred arm</li>
+          <li>Bio</li>
+          <li>Instagram Username</li>
+          <li>Other HTTPS social URL</li>
+        </ul>
+      </div>
+    </section>
 
-    <form class="button-row" method="post">
+    <section class="report-section" aria-labelledby="publish-page-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">02</span>
+        <h2 id="publish-page-title">Your public page</h2>
+      </div>
+      <div class="report-section__body">
+        <dl class="facts-table">
+          <div><dt>Public name</dt><dd>{{ profile.resolved_display_name }}</dd></div>
+          <div><dt>Profile URL</dt><dd><code>{{ public_profile_path }}</code></dd></div>
+        </dl>
+        <p class="status-banner">Avatar files are published as provided and may contain location, device or other metadata.</p>
+        <p class="report-note">Your Username is always part of your public profile URL{% if not profile.display_name %}. It is also your public name because no Display name is set{% endif %}.</p>
+      </div>
+    </section>
+
+    <form class="report-action report-action--start" method="post">
       {% csrf_token %}
-      <button class="button" type="submit">Publish profile</button>
-      <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Return to preview</a>
+      <div class="button-row">
+        <button class="button" type="submit">Publish profile</button>
+        <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Return to preview</a>
+      </div>
     </form>
-  </section>
+  </div>
 {% endblock %}

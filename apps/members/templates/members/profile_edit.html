@@ -3,45 +3,79 @@
 {% block title %}Edit Profile | NULDL Armwrestling Club{% endblock %}
 
 {% block content %}
-  <section class="content-narrow" aria-labelledby="profile-edit-title">
-    <p class="eyebrow">Member profile</p>
-    <h1 id="profile-edit-title">Edit Profile</h1>
-    <p>Update the information saved in your member profile. Saving changes does not publish or unpublish your profile.</p>
+  <div class="public-page public-page--report">
+    <header class="page-heading">
+      <p class="label-mono">Member profile</p>
+      <h1 id="profile-edit-title">Edit Profile</h1>
+      <p class="lede">Update the information saved in your member profile. Saving changes does not publish or unpublish your profile.</p>
+    </header>
 
-    <div class="panel">
-      <form class="stack" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% include "includes/forms/form_errors.html" with form=form %}
-        {% include "includes/forms/field.html" with field=form.display_name %}
-        <div class="avatar-editor">
-          {% if profile.avatar %}
-            <figure class="avatar-editor__current">
-              <img
-                class="avatar-preview"
-                src="{{ profile.avatar.url }}"
-                alt="Current avatar for {{ profile.resolved_display_name }}"
-                width="320"
-                height="320"
-              >
-              <figcaption>Current avatar</figcaption>
-            </figure>
-          {% endif %}
-          {% include "includes/forms/field.html" with field=form.avatar %}
-          <p class="helptext" id="avatar-privacy-help">Uploaded images are stored as provided and may contain location, device or other metadata. Remove sensitive metadata before uploading.</p>
-          {% if profile.avatar %}
-            {% include "includes/forms/field.html" with field=form.remove_avatar %}
-          {% endif %}
+    <form class="settings-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% include "includes/forms/form_errors.html" with form=form %}
+
+      <section class="report-section" aria-labelledby="profile-name-title">
+        <div class="report-section__label">
+          <span class="report-section__index" aria-hidden="true">01</span>
+          <h2 id="profile-name-title">Name and avatar</h2>
         </div>
-        {% include "includes/forms/field.html" with field=form.bio %}
-        {% include "includes/forms/field.html" with field=form.experience_level %}
-        {% include "includes/forms/field.html" with field=form.preferred_arm %}
-        {% include "includes/forms/field.html" with field=form.instagram_handle %}
-        {% include "includes/forms/field.html" with field=form.other_social_url %}
+        <div class="report-section__body">
+          {% include "includes/forms/field.html" with field=form.display_name %}
+          <div class="avatar-editor{% if profile.avatar %} avatar-editor--current{% endif %}">
+            {% if profile.avatar %}
+              <figure class="avatar-editor__current">
+                <img
+                  class="avatar-preview"
+                  src="{{ profile.avatar.url }}"
+                  alt="Current avatar for {{ profile.resolved_display_name }}"
+                  width="128"
+                  height="128"
+                >
+                <figcaption>Current avatar</figcaption>
+              </figure>
+            {% endif %}
+            <div class="avatar-editor__controls">
+              {% include "includes/forms/field.html" with field=form.avatar %}
+              <p class="helptext" id="avatar-privacy-help">Uploaded images are stored as provided and may contain location, device or other metadata. Remove sensitive metadata before uploading.</p>
+              {% if profile.avatar %}
+                {% include "includes/forms/field.html" with field=form.remove_avatar %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="report-section" aria-labelledby="profile-about-title">
+        <div class="report-section__label">
+          <span class="report-section__index" aria-hidden="true">02</span>
+          <h2 id="profile-about-title">About you</h2>
+        </div>
+        <div class="report-section__body">
+          {% include "includes/forms/field.html" with field=form.bio %}
+          <div class="field-pair">
+            {% include "includes/forms/field.html" with field=form.experience_level %}
+            {% include "includes/forms/field.html" with field=form.preferred_arm %}
+          </div>
+        </div>
+      </section>
+
+      <section class="report-section" aria-labelledby="profile-links-title">
+        <div class="report-section__label">
+          <span class="report-section__index" aria-hidden="true">03</span>
+          <h2 id="profile-links-title">Links</h2>
+        </div>
+        <div class="report-section__body">
+          {% include "includes/forms/field.html" with field=form.instagram_handle %}
+          {% include "includes/forms/field.html" with field=form.other_social_url %}
+        </div>
+      </section>
+
+      <div class="report-action report-action--start">
         <div class="button-row">
           <button class="button" type="submit">Save changes</button>
           <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Preview profile</a>
         </div>
-      </form>
-    </div>
-  </section>
+      </div>
+    </form>
+  </div>
 {% endblock %}

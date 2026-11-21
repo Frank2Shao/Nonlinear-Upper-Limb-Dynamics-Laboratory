@@ -76,6 +76,35 @@ const accountLayout = (page) =>
     };
   });
 
+// Edit Profile and Preview (design_document.md 7.11): the current avatar sits
+// beside the upload controls on wide screens and above them on phones; the two
+// short fields pair up when there is room; the actions keep their own width;
+// the Preview frame is dashed and labelled "Public view".
+const profileEditLayout = (page) =>
+  page.evaluate(() => {
+    const box = (element) => element.getBoundingClientRect().toJSON();
+    const form = document.querySelector("form.settings-form");
+    return {
+      current: box(document.querySelector(".avatar-editor__current")),
+      controls: box(document.querySelector(".avatar-editor__controls")),
+      experience: box(document.querySelector("#id_experience_level")),
+      arm: box(document.querySelector("#id_preferred_arm")),
+      save: box(form.querySelector("button[type=submit]")),
+      form: box(form),
+    };
+  });
+
+const previewFrame = (page) =>
+  page.evaluate(() => {
+    const frame = document.querySelector(".preview-frame");
+    return {
+      borderStyle: getComputedStyle(frame).borderTopStyle,
+      label: frame.querySelector(".preview-frame__label").textContent.replace(/\s+/g, " ").trim(),
+      containsPanel: Boolean(frame.querySelector(".profile-panel")),
+      containsActions: Boolean(frame.querySelector(".button")),
+    };
+  });
+
 const assertEmptyDirectory = async (page, label) => {
   await assertPage(page, "/members/", label);
   await page
@@ -148,6 +177,22 @@ try {
     assert.match(desktopAccount.tagFont, /JetBrains Mono/);
 
     await desktopPage.goto(`${baseUrl}/profile/edit/`);
+    const desktopEdit = await profileEditLayout(desktopPage);
+    assert.ok(
+      desktopEdit.controls.left >= desktopEdit.current.right &&
+        Math.abs(desktopEdit.controls.top - desktopEdit.current.top) <= 4,
+      "Desktop Edit Profile must put the current avatar beside the upload controls.",
+    );
+    assert.ok(
+      desktopEdit.arm.left >= desktopEdit.experience.right &&
+        Math.abs(desktopEdit.arm.top - desktopEdit.experience.top) <= 1,
+      "Desktop Edit Profile must pair Experience level and Preferred arm.",
+    );
+    assert.ok(
+      desktopEdit.save.width < desktopEdit.form.width / 2 &&
+        Math.abs(desktopEdit.save.left - desktopEdit.form.left) <= 1,
+      "Desktop Save changes must be left-aligned at its own width.",
+    );
     const unlabelledControls = await desktopPage
       .locator("input:not([type=hidden]):not([type=submit]), select, textarea")
       .evaluateAll((controls) =>
@@ -184,6 +229,12 @@ try {
         .waitFor();
     }
     await desktopPage.goto(`${baseUrl}/profile/preview/`);
+    assert.deepEqual(await previewFrame(desktopPage), {
+      borderStyle: "dashed",
+      label: `Public view /members/${ownerUsername}/`,
+      containsPanel: true,
+      containsActions: false,
+    });
     await desktopPage.getByText("UnbrokenOwnerBiography", { exact: false }).waitFor();
     await desktopPage.getByRole("link", { name: "Back to Account" }).waitFor();
     await assertNoHorizontalOverflow(desktopPage, "Desktop unbroken preview biography");
@@ -222,6 +273,16 @@ try {
     assert.ok(
       mobileAccount.identity.left >= mobileAccount.avatar.right,
       "Mobile Account summary keeps the compact avatar beside the identity.",
+    );
+    await mobilePage.goto(`${baseUrl}/profile/edit/`);
+    const mobileEdit = await profileEditLayout(mobilePage);
+    assert.ok(
+      mobileEdit.controls.top >= mobileEdit.current.bottom,
+      "Mobile Edit Profile must put the current avatar above the upload controls.",
+    );
+    assert.ok(
+      mobileEdit.arm.top >= mobileEdit.experience.bottom,
+      "Mobile Edit Profile must stack Experience level and Preferred arm.",
     );
     await mobilePage.goto(`${baseUrl}/profile/preview/`);
     await assertFocusIndicator(

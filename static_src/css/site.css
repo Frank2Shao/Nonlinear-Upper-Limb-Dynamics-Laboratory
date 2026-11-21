@@ -335,10 +335,6 @@
     padding-block: clamp(2.5rem, 8vw, 5rem);
   }
 
-  .content-narrow {
-    width: min(36rem, 100%);
-  }
-
   .eyebrow {
     margin-bottom: 0.5rem;
     color: var(--color-gold);
@@ -355,7 +351,6 @@
   }
 
   /* Shared card surface. Each block below sets only its own spacing and layout. */
-  .panel,
   .content-card,
   .member-card,
   .empty-state {
@@ -366,7 +361,6 @@
   }
 
   /* Shared avatar frame, image fit and initial fallback. */
-  .avatar-preview,
   .profile-panel__avatar,
   .profile-panel__avatar-fallback,
   .member-card__avatar,
@@ -375,7 +369,6 @@
     border-radius: var(--radius-card);
   }
 
-  .avatar-preview,
   .profile-panel__avatar,
   .member-card__avatar {
     display: block;
@@ -397,19 +390,13 @@
   .profile-panel__identity h2,
   .profile-panel__username,
   .profile-public__bio,
-  .content-narrow code,
-  .content-narrow strong,
   .member-card__content h2,
   .member-facts dd,
   .facts-table dd,
   .account-summary__name,
-  .account-summary__path {
+  .account-summary__path,
+  .preview-frame__label > span {
     overflow-wrap: anywhere;
-  }
-
-  .panel {
-    margin-top: 1.5rem;
-    padding: clamp(1.25rem, 4vw, 2rem);
   }
 
   .public-page {
@@ -1336,32 +1323,6 @@
     gap: 1rem;
   }
 
-  .avatar-editor {
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  .avatar-editor__current {
-    width: min(12rem, 100%);
-    margin: 0;
-    display: grid;
-    gap: 0.5rem;
-    color: var(--color-muted);
-    font-size: 0.9rem;
-  }
-
-  .avatar-preview {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-  }
-
-  .profile-flow {
-    width: min(48rem, 100%);
-    display: grid;
-    gap: 1.5rem;
-  }
-
   /* Public profile (detail and the owner's Preview): an identity panel with a
      gold hairline frame and top edge, then numbered report sections. */
   .member-profile,
@@ -1725,6 +1686,98 @@
   /* Settings forms inside a report section keep their button at its own width. */
   .report-section__body > form.stack > .button {
     justify-self: start;
+  }
+
+  /* Edit Profile: one form across numbered report sections, closed by the
+     action bar. */
+  .settings-form {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .settings-form .report-section__body {
+    gap: 1.25rem;
+  }
+
+  /* Two short fields side by side when the body is wide enough. */
+  .field-pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 1.25rem;
+  }
+
+  /* The current avatar sits beside the upload controls at --breakpoint-hero. */
+  .avatar-editor {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .avatar-editor__current {
+    width: 8rem;
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+  }
+
+  .avatar-preview {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid var(--color-gold-line);
+  }
+
+  .avatar-editor__controls {
+    min-width: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .avatar-editor__controls > .helptext {
+    margin: 0;
+  }
+
+  /* Closing actions under a gold hairline, aligned with the content's left edge. */
+  .report-action--start {
+    justify-items: stretch;
+  }
+
+  /* Profile Preview: the public component in a dashed frame, labelled so it
+     is not mistaken for the real public page. */
+  .preview-frame {
+    display: grid;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    border: 1px dashed var(--color-gold-line);
+    border-radius: var(--radius-card);
+  }
+
+  .preview-frame__label {
+    margin: 0;
+    padding-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    border-bottom: 1px dashed var(--color-gold-line);
+    color: var(--color-gold);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .preview-frame__label > span + span {
+    color: var(--color-muted);
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  .facts-table code {
+    font-size: 0.875rem;
   }
 
   .empty-state {
@@ -2125,6 +2178,12 @@
 
     .profile-panel {
       grid-template-columns: 15rem minmax(0, 1fr);
+    }
+
+    .avatar-editor--current {
+      grid-template-columns: 8rem minmax(0, 1fr);
+      align-items: start;
+      column-gap: 1.25rem;
     }
 
     /* Title column 1 part, body 2 parts, the body reaching the right edge. */

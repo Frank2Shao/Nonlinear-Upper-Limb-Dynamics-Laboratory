@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from django.urls import reverse
 
@@ -219,3 +221,41 @@ def test_profile_edit_uses_plain_post_without_javascript(client):
     assert response.redirect_chain == [(reverse("account"), 302)]
     profile.refresh_from_db()
     assert profile.display_name == "No JavaScript Member"
+
+
+def test_profile_edit_groups_fields_into_three_numbered_sections(client):
+    member, _profile = create_member(username="profile-sections")
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_edit")).content.decode()
+    titles = re.findall(
+        r'<span class="report-section__index" aria-hidden="true">(\d+)</span>\s*'
+        r'<h2 id="[\w-]+">([^<]+)</h2>',
+        content,
+    )
+    sections = content.split('<section class="report-section"')[1:]
+    fields = {
+        "display_name",
+        "avatar",
+        "bio",
+        "experience_level",
+        "preferred_arm",
+        "instagram_handle",
+        "other_social_url",
+    }
+
+    assert '<p class="label-mono">Member profile</p>' in content
+    assert titles == [("01", "Name and avatar"), ("02", "About you"), ("03", "Links")]
+    assert [
+        set(re.findall(r'name="(\w+)"', section)) & fields for section in sections
+    ] == [
+        {"display_name", "avatar"},
+        {"bio", "experience_level", "preferred_arm"},
+        {"instagram_handle", "other_social_url"},
+    ]
+    pair = sections[1].split('<div class="field-pair">')[1]
+    assert 'name="experience_level"' in pair
+    assert 'name="preferred_arm"' in pair
+    assert 'class="avatar-editor"' in content
+    assert 'name="remove_avatar"' not in content
+    assert content.index('name="other_social_url"') < content.index("Save changes")

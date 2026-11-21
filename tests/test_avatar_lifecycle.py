@@ -282,6 +282,7 @@ def test_profile_edit_shows_current_avatar_delete_control_and_privacy_notice(
     assert profile.avatar.url in content
     assert 'name="remove_avatar"' in content
     assert 'class="avatar-preview"' in content
+    assert 'class="avatar-editor avatar-editor--current"' in content
     assert 'aria-describedby="avatar-privacy-help"' in content
     assert (
         "Uploaded images are stored as provided and may contain location, device or "

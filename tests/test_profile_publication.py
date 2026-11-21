@@ -17,6 +17,24 @@ PROFILE_ROUTES = (
 )
 
 
+SECTION_PATTERN = re.compile(
+    r'<span class="report-section__index" aria-hidden="true">(\d+)</span>\s*'
+    r'<h2 id="[\w-]+">([^<]+)</h2>'
+)
+
+
+def div_block(content: str, marker: str) -> str:
+    """The balanced <div> that starts at marker."""
+    start = content.index(marker)
+    start = content.rindex("<div", 0, start)
+    depth = 0
+    for match in re.finditer(r"<(/?)div\b[^>]*>", content[start:]):
+        depth += -1 if match.group(1) else 1
+        if depth == 0:
+            return content[start : start + match.end()]
+    raise AssertionError(f"Unbalanced block at {marker}")
+
+
 def create_member(
     *,
     username: str,
@@ -248,7 +266,7 @@ def test_publish_confirmation_explains_public_fields_and_username_fallback(clien
     ):
         assert label in content
     assert "/members/public-url-member/" in content
-    assert "using your Username because no Display name is set" in content
+    assert "It is also your public name because no Display name is set" in content
     assert "location, device or other metadata" in content
     assert "Researcher number, if one has been assigned" in content
 
@@ -312,3 +330,67 @@ def test_profile_preview_links_back_to_account(client):
     assert response.status_code == 200
     assert "Back to Account" in content
     assert reverse("account") in content
+
+
+def test_publish_confirmation_uses_numbered_sections_and_a_facts_table(client):
+    member, profile = create_member(username="publish-layout")
+    profile.display_name = "Publish Layout"
+    profile.save()
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_publish")).content.decode()
+
+    assert '<p class="label-mono">Publication confirmation</p>' in content
+    assert SECTION_PATTERN.findall(content) == [
+        ("01", "What becomes public"),
+        ("02", "Your public page"),
+    ]
+    rules = content.split('<ul class="rule-list">')[1].split("</ul>")[0]
+    assert rules.count("<li>") == 8
+    assert "<dt>Public name</dt><dd>Publish Layout</dd>" in content
+    assert (
+        "<dt>Profile URL</dt><dd><code>/members/publish-layout/</code></dd>" in content
+    )
+    assert "Your Username is always part of your public profile URL." in content
+    assert "because no Display name is set" not in content
+    assert content.index("Your public page") < content.index("Publish profile</button>")
+
+
+def test_unpublish_confirmation_shows_the_public_page_table(client):
+    member, _profile = create_member(username="unpublish-layout", is_published=True)
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_unpublish")).content.decode()
+
+    assert '<p class="label-mono">Publication confirmation</p>' in content
+    assert SECTION_PATTERN.findall(content) == [("01", "Your public page")]
+    assert "<dt>Public name</dt><dd>unpublish-layout</dd>" in content
+    assert (
+        "<dt>Profile URL</dt><dd><code>/members/unpublish-layout/</code></dd>"
+        in content
+    )
+    assert content.index("Your public page") < content.index(
+        "Unpublish profile</button>"
+    )
+
+
+def test_preview_frames_the_public_component_and_keeps_notice_and_actions_outside(
+    client,
+):
+    member, _profile = create_member(
+        username="preview-frame", is_published=True, is_hidden_by_admin=True
+    )
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_preview")).content.decode()
+    frame = div_block(content, 'class="preview-frame"')
+
+    assert '<p class="label-mono">Private preview</p>' in content
+    assert "<span>Public view</span>" in frame
+    assert "<span>/members/preview-frame/</span>" in frame
+    assert 'class="profile-panel"' in frame
+    assert "currently unavailable on public pages" not in frame
+    assert "Back to Account" not in frame
+    assert "Unpublish profile" not in frame
+    assert content.index("currently unavailable on public pages") < content.index(frame)
+    assert content.index(frame) < content.index("Back to Account")
