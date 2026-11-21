@@ -2398,3 +2398,40 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 - 项目负责人看过现状与三个方案后决定：错误页保持现有布局，不重新设计。现有错误页已继承全站颜色、字体、按钮与页面壳，继续使用 `_error_page.html` 中的 `.eyebrow` 状态码、H1、`.lede` 说明与 `.cta-panel` 中的 `Return Home`；文案、handlers、状态码与隐私边界不变。
 - 因此 Visual Refresh 的页面范围（Home、Events、About、Beginners & Safety、Members、认证与 Account、错误页）全部结束，没有 V22。`.eyebrow`、`.cta-panel` 与 `.public-section__header` 仍由错误页使用，需保留。
 - 经项目负责人批准，`architecture.md` 3.68 末条、页首状态与 `implementation.md` 的 Visual Refresh 页面顺序说明已改为记录该决定。
+
+## Visual Refresh Step V22 — Home 整页背景照片（补充）
+
+### 决定与前置条件
+
+- 项目负责人指出 Home 背景照片显示不完整。原因是规则本身：照片按比例覆盖约 1280 × 600 的 Hero（`cover`、对齐点 `center 20%`），4:3 原图只显示约 62% 的高度，主要裁去底部，四边另有 12% 渐隐。
+- 项目负责人决定：照片改为整个 Home 页的背景，宽度与内容区一致、从导航栏下方开始、到达窗口顶部后固定，内容在其上滑过；窗口越高显示越多；整页都能用光照；手机与触屏仍不显示。照片只用于 Home，其他页面保持网格加纯黑底（分析过的可读性、隐私与语气代价见设计文档 7.4）。
+- 项目负责人提供了 1440 × 2200 的竖版拼贴 `static_src/images/home/hero-specimen-tall-source.png`（RGBA、完全不透明）。已完整阅读 `architecture.md` 与 `design_document.md`。
+
+### 实施内容
+
+- 文档：`design_document.md` 7.4 的背景彩蛋规则改为整页背景（新增各项行为与“只用于 Home”的决定），参数改为竖版源图与左右 12%、顶边 4%、底边 12% 的渐隐；9.5 与 9.6 的措辞同步；`implementation.md` 增加 V22 一行。
+- 图片：`scripts/build_home_images.py` 的 Hero 照片条目改用新源图（新 SHA-256、1440 × 2200、不透明、RGB 输出），生成物仍为 `hero-specimen-1440.webp`（1440 × 2200，约 173 KB）。旧源图 `hero-specimen-source.png` 已不再被引用，等项目负责人确认效果后删除。
+- `home.html`：照片层 `.hero-specimen` 从 `.home-hero` 移到 `.home-page` 的第一个子元素，内部新增 `.hero-specimen__window`；指针处理器移到 `.home-page`，坐标改为相对光照层计算。
+- CSS（仍只在 `@variant hero` 且 `hover: hover` 时生效，照片 URL 也只在其中声明）：
+  - `.page-shell` 的上下内边距提取为 `--shell-padding`；
+  - `.hero-specimen` 绝对定位于 `.home-page`，顶端向上抵消 `--shell-padding`（从导航栏下方开始），底端向下延伸一个视口高度；
+  - `.hero-specimen__window` 为视口高度的 `position: sticky; top: 0` 窗口，照片先随页面上移，到达窗口顶部后固定，一直到 Home 末尾都不移动；
+  - Home 的 `.page-shell` 设 `overflow-y: clip`，把多出的高度裁在 Footer 之前，不增加滚动长度，也不在 Footer 显示照片；
+  - `.hero-specimen__figure` 宽度为内容区宽度，按 1440 / 2200 比例缩放并顶端对齐；
+  - 光照的显示条件改为 `.home-page[data-lit]`；删除 `.home-hero` 上为照片层设置的 `position`/`isolation`。
+
+### 测试
+
+- `test_home_images.py`：照片源图改为新文件、SHA-256 与尺寸。
+- `test_home_page.py`：照片层位于 `.home-page` 内、`.home-hero` 之前（整页背景），仍对辅助技术隐藏、HTML 不引用照片文件。
+- `home-page.mjs`：桌面断言照片层与内容区等宽对齐、顶端位于导航栏下方、保持原比例；光照在 Hero 内点亮并跟随指针；页面内全部可见链接不被遮挡；滚到底后照片窗口仍在视口顶部、照片没有位移、Footer 底边与视口底边对齐（没有多出的滚动）、Home 的 `.page-shell` 为 `overflow-y: clip`；指针在 `Upcoming Events` 旁也能点亮，移到 Footer 后熄灭。mobile 与宽屏触屏不显示照片层、不下载照片的断言不变。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `457 passed`。
+- `static:check`（含图片生成物检查）、Ruff lint/format、Django check 与 `git diff --check` 通过。
+- 在本地 Development server（只读访问 Home，未写入数据）截图，均无横向溢出与 page error：1440 × 900 顶部、中段、底部与在 `Upcoming Events` 旁点亮光照，1920 × 1080，1234 × 1360（项目负责人截图的瘦高比例），1080 × 1920 竖屏，1000 × 800 窄桌面，以及 390px 手机整页（照片层不显示）。
+
+### 当前边界与下一步门槛
+
+- 项目负责人已走查截图并批准 V22；旧源图 `hero-specimen-source.png` 已删除（可从 Git 历史恢复），`architecture.md` 已新增 3.69 并更新页首进度与相关文件职责。照片中成员的公开使用同意仍需项目负责人在上线前取得。

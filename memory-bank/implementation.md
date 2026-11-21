@@ -529,7 +529,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V6 | Home 其余区块（`New to Armwrestling?` 卡片与 `Upcoming Events`）。先在设计画布确认样式，再以 V2 组件实施；活动卡片的日期、时间与地点采用原 V4 信息表风格（等宽标签、低优先级标签色与主要文字色数值、半透明金色细边框）；活动卡片样式同时作用于 Events 列表。 |
 | V7 | 第一轮质量门禁。完整测试、Ruff、`static:check`、Django checks、Phase 2–4 desktop/mobile smoke 与 Accessibility 门禁全部通过；提交 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后再更新 `architecture.md`。 |
 
-后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。（第五轮后，项目负责人看过 403/404/500 的设计方案，决定错误页保持现有布局，不展开步骤；Visual Refresh 至 V21 结束。）
+后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。（第五轮后，项目负责人看过 403/404/500 的设计方案，决定错误页保持现有布局，不展开步骤；Visual Refresh 至 V21 结束，其后只追加 V22 一项 Home 背景照片补充。）
 
 ### Visual Refresh 第二轮：Events 列表与详情
 
@@ -574,6 +574,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V19 | Account 页。页头与四个报告分节；图纸式表格展示账户与 Profile 资料；资料摘要（Avatar、发布状态标签、Researcher 标签、公开名称、公开路径）与操作入口；USYD/USU 表单与 Security 按钮左对齐。更新依赖旧结构的测试。验证已发布/未发布/管理员隐藏、有/无编号与 Avatar、USU 各审核状态、非 USYD 用户、Heading 顺序、隐私边界不变、desktop/mobile、200% 放大、键盘、无溢出与对比度。 |
 | V20 | Edit Profile、Preview 外壳与 Publish/Unpublish 确认页。编辑表单分为三个报告分节与末尾操作栏（Avatar 编辑区宽屏两列）；Preview 页头与 `Public view` 虚线框，隐藏提示与按钮在框外；Publish/Unpublish 确认页的分节、规则列表、`Public name`/`Profile URL` 表格与警示。更新依赖旧结构的测试。验证编辑保存与错误回显、Avatar 上传/删除、Preview 的已发布/未发布/隐藏状态、Publish 与 Unpublish 的 POST、CSRF 与幂等不变、Username 回退说明、Heading 顺序、desktop/mobile、200% 放大、键盘、无溢出与对比度。 |
 | V21 | 第五轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交认证页面、Account、Edit Profile、Preview 与 Publish/Unpublish 的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
+| V22 | Visual Refresh 补充：Home 整页背景照片（design_document.md 7.4）。图片构建清单改用 1440 × 2200 竖版源图 `hero-specimen-tall-source.png`（不透明、RGB 输出），删除旧横版源图；照片层从 Hero 移到整个 Home 内容区，宽度与内容区一致、按原比例缩放、顶端从导航栏下方开始，内部窗口高度的 sticky 层使照片到达窗口顶部后固定、到 Home 内容末尾随内容离开；光照在 Home 内容区任意位置响应指针；仍只在宽屏且可悬停时渲染并下载照片。更新依赖旧结构的测试。验证照片宽度与内容区一致、顶端位于导航栏下方、滚动后固定在窗口顶部、窗口越高显示越多、Footer 无照片、光照在 Hero 以下区块也能点亮与熄灭且不遮挡操作、mobile 与触屏不下载照片、无溢出与 page error。 |
 
 ## 十、Phase 6 概要：上线与运维
 
