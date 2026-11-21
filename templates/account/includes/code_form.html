@@ -2,16 +2,14 @@
 One-time code entry shared by email verification and Magic Code login.
 Parameters: action and submit_label; reads verify_form and can_resend from context.
 {% endcomment %}
-<div class="panel">
-  <form class="stack" method="post" action="{{ action }}">
-    {% csrf_token %}
-    {% include "includes/forms/form_fields.html" with form=verify_form %}
-    {{ redirect_field }}
-    <div class="button-row">
-      <button class="button" type="submit" name="action" value="verify">{{ submit_label }}</button>
-      {% if can_resend %}
-        <button class="button button--secondary" type="submit" name="action" value="resend" formnovalidate>Request new code</button>
-      {% endif %}
-    </div>
-  </form>
-</div>
+<form class="stack" method="post" action="{{ action }}">
+  {% csrf_token %}
+  {% include "includes/forms/form_fields.html" with form=verify_form %}
+  {{ redirect_field }}
+  <div class="button-row">
+    <button class="button" type="submit" name="action" value="verify">{{ submit_label }}</button>
+    {% if can_resend %}
+      <button class="button button--secondary" type="submit" name="action" value="resend" formnovalidate>Request new code</button>
+    {% endif %}
+  </div>
+</form>

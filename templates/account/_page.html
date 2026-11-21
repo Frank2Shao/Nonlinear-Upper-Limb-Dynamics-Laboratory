@@ -1,14 +1,21 @@
 {% extends "core/base.html" %}
 {% comment %}
-Shared skeleton for the project allauth pages: eyebrow, the page's only H1,
-an optional intro (usually a lede paragraph) and the page-specific body.
+Shared skeleton for the project allauth pages (design_document.md 7.11): a page
+heading with the mono label, the page's only H1 and an optional intro (usually
+a lede paragraph), then the page body inside the gold-framed access panel.
+Pages put other ways in (links back, alternative sign-in) in a trailing
+<div class="access-panel__alt"> inside the body.
 {% endcomment %}
 
 {% block content %}
-  <section class="content-narrow" aria-labelledby="page-title">
-    <p class="eyebrow">{% block eyebrow %}{% endblock %}</p>
-    <h1 id="page-title">{% block heading %}{% endblock %}</h1>
-    {% block intro %}{% endblock %}
-    {% block body %}{% endblock %}
+  <section class="access-page" aria-labelledby="page-title">
+    <header class="page-heading">
+      <p class="label-mono">{% block eyebrow %}{% endblock %}</p>
+      <h1 id="page-title">{% block heading %}{% endblock %}</h1>
+      {% block intro %}{% endblock %}
+    </header>
+    <div class="access-panel">
+      {% block body %}{% endblock %}
+    </div>
   </section>
 {% endblock %}

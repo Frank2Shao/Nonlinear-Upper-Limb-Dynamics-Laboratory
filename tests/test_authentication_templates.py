@@ -169,3 +169,69 @@ def test_invalid_password_change_does_not_echo_passwords(client, verified_member
     assert current_password not in content
     assert new_password not in content
     assert 'aria-invalid="true"' in content
+
+
+@pytest.mark.parametrize(
+    "url_name, label",
+    [
+        ("account_login", "Member access"),
+        ("account_signup", "Membership"),
+        ("account_request_login_code", "Password-free access"),
+        ("account_reset_password", "Account recovery"),
+        ("account_reset_password_done", "Account recovery"),
+        ("account_inactive", "Member access"),
+    ],
+)
+def test_access_pages_put_the_heading_beside_a_framed_panel(client, url_name, label):
+    content = client.get(reverse(url_name)).content.decode()
+
+    heading = content.index('<header class="page-heading">')
+    assert content.index(f'<p class="label-mono">{label}</p>') > heading
+    assert content.index('<h1 id="page-title">') > heading
+    assert content.index('<div class="access-panel">') > content.index("</header>")
+    assert content.count('<div class="access-panel">') == 1
+
+
+def test_member_access_pages_use_the_panel(client, verified_member):
+    client.force_login(verified_member)
+
+    for url_name in ("account_change_password", "account_logout"):
+        content = client.get(reverse(url_name)).content.decode()
+        assert content.count('<div class="access-panel">') == 1
+
+
+def test_login_keeps_one_password_reset_link_and_moves_alternatives_below(client):
+    content = client.get(reverse("account_login")).content.decode()
+    reset_url = reverse("account_reset_password")
+
+    # The duplicate "Forgot password?" button is gone; the allauth help link
+    # beside the Password field stays the way to reset a password.
+    assert "Forgot password?" not in content
+    assert content.count(f'href="{reset_url}"') == 1
+    assert f'<a href="{reset_url}">Forgot your password?</a>' in content
+    alternatives = content[content.index('<div class="access-panel__alt">') :]
+    assert "Log in by email code" in alternatives
+    assert reverse("account_signup") in alternatives
+
+
+@pytest.mark.parametrize(
+    "url_name, field_id, label",
+    [
+        ("account_login", "id_login", "Username"),
+        ("account_login", "id_password", "Password"),
+        ("account_signup", "id_email", "Email"),
+        ("account_signup", "id_password2", "Password (again)"),
+        ("account_reset_password", "id_email", "Email"),
+    ],
+)
+def test_site_form_labels_have_no_trailing_colon(client, url_name, field_id, label):
+    content = client.get(reverse(url_name)).content.decode()
+
+    assert f'<label for="{field_id}">{label}</label>' in content
+    assert f"{label}:</label>" not in content
+
+
+def test_admin_labels_keep_the_django_suffix(admin_client):
+    content = admin_client.get(reverse("admin:accounts_user_add")).content.decode()
+
+    assert "Username:</label>" in content

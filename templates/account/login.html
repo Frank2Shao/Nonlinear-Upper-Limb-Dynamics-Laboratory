@@ -9,9 +9,8 @@
   {% url 'account_login' as form_action %}
   {% include "account/includes/panel_form.html" with action=form_action form=form submit_label="Log in" %}
 
-  <div class="button-row">
+  <div class="access-panel__alt">
     <a class="button button--secondary" href="{% url 'account_request_login_code' %}">Log in by email code</a>
-    <a class="button button--quiet" href="{% url 'account_reset_password' %}">Forgot password?</a>
+    <p>Need an account? <a href="{{ signup_url }}">Join the Club</a>.</p>
   </div>
-  <p>Need an account? <a href="{{ signup_url }}">Join the Club</a>.</p>
 {% endblock %}

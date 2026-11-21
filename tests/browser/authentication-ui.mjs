@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 
 import {
+  INTERACTIVE_TARGETS,
   assertNoExternalRequests,
+  assertNoHorizontalOverflow,
+  assertTouchTargets,
   createLocalContext,
   requireEnvironment,
 } from "./browser-support.mjs";
@@ -115,6 +118,99 @@ try {
   await focusPage.waitForFunction(() => document.activeElement?.id === "id_usu_id");
   assert.equal(await focusPage.locator("#id_usu_id").isVisible(), true);
   await focusContext.close();
+
+  // Access page layout (design_document.md 7.11): heading beside the framed
+  // panel on wide screens, above it on phones; mono labels without colons;
+  // checkboxes before their labels; the main action spans the panel.
+  for (const [device, viewport] of [
+    ["desktop", { width: 1440, height: 900 }],
+    ["mobile", { width: 390, height: 844 }],
+  ]) {
+    const layoutContext = await createLocalContext(
+      browser,
+      baseUrl,
+      { viewport },
+      externalRequests,
+    );
+    const layoutPage = await layoutContext.newPage();
+    for (const path of [
+      "/accounts/login/",
+      "/accounts/signup/",
+      "/accounts/login/code/",
+      "/accounts/password/reset/",
+    ]) {
+      await layoutPage.goto(`${baseUrl}${path}`);
+      const label = `${device} ${path}`;
+      await assertNoHorizontalOverflow(layoutPage, label);
+      await assertTouchTargets(layoutPage, label, `main :is(${INTERACTIVE_TARGETS})`);
+      const layout = await layoutPage.evaluate(() => {
+        const box = (element) => element.getBoundingClientRect().toJSON();
+        const panel = document.querySelector(".access-panel");
+        const form = panel.querySelector("form");
+        return {
+          heading: box(document.querySelector(".access-page .page-heading")),
+          panel: box(panel),
+          form: box(form),
+          submit: box(form.querySelector(":scope > button[type=submit]")),
+          labels: [...document.querySelectorAll("main .field label")].map((element) => ({
+            text: element.textContent.trim(),
+            font: getComputedStyle(element).fontFamily,
+            transform: getComputedStyle(element).textTransform,
+          })),
+        };
+      });
+      if (device === "desktop") {
+        assert.ok(
+          layout.panel.left >= layout.heading.right,
+          `${label}: the panel must sit to the right of the heading.`,
+        );
+        assert.ok(layout.panel.width <= 481, `${label}: the panel must be at most 30rem wide.`);
+      } else {
+        assert.ok(
+          layout.panel.top >= layout.heading.bottom,
+          `${label}: the panel must sit below the heading on phones.`,
+        );
+      }
+      assert.ok(
+        Math.abs(layout.submit.width - layout.form.width) <= 1,
+        `${label}: the main action must span the panel.`,
+      );
+      assert.ok(layout.labels.length > 0, `${label}: the form must have labels.`);
+      for (const { text, font, transform } of layout.labels) {
+        assert.ok(!text.endsWith(":"), `${label}: "${text}" must not end with a colon.`);
+        assert.match(font, /JetBrains Mono/, `${label}: labels use the mono face.`);
+        assert.equal(transform, "uppercase", `${label}: labels are uppercase.`);
+      }
+    }
+
+    await layoutPage.goto(`${baseUrl}/accounts/login/`);
+    const checkbox = await layoutPage.evaluate(() => {
+      const input = document.querySelector("#id_remember").getBoundingClientRect();
+      const text = document.querySelector('label[for="id_remember"]').getBoundingClientRect();
+      return {
+        before: input.right <= text.left,
+        sameLine: Math.abs(input.top + input.height / 2 - (text.top + text.height / 2)) <= 4,
+      };
+    });
+    assert.deepEqual(
+      checkbox,
+      { before: true, sameLine: true },
+      `${device}: the checkbox must sit before its label on one line.`,
+    );
+    const alternative = layoutPage
+      .locator(".access-panel__alt")
+      .getByRole("link", { name: "Log in by email code" });
+    const [alternativeBox, panelForm] = await Promise.all([
+      alternative.boundingBox(),
+      layoutPage.locator(".access-panel form").boundingBox(),
+    ]);
+    assert.ok(
+      Math.abs(alternativeBox.width - panelForm.width) <= 1,
+      `${device}: "Log in by email code" must span the panel below the hairline.`,
+    );
+    await layoutContext.close();
+  }
+
   assertNoExternalRequests(externalRequests);
 } finally {
   await browser.close();

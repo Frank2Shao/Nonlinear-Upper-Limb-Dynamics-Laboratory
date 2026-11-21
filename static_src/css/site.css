@@ -106,7 +106,9 @@
   --color-border: #37332c;
   --color-border-strong: #706858;
   --color-separator: #4a4439;
-  --color-input: #0e0e0e;
+  /* Form control outline: opaque gold dark enough to read as a thin line but
+     at least 3:1 against the page ground and card surfaces (WCAG 1.4.11). */
+  --color-input-border: #8a6c30;
   --color-header: rgb(10 9 8 / 88%);
   --color-overlay: rgb(0 0 0 / 78%);
   --color-warning-surface: #2a2110;
@@ -1249,6 +1251,87 @@
     font-weight: 600;
   }
 
+  /* Access pages (Log in, Join the Club and the other allauth pages): the
+     page heading, then the form in a gold-framed panel. At --breakpoint-hero
+     they sit side by side (see @variant hero). */
+  .access-page {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3rem);
+    align-items: start;
+  }
+
+  .access-page .page-heading {
+    margin-bottom: 0;
+  }
+
+  .access-panel {
+    --button-ground: var(--color-surface);
+    position: relative;
+    display: grid;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid var(--color-gold-line);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  .access-panel::before {
+    content: "";
+    position: absolute;
+    inset: -1px -1px auto;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--color-gold-shadow),
+      var(--color-gold-highlight) 40%,
+      transparent
+    );
+  }
+
+  .access-panel > *,
+  .access-panel__alt > * {
+    margin: 0;
+  }
+
+  .access-panel form > .button,
+  .access-panel form > .button-row {
+    margin-top: 0.5rem;
+  }
+
+  /* The panel's main action spans the panel. */
+  .access-panel > .button,
+  .access-panel form > .button,
+  .access-panel__alt .button {
+    width: 100%;
+  }
+
+  /* Other ways in, below a gold hairline. */
+  .access-panel__alt {
+    display: grid;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-gold-line);
+  }
+
+  /* Text links in the panel (the password-reset help link, "Join the Club",
+     "Log in") keep a 24px target. */
+  .access-panel p a,
+  .access-panel .helptext a {
+    display: inline-block;
+    min-height: 1.5rem;
+    line-height: 1.5rem;
+  }
+
+  .access-panel__alt summary {
+    min-height: 1.5rem;
+    color: var(--color-gold);
+    cursor: pointer;
+  }
+
+  .access-panel__alt details[open] summary {
+    margin-bottom: 1rem;
+  }
+
   .stack {
     display: grid;
     gap: 1rem;
@@ -1587,9 +1670,15 @@
     gap: 0.35rem;
   }
 
+  /* Labels read like the drawing-style info rows (design_document.md 7.11). */
   .field label,
   .field legend {
-    font-weight: 600;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
   .field input:where(:not([type="checkbox"], [type="radio"])),
@@ -1598,10 +1687,44 @@
     width: 100%;
     min-height: 3rem;
     padding: 0.65rem 0.75rem;
-    border: 1px solid var(--color-border-strong);
-    border-radius: 0.25rem;
-    background: var(--color-input);
+    border: 1px solid var(--color-input-border);
+    border-radius: 0;
+    background: var(--color-ink);
     color: var(--color-cream);
+    transition: border-color 150ms ease;
+  }
+
+  /* Same specificity as the aria-invalid rule below, which comes later and
+     therefore keeps the error colour while hovered. */
+  .field
+    :where(
+      input:not([type="checkbox"], [type="radio"]),
+      select,
+      textarea
+    ):hover {
+    border-color: var(--color-gold);
+  }
+
+  /* A checkbox sits before its label on one line; help text and errors take
+     the full width below. */
+  .field:has(> input[type="checkbox"]) {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+  }
+
+  .field:has(> input[type="checkbox"]) > input {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .field:has(> input[type="checkbox"]) > label {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .field:has(> input[type="checkbox"]) > :not(input, label) {
+    grid-column: 1 / -1;
   }
 
   .field input[type="checkbox"],
@@ -1915,6 +2038,11 @@
   /* Responsive rules live inside the components layer so the cascade stays
      predictable; they come last so they override the base component rules. */
   @variant hero {
+    .access-page {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+      column-gap: 4rem;
+    }
+
     .home-hero__main {
       display: flex;
       flex-wrap: wrap;

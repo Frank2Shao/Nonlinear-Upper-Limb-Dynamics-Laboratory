@@ -103,6 +103,9 @@ def test_built_css_contains_design_and_accessibility_tokens():
         ("--color-gold-pale", "--color-ink", 4.5),
         # Gold material used as large display text on the page ground.
         ("--color-gold-metal", "--color-ink", 3),
+        # Form control outlines on the page ground and on panels (WCAG 1.4.11).
+        ("--color-input-border", "--color-ink", 3),
+        ("--color-input-border", "--color-surface", 3),
     ),
 )
 def test_key_text_and_focus_colours_meet_wcag_contrast_thresholds(

@@ -8,5 +8,7 @@
 {% block body %}
   {% url 'account_confirm_login_code' as confirm_action %}
   {% include "account/includes/code_form.html" with action=confirm_action submit_label="Confirm code" %}
-  {% include "account/includes/cancel_sign_in_form.html" %}
+  <div class="access-panel__alt">
+    {% include "account/includes/cancel_sign_in_form.html" %}
+  </div>
 {% endblock %}

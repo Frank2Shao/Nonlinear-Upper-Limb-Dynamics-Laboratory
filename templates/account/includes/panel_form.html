@@ -1,12 +1,11 @@
 {% comment %}
-Panel holding one POST form with all fields and a single submit button.
+One POST form with all fields and a single full-width submit button, placed in
+the page's access panel by account/_page.html.
 Parameters: action, form, submit_label and optional submit_name.
 {% endcomment %}
-<div class="panel">
-  <form class="stack" method="post" action="{{ action }}">
-    {% csrf_token %}
-    {% include "includes/forms/form_fields.html" with form=form %}
-    {{ redirect_field }}
-    <button class="button" type="submit"{% if submit_name %} name="{{ submit_name }}"{% endif %}>{{ submit_label }}</button>
-  </form>
-</div>
+<form class="stack" method="post" action="{{ action }}">
+  {% csrf_token %}
+  {% include "includes/forms/form_fields.html" with form=form %}
+  {{ redirect_field }}
+  <button class="button" type="submit"{% if submit_name %} name="{{ submit_name }}"{% endif %}>{{ submit_label }}</button>
+</form>

@@ -8,5 +8,7 @@
 {% block body %}
   {% include "account/includes/panel_form.html" with action=request_login_code_url form=form submit_label="Request code" %}
 
-  <p><a href="{{ login_url }}">Use username and password instead</a>.</p>
+  <div class="access-panel__alt">
+    <p><a href="{{ login_url }}">Use username and password instead</a>.</p>
+  </div>
 {% endblock %}

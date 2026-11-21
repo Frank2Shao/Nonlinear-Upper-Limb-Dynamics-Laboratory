@@ -1,3 +1,13 @@
+{% load form_labels %}
+{% comment %}
+Django's django/forms/field.html (what as_field_group renders), except that the
+label or legend has no trailing colon. The BoundField still supplies the ids,
+aria-invalid and aria-describedby.
+{% endcomment %}
 <div class="field">
-  {{ field.as_field_group }}
+  {% if field.use_fieldset %}<fieldset{% if field.aria_describedby %} aria-describedby="{{ field.aria_describedby }}"{% endif %}>{% endif %}
+  {% if field.label %}{{ field|plain_label }}{% endif %}
+  {% if field.help_text %}<div class="helptext"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</div>{% endif %}
+  {{ field.errors }}
+  {{ field }}{% if field.use_fieldset %}</fieldset>{% endif %}
 </div>
