@@ -120,11 +120,18 @@ def test_home_hero_uses_three_title_lines_tag_and_drawing_title_block(client):
     assert 'aria-hidden="true"' not in title_block[: title_block.index("</section>")]
 
 
-def test_home_hero_specimen_layer_is_decorative_and_loaded_only_by_css(client):
+def test_home_specimen_layer_is_decorative_and_loaded_only_by_css(client):
     response = client.get(reverse("home"))
 
     content = response.content.decode()
     assert '<div class="hero-specimen" aria-hidden="true">' in content
+    # The photo backs the whole Home page, not only the Hero.
+    page_start = content.index('class="public-page home-page"')
+    assert (
+        page_start
+        < content.index('class="hero-specimen"')
+        < content.index('class="home-hero"')
+    )
     # The light reveals only the photo: no force annotations or labels on it.
     for label in ("Fig. 01", "Contact point", "F = ?", "Direction: nonlinear"):
         assert label not in content

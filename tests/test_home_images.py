@@ -38,9 +38,9 @@ APPROVED_SOURCES = {
         (800,),
     ),
     "hero-specimen": (
-        "home/hero-specimen-source.png",
-        "95bf86e14599468e3dc55497681be12c573b2b9775ceff3bd823e3f530e63ec8",
-        (1448, 1086),
+        "home/hero-specimen-tall-source.png",
+        "f5014b3b7d4f41e7b98449981fbac08c3851e7aa11e09a83e440eb5e9a82d7b1",
+        (1440, 2200),
         "RGBA",
         "home/hero-specimen-{width}.webp",
         (1440,),

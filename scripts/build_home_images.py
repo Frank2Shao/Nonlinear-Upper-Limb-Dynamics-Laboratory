@@ -82,13 +82,13 @@ SOURCES = (
     ),
     ImageSource(
         label="Hero specimen photo",
-        source=SOURCE_DIRECTORY / "home" / "hero-specimen-source.png",
-        sha256="95bf86e14599468e3dc55497681be12c573b2b9775ceff3bd823e3f530e63ec8",
-        size=(1448, 1086),
+        source=SOURCE_DIRECTORY / "home" / "hero-specimen-tall-source.png",
+        sha256="f5014b3b7d4f41e7b98449981fbac08c3851e7aa11e09a83e440eb5e9a82d7b1",
+        size=(1440, 2200),
         mode="RGBA",
         output="home/hero-specimen-{width}.webp",
-        # Covers the whole wide-screen Hero (up to 80rem wide), so one width
-        # close to the source suffices.
+        # Shown at the Home content width (up to 80rem), so one width equal to
+        # the source suffices.
         widths=(1440,),
         quality=78,
         # The photo sits on its own black ground; the page fades its edges.

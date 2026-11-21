@@ -332,7 +332,9 @@
   }
 
   .page-shell {
-    padding-block: clamp(2.5rem, 8vw, 5rem);
+    /* Also read by the Home background photo, which starts below the Header. */
+    --shell-padding: clamp(2.5rem, 8vw, 5rem);
+    padding-block: var(--shell-padding);
   }
 
   .eyebrow {
@@ -530,7 +532,7 @@
     color: var(--color-cream);
   }
 
-  /* Hero background easter egg. Not rendered (and the photo not requested)
+  /* Home background easter egg. Not rendered (and the photo not requested)
      unless the screen is wide enough for the logo to sit beside the title and
      the pointer can hover; see @variant hero. */
   .hero-specimen {
@@ -2206,37 +2208,55 @@
     }
 
     @media (hover: hover) {
-      .home-hero {
+      .home-page {
         position: relative;
         isolation: isolate;
       }
 
-      /* The photo sits behind the text and logo and never takes pointer events. */
+      /* The photo starts at the bottom of the Header (the page shell's top
+         padding) and runs one viewport past the end of Home, so its window can
+         stay pinned to the very end; the Home page shell clips that extra
+         height, so nothing shows in the Footer or adds scrolling. It sits
+         behind the content and never takes pointer events. */
+      .page-shell:has(> .home-page) {
+        overflow-y: clip;
+      }
+
       .hero-specimen {
         position: absolute;
-        inset: 0;
+        z-index: -1;
+        inset: calc(-1 * var(--shell-padding)) 0 -100vh;
         display: block;
         pointer-events: none;
       }
 
-      /* The photo covers the whole Hero; the overflow (mostly its bottom) is
-         cropped. */
+      /* A viewport-high window that scrolls up with the page, then stays at the
+         top of the viewport while the content scrolls over it. Taller windows
+         show more of the photo. */
+      .hero-specimen__window {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* The photo at the content width and its own aspect ratio, top-aligned. */
       .hero-specimen__figure {
         position: absolute;
-        z-index: -1;
-        inset: 0;
+        inset: 0 0 auto;
+        aspect-ratio: 1440 / 2200;
       }
 
       .hero-specimen__figure::before {
         content: "";
         position: absolute;
         inset: 0;
-        background: url("../images/home/hero-specimen-1440.webp") center 20% / cover no-repeat;
+        background: url("../images/home/hero-specimen-1440.webp") top center / 100% auto no-repeat;
         opacity: 0.85;
         /* The photo has its own black ground: fade its edges into the page. */
         mask-image:
           linear-gradient(to right, transparent, #000 12%, #000 88%, transparent),
-          linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+          linear-gradient(to bottom, transparent, #000 4%, #000 88%, transparent);
         mask-composite: intersect;
       }
 
@@ -2245,10 +2265,9 @@
       }
 
       /* A soft 200px circle that follows the pointer (custom properties set on
-         .home-hero) and goes out when the pointer leaves the Hero. */
+         .home-page) and goes out when the pointer leaves the Home content. */
       .hero-specimen__light {
         position: absolute;
-        z-index: -1;
         inset: 0;
         opacity: 0;
         mask-image: radial-gradient(
@@ -2259,7 +2278,7 @@
         transition: opacity 200ms ease;
       }
 
-      .home-hero[data-lit] .hero-specimen__light {
+      .home-page[data-lit] .hero-specimen__light {
         opacity: 1;
       }
     }

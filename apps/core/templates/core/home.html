@@ -7,21 +7,22 @@
 {% block open_graph_description %}Learn armwrestling technique, practise under supervision and join a welcoming strength-sport community. Beginners are welcome.{% endblock %}
 
 {% block content %}
-  <div class="public-page home-page">
-    {# The pointer only moves two CSS custom properties; the photo layer exists only on wide, hover-capable screens (see .hero-specimen). #}
-    <section
-      class="home-hero"
-      aria-labelledby="home-title"
-      x-data
-      x-on:pointermove="if ($event.pointerType !== 'touch') { const box = $el.getBoundingClientRect(); $el.style.setProperty('--light-x', `${$event.clientX - box.left}px`); $el.style.setProperty('--light-y', `${$event.clientY - box.top}px`); $el.dataset.lit = '' }"
-      x-on:pointerleave="delete $el.dataset.lit"
-    >
-      <div class="hero-specimen" aria-hidden="true">
+  {# The pointer only moves two CSS custom properties, measured from the light layer; the photo layer exists only on wide, hover-capable screens (see .hero-specimen). #}
+  <div
+    class="public-page home-page"
+    x-data
+    x-on:pointermove="if ($event.pointerType !== 'touch') { const box = $el.querySelector('.hero-specimen__light').getBoundingClientRect(); $el.style.setProperty('--light-x', `${$event.clientX - box.left}px`); $el.style.setProperty('--light-y', `${$event.clientY - box.top}px`); $el.dataset.lit = '' }"
+    x-on:pointerleave="delete $el.dataset.lit"
+  >
+    <div class="hero-specimen" aria-hidden="true">
+      <div class="hero-specimen__window">
         <div class="hero-specimen__figure hero-specimen__figure--dim"></div>
         <div class="hero-specimen__light">
           <div class="hero-specimen__figure"></div>
         </div>
       </div>
+    </div>
+    <section class="home-hero" aria-labelledby="home-title">
       <div class="home-hero__main">
         <div class="home-hero__content">
           <p class="home-hero__tagline">

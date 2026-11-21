@@ -13,8 +13,10 @@ const pageErrors = [];
 const browser = await chromium.launch({ headless: true });
 const isSpecimenPhoto = (url) => new URL(url).pathname.includes("/images/home/hero-specimen-");
 
-// The background easter egg: a faint photo that a pointer-following light
-// reveals, without blocking the Hero actions.
+// The background easter egg (design_document.md 7.4): a faint photo across the
+// whole Home page that a pointer-following light reveals. It is as wide as the
+// content, starts below the Header, stays pinned to the top of the viewport
+// while the page scrolls, never reaches the Footer and never blocks actions.
 const assertSpecimenLight = async (page, specimenRequests) => {
   const layer = page.locator(".hero-specimen");
   const lights = page.locator(".hero-specimen__light");
@@ -27,49 +29,90 @@ const assertSpecimenLight = async (page, specimenRequests) => {
     }),
     ["block", "none"],
   );
-  assert.ok(specimenRequests.length > 0, "Desktop Hero must load the specimen photo.");
+  assert.ok(specimenRequests.length > 0, "Desktop Home must load the specimen photo.");
+
+  const geometry = () =>
+    page.evaluate(() => {
+      const box = (selector) => document.querySelector(selector).getBoundingClientRect().toJSON();
+      return {
+        header: box(".site-header"),
+        shell: box(".page-shell"),
+        window: box(".hero-specimen__window"),
+        figure: box(".hero-specimen__figure--dim"),
+        footer: box(".site-footer"),
+        viewportHeight: innerHeight,
+      };
+    });
+  const top = await geometry();
+  assert.ok(Math.abs(top.window.left - top.shell.left) < 1, "The photo must align with the content.");
+  assert.ok(Math.abs(top.window.width - top.shell.width) < 1, "The photo must be as wide as the content.");
+  assert.ok(Math.abs(top.window.top - top.header.bottom) < 1, "The photo must start below the Header.");
+  assert.ok(
+    Math.abs(top.figure.height - (top.figure.width * 2200) / 1440) < 1,
+    "The photo must keep its own aspect ratio.",
+  );
+
   const opacities = () =>
     lights.evaluateAll((elements) => elements.map((element) => getComputedStyle(element).opacity));
   assert.deepEqual(await opacities(), ["0"], "The light must be off until the pointer enters.");
+  const lit = (value) =>
+    page.waitForFunction(
+      (expected) =>
+        [...document.querySelectorAll(".hero-specimen__light")].every(
+          (element) => getComputedStyle(element).opacity === expected,
+        ),
+      value,
+    );
 
-  const figure = await page.locator(".hero-specimen__figure--dim").boundingBox();
   const hero = await page.locator(".home-hero").boundingBox();
-  const pointer = { x: figure.x + figure.width * 0.57, y: figure.y + figure.height * 0.43 };
+  const pointer = { x: hero.x + hero.width * 0.57, y: hero.y + hero.height * 0.43 };
   await page.mouse.move(pointer.x, pointer.y);
-  await page.waitForFunction(
-    () =>
-      [...document.querySelectorAll(".hero-specimen__light")].every(
-        (element) => getComputedStyle(element).opacity === "1",
-      ),
-  );
-  const position = await page.locator(".home-hero").evaluate((element) => [
+  await lit("1");
+  const position = await page.locator(".home-page").evaluate((element) => [
     element.style.getPropertyValue("--light-x"),
     element.style.getPropertyValue("--light-y"),
   ]);
+  const light = await lights.boundingBox();
   assert.deepEqual(
     position.map((value) => Math.round(Number.parseFloat(value))),
-    [Math.round(pointer.x - hero.x), Math.round(pointer.y - hero.y)],
+    [Math.round(pointer.x - light.x), Math.round(pointer.y - light.y)],
     "The light must follow the pointer.",
   );
 
-  const blocked = await page.locator(".home-hero__actions a").evaluateAll((links) =>
+  const blocked = await page.locator(".home-page a").evaluateAll((links) =>
     links
+      .filter((link) => link.checkVisibility())
       .filter((link) => {
         const box = link.getBoundingClientRect();
+        if (box.bottom < 0 || box.top > innerHeight) return false;
         const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
         return !link.contains(hit);
       })
       .map((link) => link.textContent.trim()),
   );
-  assert.deepEqual(blocked, [], "The specimen layer must not block the Hero actions.");
+  assert.deepEqual(blocked, [], "The specimen layer must not block Home actions.");
 
-  await page.mouse.move(hero.x + hero.width / 2, hero.y + hero.height + 40);
-  await page.waitForFunction(
-    () =>
-      [...document.querySelectorAll(".hero-specimen__light")].every(
-        (element) => getComputedStyle(element).opacity === "0",
-      ),
+  // Below the Hero the light still works, and the photo stays pinned.
+  await page.locator(".home-page").evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const heading = await page.getByRole("heading", { level: 2, name: "Upcoming Events" }).boundingBox();
+  await page.mouse.move(heading.x + heading.width + 40, heading.y + heading.height / 2);
+  await lit("1");
+  const bottom = await geometry();
+  assert.ok(Math.abs(bottom.window.top) < 1, "The photo must stay at the top of the viewport.");
+  assert.ok(Math.abs(bottom.figure.top) < 1, "The photo must not shift at the end of Home.");
+  assert.ok(
+    Math.abs(bottom.footer.bottom - bottom.viewportHeight) < 1,
+    "The photo layer must not add scrolling below the Footer.",
   );
+  assert.equal(
+    await page.locator(".page-shell").evaluate((element) => getComputedStyle(element).overflowY),
+    "clip",
+    "The Home page shell must clip the photo before the Footer.",
+  );
+
+  await page.mouse.move(bottom.footer.x + bottom.footer.width / 2, bottom.footer.y + bottom.footer.height / 2);
+  await lit("0");
+  await page.locator(".home-page").evaluate(() => window.scrollTo(0, 0));
 };
 
 const assertHomeLayout = async (page, label) => {
