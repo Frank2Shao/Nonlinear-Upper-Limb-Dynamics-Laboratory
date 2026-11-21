@@ -54,6 +54,28 @@ const assertPage = async (page, path, label) => {
   await assertVisibleContentFits(page, label, VISIBLE_CONTENT);
 };
 
+// Account (design_document.md 7.11): drawing-table rows put the label beside
+// the value on wide screens and above it on phones; the avatar sits beside the
+// summary; settings buttons keep their own width on wide screens.
+const accountLayout = (page) =>
+  page.evaluate(() => {
+    const box = (element) => element.getBoundingClientRect().toJSON();
+    const row = document.querySelector(".facts-table > div");
+    const form = document.querySelector("#account-usyd-title")
+      .closest(".report-section")
+      .querySelector("form");
+    return {
+      label: box(row.querySelector("dt")),
+      value: box(row.querySelector("dd")),
+      avatar: box(document.querySelector(".account-summary > :first-child")),
+      identity: box(document.querySelector(".account-summary__identity")),
+      update: box(form.querySelector("button[type=submit]")),
+      form: box(form),
+      tagFont: getComputedStyle(document.querySelector(".account-summary .status-tag"))
+        .fontFamily,
+    };
+  });
+
 const assertEmptyDirectory = async (page, label) => {
   await assertPage(page, "/members/", label);
   await page
@@ -102,12 +124,28 @@ try {
 
     await desktopPage.goto(`${baseUrl}/account/`);
     await desktopPage
-      .getByRole("heading", { level: 3, name: "Public member profile" })
+      .getByRole("heading", { level: 2, name: "Public member profile" })
       .waitFor();
     await desktopPage.getByText("Unavailable on public pages", { exact: true }).waitFor();
     await desktopPage.getByRole("link", { name: "Edit profile" }).waitFor();
     await desktopPage.getByRole("link", { name: "Preview profile" }).waitFor();
     await desktopPage.getByRole("link", { name: "Unpublish profile" }).waitFor();
+    const desktopAccount = await accountLayout(desktopPage);
+    assert.ok(
+      desktopAccount.value.left >= desktopAccount.label.right &&
+        Math.abs(desktopAccount.value.top - desktopAccount.label.top) <= 4,
+      "Desktop Account facts must put the label beside the value.",
+    );
+    assert.ok(
+      desktopAccount.identity.left >= desktopAccount.avatar.right,
+      "Desktop Account summary must put the avatar beside the identity.",
+    );
+    assert.ok(
+      desktopAccount.update.width < desktopAccount.form.width / 2 &&
+        Math.abs(desktopAccount.update.left - desktopAccount.form.left) <= 1,
+      "Desktop Update account must be left-aligned at its own width.",
+    );
+    assert.match(desktopAccount.tagFont, /JetBrains Mono/);
 
     await desktopPage.goto(`${baseUrl}/profile/edit/`);
     const unlabelledControls = await desktopPage
@@ -175,6 +213,16 @@ try {
       }
       await assertTouchTargets(mobilePage, `Mobile ${path}`);
     }
+    await mobilePage.goto(`${baseUrl}/account/`);
+    const mobileAccount = await accountLayout(mobilePage);
+    assert.ok(
+      mobileAccount.value.top >= mobileAccount.label.bottom,
+      "Mobile Account facts must put the label above the value.",
+    );
+    assert.ok(
+      mobileAccount.identity.left >= mobileAccount.avatar.right,
+      "Mobile Account summary keeps the compact avatar beside the identity.",
+    );
     await mobilePage.goto(`${baseUrl}/profile/preview/`);
     await assertFocusIndicator(
       mobilePage.getByRole("link", { name: "Edit profile" }),

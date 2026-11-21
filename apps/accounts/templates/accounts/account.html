@@ -3,100 +3,117 @@
 {% block title %}Account | NULDL Armwrestling Club{% endblock %}
 
 {% block content %}
-  <section class="content-narrow" aria-labelledby="account-title">
-    <p class="eyebrow">Member settings</p>
-    <h1 id="account-title">Account</h1>
+  <div class="public-page public-page--report">
+    <header class="page-heading">
+      <p class="label-mono">Member settings</p>
+      <h1 id="account-title">Account</h1>
+    </header>
 
-    <div class="panel">
-      <h2>Account details</h2>
-      <dl class="definition-list">
-        <dt>Username</dt>
-        <dd>{{ user.username }}</dd>
-        <dt>Email</dt>
-        <dd>{{ user.email }}</dd>
-        <dt>Email verification</dt>
-        <dd>{% if email_is_verified %}Verified{% else %}Not verified{% endif %}</dd>
-        <dt>USU review status</dt>
-        <dd>{{ user.get_usu_review_status_display }}</dd>
-      </dl>
+    <section class="report-section" aria-labelledby="account-details-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">01</span>
+        <h2 id="account-details-title">Account details</h2>
+      </div>
+      <div class="report-section__body">
+        <dl class="facts-table">
+          <div><dt>Username</dt><dd>{{ user.username }}</dd></div>
+          <div><dt>Email</dt><dd>{{ user.email }}</dd></div>
+          <div><dt>Email verification</dt><dd>{% if email_is_verified %}Verified{% else %}Not verified{% endif %}</dd></div>
+          <div><dt>USU review status</dt><dd>{{ user.get_usu_review_status_display }}</dd></div>
+        </dl>
+      </div>
+    </section>
 
-      {% if member_profile %}
-        <section class="account-profile-summary" aria-labelledby="account-profile-title">
-          <h3 id="account-profile-title">Public member profile</h3>
-          <p>Your username is always part of your public profile URL. Other profile information is shown on the Members page only when provided. Leave optional text fields blank, choose “Not specified”, or remove your avatar if you do not want those details displayed.</p>
+    {% if member_profile %}
+      <section class="report-section" aria-labelledby="account-profile-title">
+        <div class="report-section__label">
+          <span class="report-section__index" aria-hidden="true">02</span>
+          <h2 id="account-profile-title">Public member profile</h2>
+        </div>
+        <div class="report-section__body">
+          <div class="account-summary">
+            {% if member_profile.avatar %}
+              <img
+                class="account-summary__avatar"
+                src="{{ member_profile.avatar.url }}"
+                alt="Current avatar for {{ member_profile.resolved_display_name }}"
+                width="96"
+                height="96"
+              >
+            {% else %}
+              <div class="account-summary__avatar-fallback" aria-hidden="true">{{ member_profile.resolved_display_name|first|upper }}</div>
+            {% endif %}
+            <div class="account-summary__identity">
+              <div class="profile-kicker">
+                {% if member_profile.is_hidden_by_admin %}
+                  <p class="status-tag">Unavailable on public pages</p>
+                {% elif member_profile.is_published %}
+                  <p class="status-tag status-tag--open">Published</p>
+                {% else %}
+                  <p class="status-tag">Not published</p>
+                {% endif %}
+                {% if member_profile.researcher_label %}
+                  <p class="gold-tag">{{ member_profile.researcher_label }}</p>
+                {% endif %}
+              </div>
+              <p class="account-summary__name">{{ member_profile.resolved_display_name }}</p>
+              <p class="account-summary__path">{% url 'members:detail' username=user.username %}</p>
+            </div>
+          </div>
 
-          <dl class="definition-list">
-            <dt>Publication status</dt>
-            <dd>
-              {% if member_profile.is_hidden_by_admin %}
-                Unavailable on public pages
-              {% elif member_profile.is_published %}
-                Published
-              {% else %}
-                Not published
-              {% endif %}
-            </dd>
-            <dt>Display name</dt>
-            <dd>{{ member_profile.display_name|default:"Not provided" }}</dd>
-            <dt>Avatar</dt>
-            <dd>
-              {% if member_profile.avatar %}
-                <img
-                  class="account-profile-summary__avatar"
-                  src="{{ member_profile.avatar.url }}"
-                  alt="Current avatar for {{ member_profile.resolved_display_name }}"
-                  width="96"
-                  height="96"
-                >
-              {% else %}
-                Not provided
-              {% endif %}
-            </dd>
-            <dt>Bio</dt>
-            <dd>{{ member_profile.bio|default:"Not provided"|linebreaksbr }}</dd>
-            <dt>Experience level</dt>
-            <dd>{{ member_profile.get_experience_level_display }}</dd>
-            <dt>Preferred arm</dt>
-            <dd>{{ member_profile.get_preferred_arm_display }}</dd>
-            <dt>Instagram Username</dt>
-            <dd>{{ member_profile.instagram_handle|default:"Not provided" }}</dd>
-            <dt>Other social URL</dt>
-            <dd>{{ member_profile.other_social_url|default:"Not provided" }}</dd>
+          <dl class="facts-table">
+            <div><dt>Bio</dt><dd>{{ member_profile.bio|default:"Not provided"|linebreaksbr }}</dd></div>
+            <div><dt>Experience level</dt><dd>{{ member_profile.get_experience_level_display }}</dd></div>
+            <div><dt>Preferred arm</dt><dd>{{ member_profile.get_preferred_arm_display }}</dd></div>
+            <div><dt>Instagram Username</dt><dd>{{ member_profile.instagram_handle|default:"Not provided" }}</dd></div>
+            <div><dt>Other social URL</dt><dd>{{ member_profile.other_social_url|default:"Not provided" }}</dd></div>
           </dl>
+
+          <p class="report-note">Your username is always part of your public profile URL. Other profile information is shown on the Members page only when provided. Leave optional text fields blank, choose “Not specified”, or remove your avatar if you do not want those details displayed.</p>
 
           <div class="button-row">
             <a class="button button--secondary" href="{% url 'members:profile_edit' %}">Edit profile</a>
             <a class="button button--secondary" href="{% url 'members:profile_preview' %}">Preview profile</a>
             {% include "members/includes/profile_publication_action.html" with profile=member_profile %}
           </div>
-        </section>
-      {% endif %}
-    </div>
+        </div>
+      </section>
+    {% endif %}
 
-    <div class="panel">
-      <h2>USYD and USU details</h2>
-      <form
-        class="stack"
-        method="post"
-        x-data="{ isUsyd: {{ form.is_usyd_student.value|yesno:'true,false' }} }"
-        x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
-      >
-        {% csrf_token %}
-        {% include "includes/forms/form_errors.html" with form=form %}
-        {% include "accounts/includes/usyd_fields.html" with form=form %}
-        <button class="button" type="submit">Update account</button>
-      </form>
-    </div>
-
-    <div class="panel">
-      <h2>Security</h2>
-      <div class="button-row">
-        <a class="button button--secondary" href="{% url 'account_change_password' %}">Change password</a>
-        <form method="post" action="{% url 'account_logout' %}">
+    <section class="report-section" aria-labelledby="account-usyd-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">{% if member_profile %}03{% else %}02{% endif %}</span>
+        <h2 id="account-usyd-title">USYD and USU details</h2>
+      </div>
+      <div class="report-section__body">
+        <form
+          class="stack"
+          method="post"
+          x-data="{ isUsyd: {{ form.is_usyd_student.value|yesno:'true,false' }} }"
+          x-init="$watch('isUsyd', value => { if (!value) $refs.usuId.value = '' })"
+        >
           {% csrf_token %}
-          <button class="button button--quiet" type="submit">Log out</button>
+          {% include "includes/forms/form_errors.html" with form=form %}
+          {% include "accounts/includes/usyd_fields.html" with form=form %}
+          <button class="button" type="submit">Update account</button>
         </form>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <section class="report-section" aria-labelledby="account-security-title">
+      <div class="report-section__label">
+        <span class="report-section__index" aria-hidden="true">{% if member_profile %}04{% else %}03{% endif %}</span>
+        <h2 id="account-security-title">Security</h2>
+      </div>
+      <div class="report-section__body">
+        <div class="button-row">
+          <a class="button button--secondary" href="{% url 'account_change_password' %}">Change password</a>
+          <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button class="button button--quiet" type="submit">Log out</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
 {% endblock %}

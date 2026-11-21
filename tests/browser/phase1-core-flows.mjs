@@ -65,8 +65,9 @@ try {
       page.getByRole("button", { name: "Verify email" }).click(),
     ]);
     await page.getByRole("heading", { name: "Account", exact: true }).waitFor();
-    await page.getByText(required("NULDL_USERNAME"), { exact: true }).waitFor();
-    await page.getByText("Pending", { exact: true }).waitFor();
+    const accountDetails = page.getByRole("region", { name: "Account details" });
+    await accountDetails.getByText(required("NULDL_USERNAME"), { exact: true }).waitFor();
+    await accountDetails.getByText("Pending", { exact: true }).waitFor();
     await logOut(page);
   } else if (scenario === "password-login") {
     await page.goto(`${baseUrl}/accounts/login/`);

@@ -105,7 +105,6 @@
   --color-error: #ff938b;
   --color-border: #37332c;
   --color-border-strong: #706858;
-  --color-separator: #4a4439;
   /* Form control outline: opaque gold dark enough to read as a thin line but
      at least 3:1 against the page ground and card surfaces (WCAG 1.4.11). */
   --color-input-border: #8a6c30;
@@ -371,16 +370,14 @@
   .profile-panel__avatar,
   .profile-panel__avatar-fallback,
   .member-card__avatar,
-  .member-card__avatar-fallback,
-  .account-profile-summary__avatar {
+  .member-card__avatar-fallback {
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-card);
   }
 
   .avatar-preview,
   .profile-panel__avatar,
-  .member-card__avatar,
-  .account-profile-summary__avatar {
+  .member-card__avatar {
     display: block;
     object-fit: cover;
   }
@@ -404,7 +401,9 @@
   .content-narrow strong,
   .member-card__content h2,
   .member-facts dd,
-  .definition-list dd {
+  .facts-table dd,
+  .account-summary__name,
+  .account-summary__path {
     overflow-wrap: anywhere;
   }
 
@@ -1637,24 +1636,95 @@
     text-align: right;
   }
 
-  .account-profile-summary {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-separator);
+  /* Drawing-style table for private settings (Account): mono label column,
+     value column, gold hairlines between rows. Labels stack on narrow screens. */
+  .facts-table {
+    margin: 0;
+    display: grid;
+    gap: 1px;
+    border: 1px solid var(--color-gold-line);
+    background: var(--color-gold-line);
   }
 
-  .account-profile-summary h3 {
-    font-size: clamp(1.625rem, 4.5vw, 2.25rem);
-    font-weight: 700;
+  .facts-table > div {
+    display: grid;
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-ink);
   }
 
-  .account-profile-summary .button-row {
-    margin-top: 1.5rem;
+  .facts-table dt {
+    padding-top: 0.15rem;
+    color: var(--color-subtle);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
-  .account-profile-summary__avatar {
+  .facts-table dd {
+    margin: 0;
+    color: var(--color-cream);
+  }
+
+  /* Account profile summary: square avatar beside status, name and path. */
+  .account-summary {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .account-summary__avatar,
+  .account-summary__avatar-fallback {
     width: 6rem;
     height: 6rem;
+    border: 1px solid var(--color-gold-line);
+  }
+
+  .account-summary__avatar {
+    display: block;
+    object-fit: cover;
+  }
+
+  .account-summary__avatar-fallback {
+    display: grid;
+    place-items: center;
+    background: var(--color-ink);
+    color: var(--color-gold);
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 800;
+  }
+
+  .account-summary__identity {
+    min-width: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .account-summary__identity > *,
+  .account-summary .status-tag {
+    margin: 0;
+  }
+
+  .account-summary__name {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .account-summary__path {
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  /* Settings forms inside a report section keep their button at its own width. */
+  .report-section__body > form.stack > .button {
+    justify-self: start;
   }
 
   .empty-state {
@@ -1996,21 +2066,6 @@
     color: var(--color-on-gold);
   }
 
-  .definition-list {
-    display: grid;
-    grid-template-columns: minmax(8rem, 0.7fr) minmax(0, 1.3fr);
-    gap: 0.5rem 1rem;
-  }
-
-  .definition-list dt {
-    color: var(--color-muted);
-    font-weight: 600;
-  }
-
-  .definition-list dd {
-    margin: 0;
-  }
-
   .site-footer {
     background: var(--color-ink);
     color: var(--color-muted);
@@ -2152,6 +2207,11 @@
   }
 
   @variant max-hero {
+    .facts-table > div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+
     .event-card {
       grid-template-columns: auto minmax(0, 1fr);
       grid-template-areas:
@@ -2264,10 +2324,6 @@
       display: grid;
     }
 
-    .definition-list {
-      grid-template-columns: 1fr;
-    }
-
     .member-card {
       grid-template-columns: 5rem minmax(0, 1fr);
       padding: 1rem;
@@ -2288,10 +2344,6 @@
 
     .profile-panel__avatar-fallback {
       font-size: 5rem;
-    }
-
-    .definition-list dd:not(:last-child) {
-      margin-bottom: 0.75rem;
     }
   }
 }

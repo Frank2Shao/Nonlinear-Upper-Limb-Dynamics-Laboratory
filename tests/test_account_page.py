@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -263,9 +265,7 @@ def test_account_details_include_profile_summary_and_publication_guidance(client
 
     content = response.content.decode()
     assert response.context["member_profile"] == profile
-    assert content.count('class="panel"') == 3
-    assert "<h2>Member profile</h2>" not in content
-    assert '<h3 id="account-profile-title">Public member profile</h3>' in content
+    assert '<h2 id="account-profile-title">Public member profile</h2>' in content
     assert "Your username is always part of your public profile URL." in content
     assert "Leave optional text fields blank" in content
     for value in (
@@ -276,7 +276,6 @@ def test_account_details_include_profile_summary_and_publication_guidance(client
         "account.profile",
         "https://example.com/account-profile",
         "Not published",
-        "Not provided",
     ):
         assert value in content
 
@@ -319,3 +318,99 @@ def test_account_profile_actions_follow_publication_state(
     assert reverse(route_name) in content
     assert reverse("members:profile_edit") in content
     assert reverse("members:profile_preview") in content
+
+
+def section_titles(content: str) -> list[tuple[str, str]]:
+    """(index, title) of every numbered report section, in page order."""
+    return re.findall(
+        r'<span class="report-section__index" aria-hidden="true">(\d+)</span>\s*'
+        r'<h2 id="[\w-]+">([^<]+)</h2>',
+        content,
+    )
+
+
+def test_account_page_uses_a_heading_and_four_numbered_sections(client):
+    member = create_user(username="account_sections")
+    MemberProfile.objects.create(user=member)
+    client.force_login(member)
+
+    content = client.get(reverse("account")).content.decode()
+
+    assert '<p class="label-mono">Member settings</p>' in content
+    assert '<h1 id="account-title">Account</h1>' in content
+    assert section_titles(content) == [
+        ("01", "Account details"),
+        ("02", "Public member profile"),
+        ("03", "USYD and USU details"),
+        ("04", "Security"),
+    ]
+    assert content.count('<dl class="facts-table">') == 2
+    assert 'class="panel"' not in content
+
+
+def test_account_sections_stay_consecutive_without_a_profile(client):
+    member = create_user(username="account_no_profile")
+    client.force_login(member)
+
+    content = client.get(reverse("account")).content.decode()
+
+    assert section_titles(content) == [
+        ("01", "Account details"),
+        ("02", "USYD and USU details"),
+        ("03", "Security"),
+    ]
+
+
+def test_account_summary_shows_status_tag_name_path_and_researcher_tag(client):
+    member = create_user(username="account_summary")
+    MemberProfile.objects.create(
+        user=member,
+        display_name="Summary Member",
+        is_published=True,
+        researcher_number=7,
+    )
+    client.force_login(member)
+
+    content = client.get(reverse("account")).content.decode()
+
+    summary = content[content.index('<div class="account-summary">') :]
+    summary = summary[: summary.index('<dl class="facts-table">')]
+    assert '<p class="status-tag status-tag--open">Published</p>' in summary
+    assert '<p class="gold-tag">Researcher 07</p>' in summary
+    assert summary.index("Published") < summary.index("Researcher 07")
+    assert '<p class="account-summary__name">Summary Member</p>' in summary
+    assert (
+        '<p class="account-summary__path">'
+        f"{reverse('members:detail', kwargs={'username': 'account_summary'})}</p>"
+    ) in summary
+    # No avatar: a decorative initial stands in, and the name is not repeated
+    # as an accessible image name.
+    assert (
+        'class="account-summary__avatar-fallback" aria-hidden="true">S</div>' in summary
+    )
+
+
+@pytest.mark.parametrize(
+    ("is_published", "is_hidden_by_admin", "tag"),
+    (
+        (False, False, '<p class="status-tag">Not published</p>'),
+        (True, True, '<p class="status-tag">Unavailable on public pages</p>'),
+    ),
+)
+def test_account_summary_uses_a_plain_tag_unless_published(
+    client, is_published, is_hidden_by_admin, tag
+):
+    member = create_user(username="account_plain_tag")
+    MemberProfile.objects.create(
+        user=member,
+        is_published=is_published,
+        is_hidden_by_admin=is_hidden_by_admin,
+    )
+    client.force_login(member)
+
+    content = client.get(reverse("account")).content.decode()
+
+    assert tag in content
+    assert "gold-tag" not in content
+    # Without a display name the summary falls back to the username.
+    assert '<p class="account-summary__name">account_plain_tag</p>' in content
