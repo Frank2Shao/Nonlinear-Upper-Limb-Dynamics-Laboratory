@@ -2,7 +2,7 @@
 
 **最后更新：** 2026 年 11 月 22 日
 **对应进度：** Visual Refresh, Step V21
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成），Phase 6 尚未开始
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局），Phase 6 尚未开始
 
 ## 一、当前架构结论
 
@@ -789,7 +789,7 @@ ASGI / WSGI ───────────→ config.settings.production
 - 第五轮（V18 共用表单字段与认证页面、V19 Account、V20 Edit Profile/Preview/Publish/Unpublish）沿用 V7、V10、V13、V17 的门禁方式，没有新增脚本：`scripts/accept_phase_4.py` 在 OS 临时目录的全新 uv environment 中执行共享门禁 `scripts/verify_project.py`，再在真实 Development server 上运行 Phase 2–4 desktop/mobile smoke。
 - 结果：完整 pytest `457 passed`、branch coverage `95%`，Ruff、migration drift、Django check 与 `check --deploy --fail-level WARNING` 均无问题，三组 smoke 全部通过；验收后工作区没有任何已跟踪文件变化。
 - 人工走查使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、四名合成会员与程序生成的抽象头像，截图后删除），在 1440 × 900 与 390 × 844 下各 13 张：Log in、Join the Club、Verify email、Log in by email code、Password reset、Change password、Account（已发布/未发布）、Edit Profile、Preview（已发布/管理员隐藏）、Publish（Username 回退说明）与 Unpublish。每张自动检查无横向溢出、主内容无冒号结尾的 Label、唯一 H1 与无 page error，经项目负责人确认。Development database 未写入数据。
-- 第五轮完成后，Home、Events、About、Beginners & Safety、Members、认证与 Account（含 Edit Profile、Preview 与 Publish/Unpublish 确认页）已按新视觉实施；只剩 403/404/500 错误页沿用原有布局（仍使用 `.eyebrow`），需先确认设计再展开步骤。
+- 第五轮完成后，Home、Events、About、Beginners & Safety、Members、认证与 Account（含 Edit Profile、Preview 与 Publish/Unpublish 确认页）已按新视觉实施；403/404/500 错误页经项目负责人看过三个 mockup 后决定保持现有布局（继续使用 `_error_page.html` 中的 `.eyebrow`、`.lede`、`.cta-panel` 与 `.public-section__header`，这些样式需保留），不再展开步骤。Visual Refresh 的页面范围因此全部完成。
 - 本步没有修改代码、view、URL、业务逻辑或 migration。
 
 ## 四、当前文件职责

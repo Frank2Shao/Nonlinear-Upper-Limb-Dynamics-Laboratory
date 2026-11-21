@@ -2391,3 +2391,10 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 
 - 第五轮（V18 共用表单字段与认证页面、V19 Account、V20 Edit Profile/Preview/Publish/Unpublish）完成后，Home、Events、About、Beginners & Safety、Members、认证与 Account 已按新视觉实施；只剩 403/404/500 错误页沿用原有布局，需先确认设计再展开步骤。
 - 项目负责人已走查截图并批准 V21；`architecture.md` 已新增 3.68 并更新页首进度。第五轮完成，下一项为 403/404/500 错误页的设计确认，尚未开始。
+
+## Visual Refresh — 403/404/500 错误页设计决定
+
+- 第五轮完成后，按既定顺序为 403/404/500 制作了三个只在本地临时目录存在的 mockup（A：左侧页头与按钮、右侧带金色顶线的面板放大号金色状态码；B：整页居中的大号金色状态码；C：左对齐报告页，右侧金色描边空心状态码），均以 404 为例在 1440 与 390px 截图，未修改仓库。
+- 项目负责人看过现状与三个方案后决定：错误页保持现有布局，不重新设计。现有错误页已继承全站颜色、字体、按钮与页面壳，继续使用 `_error_page.html` 中的 `.eyebrow` 状态码、H1、`.lede` 说明与 `.cta-panel` 中的 `Return Home`；文案、handlers、状态码与隐私边界不变。
+- 因此 Visual Refresh 的页面范围（Home、Events、About、Beginners & Safety、Members、认证与 Account、错误页）全部结束，没有 V22。`.eyebrow`、`.cta-panel` 与 `.public-section__header` 仍由错误页使用，需保留。
+- 经项目负责人批准，`architecture.md` 3.68 末条、页首状态与 `implementation.md` 的 Visual Refresh 页面顺序说明已改为记录该决定。

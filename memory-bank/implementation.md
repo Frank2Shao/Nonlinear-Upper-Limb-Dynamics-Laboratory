@@ -529,7 +529,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V6 | Home 其余区块（`New to Armwrestling?` 卡片与 `Upcoming Events`）。先在设计画布确认样式，再以 V2 组件实施；活动卡片的日期、时间与地点采用原 V4 信息表风格（等宽标签、低优先级标签色与主要文字色数值、半透明金色细边框）；活动卡片样式同时作用于 Events 列表。 |
 | V7 | 第一轮质量门禁。完整测试、Ruff、`static:check`、Django checks、Phase 2–4 desktop/mobile smoke 与 Accessibility 门禁全部通过；提交 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后再更新 `architecture.md`。 |
 
-后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。
+后续页面顺序：Events 列表与详情 → About、Beginners & Safety → Members → 认证与 Account → 403/404/500。每个页面在设计确认后再展开为具体步骤。（第五轮后，项目负责人看过 403/404/500 的设计方案，决定错误页保持现有布局，不展开步骤；Visual Refresh 至 V21 结束。）
 
 ### Visual Refresh 第二轮：Events 列表与详情
 
