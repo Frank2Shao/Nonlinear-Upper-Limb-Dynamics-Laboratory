@@ -2314,3 +2314,50 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 当前边界与下一步门槛
 
 - 项目负责人已走查截图并批准 V19；`architecture.md` 已新增 3.66 并更新对应文件职责。V20（Edit Profile、Preview 外壳与 Publish/Unpublish）尚未开始。
+
+## Visual Refresh Step V20 — Edit Profile、Preview 外壳与 Publish/Unpublish 确认页
+
+### 前置条件检查
+
+- 项目负责人已批准 V19（已提交并推送）并授权开始 V20；已完整阅读 `architecture.md` 与 `design_document.md`；版式以 7.11 及第五轮确认的 mockup 为准。
+
+### 实施内容
+
+- `profile_edit.html` 改为报告页结构，取代原窄栏 `.panel`：
+  - 页头为 `label-mono` 小标签 `Member profile`、H1 `Edit Profile` 与 `.lede`；
+  - 同一张 `form.settings-form` 分为三个 `.report-section`：`01 Name and avatar`（Display name 与 Avatar 编辑区）、`02 About you`（Bio；Experience level 与 Preferred arm 放在 `.field-pair` 中，宽度足够时并排）、`03 Links`（Instagram Username、Other social URL）；
+  - Avatar 编辑区：有 Avatar 时加 `avatar-editor--current`，宽于 `--breakpoint-hero` 时左侧为 8rem 方形当前 Avatar（金色细边框、直角），右侧 `.avatar-editor__controls` 依次为上传、metadata 提示与删除 Checkbox；窄屏纵向排列；没有 Avatar 时只有上传控件；
+  - 末尾操作栏复用 `.report-action`（金色细线之下），新增修饰类 `report-action--start` 使按钮在宽屏左对齐、保持自身宽度，手机仍按全站规则占满宽度。
+- `profile_preview.html`：页头为 `Private preview` 与 H1 `Profile Preview`；公开字段组件放进 `.preview-frame`（半透明金色虚线框），框顶 `.preview-frame__label` 为金色等宽 `Public view` 与该资料的公开路径（由 `members:detail` 反向解析）；管理员隐藏提示在框之前、操作按钮在框之后。公开组件与 H1 → H2 → H3 层级不变。
+- `profile_publish_confirm.html`：页头为 `Publication confirmation` 与 H1；`01 What becomes public` 的八项公开字段改用 `.rule-list`；`02 Your public page` 为 `.facts-table`（`Public name`、`Profile URL`），其下为 Avatar metadata 警示与 `.report-note` 说明；确认表单（CSRF、`Publish profile`、`Return to preview`）在分节之后，使用 `report-action report-action--start`。
+- Username 回退说明：mockup 的 Publish 页没有这句，但 7.11 要求保留，因此放在警示之下的补充说明中：`Your Username is always part of your public profile URL.`，Display name 为空时接 `It is also your public name because no Display name is set.`。原两句（`Your Username will be part of your public profile URL: …` 与 `Your public name will be …, using your Username because …`）由表格与这段说明取代。
+- `profile_unpublish_confirm.html`：同样的页头与 lede；`01 Your public page` 为同一张 `Public name` / `Profile URL` 表格；确认表单在分节之后。7.11 只写“相同的页头、分节与表格写法”，没有 mockup，此处只放一个分节。
+- 管理员隐藏提示（`profile_hidden_notice.html`）、Publish/Unpublish 入口、view、URL、form、CSRF POST、幂等 service、固定 redirect、文案（除上述 Username 回退说明）与 migration 均未改动。
+- CSS：
+  - 删除只被这几页使用的 `.content-narrow`、`.panel`、`.profile-flow` 规则及其在共享卡片表面、Avatar 与断行分组中的条目；`.avatar-preview` 移出共享 Avatar 分组，改为金色细边框直角；
+  - 新增 `.settings-form`、`.field-pair`、`.avatar-editor--current`（`@variant hero` 两列）、`.avatar-editor__controls`、`.report-action--start`、`.preview-frame`、`.preview-frame__label`（长路径可断行）与 `.facts-table code`；
+  - `.eyebrow` 仍被错误页使用，保留。
+
+### 测试
+
+- `test_profile_edit.py`：页头小标签、三个编号分节的标题与顺序、七个字段各在正确分节内、两项下拉在 `.field-pair` 中、无 Avatar 时没有删除控件、保存按钮位于全部字段之后。
+- `test_profile_publication.py`：
+  - Publish 页两个编号分节、规则列表 8 项、`Public name` 与 `Profile URL` 表格行、设置 Display name 时不输出回退说明、确认按钮位于分节之后；回退说明断言改为新文字；
+  - Unpublish 页一个分节与同一表格；
+  - Preview 的虚线框含 `Public view`、本人公开路径与公开面板，隐藏提示在框前，`Back to Account` 与 `Unpublish profile` 在框外。
+- `test_avatar_lifecycle.py`：有 Avatar 时编辑区带 `avatar-editor--current`。
+- `phase3-accessibility.mjs`：桌面断言当前 Avatar 在上传控件左侧、两项下拉并排、`Save changes` 左对齐不拉伸、Preview 框为虚线且标签为 `Public view /members/<owner>/`、框内有公开面板没有按钮；手机断言 Avatar 在上传控件上方、两项下拉上下排列。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `457 passed`。
+- `static:check`、Ruff lint/format、Django check、`makemigrations --check`（无变化）与 `git diff --check` 通过。
+- 走查截图使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、四名合成会员与程序生成的抽象头像，截图后删除），共 24 张，均无横向溢出与 page error：
+  - 1440 × 900 与 390 × 844 各 10 张：Edit Profile（有 Avatar、空资料、HTTPS 链接服务端错误）、Preview（已发布含编号与 Avatar、未发布无 Avatar、管理员隐藏）、Publish（Display name 为空的回退说明、长名称与长 Username）、Unpublish（普通、管理员隐藏）；
+  - 另有 820px 的 Edit 与 Preview，以及 640px 视口 200% 字号的 Edit 与 Publish 各 1 张。
+- 手机 Edit 错误截图中 `Skip to main content` 出现在页面中部，与 V19 相同：焦点落在无效字段，属于全页截图对 fixed 元素的绘制方式，不是页面问题。
+- 已知现状：这几页上 Header 没有任何导航项标为当前页（mockup 中为 `Account`），这是 V20 之前就存在的导航映射，本步未改动。
+
+### 当前边界与下一步门槛
+
+- 项目负责人已走查截图并批准 V20；`architecture.md` 已新增 3.67 并更新对应文件职责。V21（第五轮质量门禁）尚未开始。
