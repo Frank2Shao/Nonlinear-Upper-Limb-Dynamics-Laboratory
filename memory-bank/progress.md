@@ -2361,3 +2361,33 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 当前边界与下一步门槛
 
 - 项目负责人已走查截图并批准 V20；`architecture.md` 已新增 3.67 并更新对应文件职责。V21（第五轮质量门禁）尚未开始。
+
+## Visual Refresh Step V21 — 第五轮质量门禁
+
+### 前置条件检查
+
+- 项目负责人已批准 V20（已提交并推送）并授权开始 V21；V18–V20 的代码与文档均已提交，工作区干净。本步不修改代码。
+
+### 自动验收
+
+- 沿用 V7、V10、V13、V17 的门禁方式，没有新增脚本：`python -m uv run --env-file .env python scriptsccept_phase_4.py` 在 OS 临时目录的全新 uv environment 中完整通过（`Phase 4 end-to-end acceptance passed.`）：
+  - 锁定 npm/Chromium 安装、静态资源 build/check/watch smoke、Ruff lint/format、migration drift、Django check 均通过；
+  - 干净 PostgreSQL 上完整 pytest `457 passed`，branch coverage `95%`；
+  - `check --deploy --fail-level WARNING` 无问题，manifest `collectstatic` 通过；
+  - 真实 Development server 上 Phase 2、Phase 3、Phase 4 desktop/mobile smoke 全部通过。
+- 验收后工作区没有任何已跟踪文件变化。
+
+### 人工走查截图
+
+- 使用只在本地临时存在的测试（Test settings 的 live server、临时 media 目录、四名合成会员与程序生成的抽象头像，截图后删除；Development database 未写入数据），在 1440 × 900 与 390 × 844 下各 13 张，共 26 张：
+  - 认证页面：Log in、Join the Club、Verify email（合成注册后进入）、Log in by email code、Password reset、Change password；
+  - Account：已发布含编号与 Avatar、未发布无 Avatar；
+  - Edit Profile（含 Avatar）；
+  - Preview：已发布、管理员隐藏；
+  - Publish（Display name 为空，显示 Username 回退说明）与 Unpublish。
+- 每张截图均自动检查：无横向溢出、主内容中没有以冒号结尾的 Label、恰好一个 H1、没有 page error，全部通过。
+
+### 当前边界与下一步门槛
+
+- 第五轮（V18 共用表单字段与认证页面、V19 Account、V20 Edit Profile/Preview/Publish/Unpublish）完成后，Home、Events、About、Beginners & Safety、Members、认证与 Account 已按新视觉实施；只剩 403/404/500 错误页沿用原有布局，需先确认设计再展开步骤。
+- 项目负责人已走查截图并批准 V21；`architecture.md` 已新增 3.68 并更新页首进度。第五轮完成，下一项为 403/404/500 错误页的设计确认，尚未开始。
