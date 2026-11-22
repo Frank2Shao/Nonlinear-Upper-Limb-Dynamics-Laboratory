@@ -2435,3 +2435,59 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 当前边界与下一步门槛
 
 - 项目负责人已走查截图并批准 V22；旧源图 `hero-specimen-source.png` 已删除（可从 Git 历史恢复），`architecture.md` 已新增 3.69 并更新页首进度与相关文件职责。照片中成员的公开使用同意仍需项目负责人在上线前取得。
+
+## Home 背景照片成员同意
+
+- 项目负责人确认（2026 年 11 月 22 日）：Home 背景照片拼贴中的成员已同意公开使用。`design_document.md` 9.6 已改为记录该确认；`architecture.md` 3.52 与 3.69 中“仍需取得同意”的说明待项目负责人批准后同步。
+
+## Phase 6 — Provider 决定与步骤规划
+
+- 项目负责人 2026 年 11 月 22 日决定：BinaryLane 悉尼机房入门 VPS（至少 1 GB 内存、带 IPv4），一台服务器以 Docker Compose 运行 PostgreSQL、gunicorn 与 Caddy；Avatar 存在 VPS 磁盘 volume；社团专用 Gmail 作为 SMTP；不使用 Sentry，改用 Django 错误邮件与服务器日志；数据库与 media 每日备份、保留 7 份。比较过的托管平台、AWS 与中国云服务商的价格与取舍记录在本次对话，结论写入 `tech_stack.md` 第十三章。
+- `tech_stack.md` 已记录上述决定并更新第三、六、七、九、十二、十三、十五章；`implementation.md` 第十节展开为 Step 46–53；Roadmap 将 Visual Refresh 标为 `Complete`、Phase 6 标为 `In progress`，并加入域名注册这一阻塞项。
+- 仍待决定：CI Provider、备份是否另存 VPS 以外、是否单独部署 Preview 环境、`nuldl.com` 注册与 DNS、正式数据保留规则。正式 Risk Notice 由项目负责人在期末后联系 USU 确认。
+- 尚未修改任何代码。Step 46 开始前需要项目负责人确认步骤规划。
+
+## Phase 6 Step 46 — 生产运行时设置
+
+### 前置条件检查
+
+- 项目负责人已确认 Phase 6 计划并授权开始 Step 46；已完整阅读 `architecture.md` 与 `design_document.md`，Provider 决定以 `tech_stack.md` 第十三、十五章为准。本步不涉及服务器、域名或真实邮箱。
+
+### 实施内容
+
+- 依赖：加入运行依赖 `gunicorn==26.2.0` 并更新 `uv.lock`。没有选最新的 27.0.1：它是 2026 年 11 月 12 日发布的新大版本，发布不到两周；26.2.0 已发布约三个月。
+- `config/settings/production.py`：
+  - `SECURE_PROXY_SSL_HEADER`：信任 Caddy 设置的 `X-Forwarded-Proto`，避免 HTTPS 重定向循环；gunicorn 只能由 Caddy 访问，客户端无法伪造该 header；
+  - `SECURE_REDIRECT_EXEMPT`：只豁免 `health/`，供服务器内部以 HTTP 做健康检查；`ALLOWED_HOSTS` 仍然严格；
+  - `MEDIA_URL`、`MEDIA_ROOT`：Avatar 存在 `BASE_DIR / "media"`，Step 47 挂载持久 volume；此前 Production 没有设置 `MEDIA_ROOT`，上传会落到进程工作目录；
+  - `SERVER_EMAIL`：等于 `DEFAULT_FROM_EMAIL`，因为 Gmail 只能以账号本身发信；`ADMINS` 来自可选的 `DJANGO_ADMINS`（逗号分隔）；
+  - `LOGGING`：单行纯文本日志输出到 stdout；只有 `django.request` 的 ERROR 会发错误邮件；`DisallowedHost` 只记日志、不发邮件；
+  - 修复既有隐患：原先 `STORAGES["staticfiles"] = …` 会直接修改与 `base.py` 共享的字典，同一进程中只要导入过 Production settings，Test settings 也会变成 Manifest 静态存储。现改为建立新字典。
+- `config/settings/base.py`：新增 `optional_csv_env`；所有环境的 `DEFAULT_EXCEPTION_REPORTER_FILTER` 指向新的 `apps/core/error_reporting.py`。
+- `PrivateExceptionReporterFilter`：在 DEBUG 关闭时，错误报告只保留 traceback、路径与异常类型；所有 POST 值、所有 cookie（含 session 与 CSRF）、全部局部变量，以及名称含 EMAIL、DATABASE、ADMINS、SESSION、CSRF、COOKIE、KEY、SECRET、PASS、TOKEN 等的 settings 一律替换为占位符。DEBUG 开启时沿用 Django 默认行为，本地调试页不受影响。
+- `apps/core/checks.py`：deploy 检查 `core.W001`，`ADMINS` 为空时警告。因此 `check --deploy --fail-level WARNING` 会拦下没有设置错误邮件收件人的部署，而本地 `.env` 与普通测试不受影响。`scripts/verify_project.py` 为其中的 deploy check 注入占位收件人 `deploy-check@example.invalid`；`.env.example` 增加注释说明。
+- `/health/`（`core:health`）：只接受 GET，不缓存，执行 `SELECT 1`。数据库可用时返回 `{"status": "ok"}`，否则返回 503 `{"status": "unavailable"}`，日志只记一句不含异常原文的错误；不进入 sitemap。
+
+### 测试
+
+- 新增 `tests/test_production_runtime.py`（13 项）：
+  - 代理 header、重定向豁免、media 与 static 路径、`SERVER_EMAIL`；
+  - 导入 Production 后 base 的 `STORAGES` 不变（回归）；
+  - `DJANGO_ADMINS` 解析（去空格、跳过空项）；
+  - `LOGGING` 能被 `dictConfig` 加载，且只有 `django.request` 发错误邮件、`DisallowedHost` 不发；
+  - 私有报告过滤器在所有环境生效；`core.W001` 在有、无收件人时的结果；
+  - health check 的正常、只接受 GET、数据库不可用时 503 且响应与日志不含异常原文、不在 sitemap；
+  - 在 Production 重定向设置下 health 以 HTTP 返回 200、普通页面 301、带 `X-Forwarded-Proto: https` 时返回 200 不循环；
+  - 合成会员 POST 触发 500 后，错误邮件含 `RuntimeError` 与路径，但不含 Email、验证码、Password、USU ID 与 session key。
+
+### 验证结果
+
+- 完整 pytest 在全新 test database 上 `470 passed`。
+- Ruff lint/format、Django check 与 `makemigrations --check`（无变化）通过。
+- Production `check --deploy --fail-level WARNING`：设置 `DJANGO_ADMINS` 时无问题；不设置时只报 `core.W001`。
+- `git diff --check` 通过。
+
+### 当前边界与下一步门槛
+
+- 项目负责人已批准 Step 46；`architecture.md` 已新增 3.70，更新页首进度、环境与 App 边界表和相关文件职责，并同步 3.52、3.69 中的照片同意说明。Step 47（Dockerfile、生产 Compose、Caddyfile）尚未开始。
+- 已知且接受的边界：错误邮件仍包含请求路径、登录用户的 Username、IP 与 User-Agent，便于排查；路径中可能出现一次性的密码重置链接 key，它在使用或过期后即失效。

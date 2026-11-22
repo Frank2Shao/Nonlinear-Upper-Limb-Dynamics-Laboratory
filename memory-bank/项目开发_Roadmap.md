@@ -3,8 +3,8 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **候选域名：** `nuldl.com`  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 进行中，Phase 6 尚未开始
-**最后更新：** 2026 年 11 月 19 日
+**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成，Phase 6 进行中（Provider 已确认，实施步骤待确认）
+**最后更新：** 2026 年 11 月 22 日
 
 ## 一、文档体系
 
@@ -57,8 +57,8 @@
 | 3 | 会员资料管理 | Phase 1 有效会员与权限 | `Complete` |
 | 4 | 活动、报名与 Risk Notice | Phase 1 认证；Risk Notice 上线前确认 | `Complete` |
 | 5 | 地点与地图 | — | `Cancelled` |
-| VR | Visual Refresh 视觉优化 | Phase 1–4、代码清理 | `In progress` |
-| 6 | 正式环境准备与上线 | Phase 1–4、Visual Refresh、Provider 与外部审批 | `Not started` |
+| VR | Visual Refresh 视觉优化 | Phase 1–4、代码清理 | `Complete` |
+| 6 | 正式环境准备与上线 | Phase 1–4、Visual Refresh、Provider 与外部审批 | `In progress` |
 | 7 | Training Records & Leaderboards | Phase 6 已上线；动作与成绩规则已确认 | `Not started` |
 
 ## 五、Phase 1：项目基础、账户与 USU ID 审核
@@ -256,7 +256,7 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 
 ### 阶段状态
 
-`In progress`。具体步骤见 `implementation.md` 第九点五节。
+`Complete`。V1–V21 五轮页面视觉优化与 V22 Home 整页背景照片已完成并经项目负责人走查；错误页经决定保持现有布局。具体步骤与结果见 `implementation.md` 第九点五节与 `progress.md`。
 
 ## 十、Phase 6：正式环境准备与上线
 
@@ -280,10 +280,10 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 
 ### 外部依赖
 
-- Hosting provider；
-- SMTP provider；
-- Media storage；
-- Error monitoring provider；
+- Hosting provider（已决定：BinaryLane 悉尼入门 VPS + Docker Compose，见 `tech_stack.md` 第十三章）；
+- SMTP provider（已决定：社团 Gmail）；
+- Media storage（已决定：VPS 磁盘 volume）；
+- Error monitoring（已决定：不使用第三方，改用 Django 错误邮件与服务器日志）；
 - Risk Notice 确认；
 - University Branding 书面批准范围；
 - `nuldl.com` 注册和 DNS 控制权。
@@ -302,7 +302,7 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 
 ### 阶段状态
 
-`Not started`
+`In progress`。2026 年 11 月 22 日确认 Provider 与备份保留期；实施步骤见 `implementation.md` 第十节（Step 46–53），待项目负责人确认后开始。
 
 ## 十一、Phase 7：Training Records & Leaderboards
 
@@ -355,7 +355,8 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 | Risk Notice 最终文本 | Phase 4 正式启用报名前 | Phase 2 仅允许非正式环境展示 draft；Production 禁用正文；限制正式报名 |
 | University Branding 批准 | 任何相关内容公开前 | 使用中性 `NULDL Armwrestling Club` Branding，不公开 USYD affiliation |
 | 各场活动可公开的地点 | 管理员公布活动地点前 | 地点未确认时显示 `Venue details to be confirmed` |
-| Hosting 与相关 Provider | Phase 6 开始前 | 不阻塞本地开发 |
+| Hosting 与相关 Provider | 已于 2026 年 11 月 22 日决定 | CI、机外备份副本与 Preview 环境仍待决定 |
+| `nuldl.com` 注册与 DNS | Phase 6 首次部署前 | 尚未注册；阻塞 Step 52 |
 | 会员退出和数据保留规则 | 对外提供删除流程前 | 首期不实现退出工作流 |
 | 中文版本 | 首期完成后再决定 | 不进入首期范围 |
 

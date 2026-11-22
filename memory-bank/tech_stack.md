@@ -3,7 +3,7 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **文档职责：** 定义技术选型、架构边界、环境、安全和运维方案  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 17 日
+**最后更新：** 2026 年 11 月 22 日
 
 ## 一、文档边界
 
@@ -38,7 +38,7 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 | --- | --- | --- | --- |
 | Runtime | Python | 3.13.x | 满足 Django 5.2 支持范围并保持稳定运行时 |
 | Web framework | Django | `~=5.2`，持续使用最新安全补丁 | LTS、认证体系、ORM、Admin 和服务端渲染完整 |
-| Database | PostgreSQL | 托管平台支持的稳定版本 | 约束、事务、条件索引和生产可靠性 |
+| Database | PostgreSQL | 18.x，Docker 官方镜像（与本地开发一致） | 约束、事务、条件索引和生产可靠性 |
 | Authentication | django-allauth | 锁定兼容版本并通过依赖更新流程升级 | 支持强制邮箱验证、验证码验证及 Magic Code 登录 |
 | HTML | Django Templates | 跟随 Django | 避免独立前端复杂度 |
 | Partial interaction | HTMX | 锁定 minor/patch | 适合报名、取消和筛选等局部交互 |
@@ -47,8 +47,9 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 | CSS build | Tailwind CLI | `@tailwindcss/cli` 锁定版本 | 无需引入完整 SPA bundler |
 | 活动地图入口 | Google Maps HTTPS 链接 | 管理员按活动填写 | 从活动详情打开位置与路线 |
 | Admin | Django Admin | 跟随 Django | 低成本完成内容和审核管理 |
-| Email | Django Email Backend + SMTP | Provider 待定 | 开发与生产配置可分离 |
-| App server | WSGI server | 部署平台确定时锁定 | Django 同步业务足以满足首期需求 |
+| Email | Django Email Backend + SMTP | 社团 Gmail 账号的 SMTP（见第七章） | 开发与生产配置可分离；首期发信量很小 |
+| App server | gunicorn | 精确锁定版本，作为运行依赖进入 `pyproject.toml` | Django 同步业务足以满足首期需求；入门 VPS 上 2 个 worker 即可 |
+| Reverse proxy | Caddy 2 | 锁定官方镜像 patch 版本 | 自动申请与续期 HTTPS 证书，并直接提供静态文件与 Avatar |
 | Packaging | `pyproject.toml` | 精确锁定直接依赖 | 统一 Python 项目元数据和依赖 |
 | Containers | Docker / Docker Compose | 锁定基础镜像 digest 或 patch | 统一开发数据库和生产构建 |
 
@@ -131,10 +132,10 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 | --- | --- | --- | --- | --- |
 | Development | 本地开发 | Console 或本地捕获工具 | Docker PostgreSQL | `True` |
 | Test | 自动化测试 | In-memory backend | 独立 PostgreSQL test DB | `False` 或测试配置 |
-| Preview | 私有验收 | 测试 SMTP | 独立托管 PostgreSQL | `False` |
-| Production | 正式公开 | 正式 SMTP | 托管 PostgreSQL | `False` |
+| Preview | 私有验收 | 测试 SMTP | 独立 PostgreSQL | `False` |
+| Production | 正式公开 | 社团 Gmail SMTP | 同一 VPS 上 Docker 运行的 PostgreSQL | `False` |
 
-Preview 环境不得被搜索引擎索引，不应显示未经确认的正式声明。
+Preview 环境不得被搜索引擎索引，不应显示未经确认的正式声明。首期是否单独部署 Preview 环境见第十五章开放决策。
 
 ### 6.2 Settings 划分
 
@@ -159,15 +160,16 @@ EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS
 DEFAULT_FROM_EMAIL
+DJANGO_CSRF_TRUSTED_ORIGINS
 ```
 
-Object storage 和 error monitoring 在选定供应商后增加对应变量。
+首期不使用对象存储或第三方错误监控，因此没有对应变量；服务器错误通知的收件人通过环境变量提供（Phase 6 实施时确定名称）。
 
 ### 6.3 Secret 管理
 
 - `.env` 仅用于本地开发且不得提交；
 - 仓库提供 `.env.example`，只包含变量名称和安全示例；
-- Preview 与 Production 使用托管平台 Secret 管理；
+- Production 的 Secret 只保存在 VPS 上权限受限的环境文件中，不进入仓库、镜像或日志；
 - 不在日志、错误页面或测试快照中输出 Secret；
 - Production 与非正式环境使用不同的 `SECRET_KEY` 和数据库凭据。
 
@@ -176,10 +178,11 @@ Object storage 和 error monitoring 在选定供应商后增加对应变量。
 - Development 使用 Console Email Backend 或邮件捕获工具；
 - Test 使用 Django 测试邮件 backend；
 - Preview 和 Production 使用 SMTP；
-- Sender domain 在上线前配置 SPF、DKIM，并根据 Provider 能力配置 DMARC；
+- Production 使用社团专用 Gmail 账号（项目负责人 2026 年 11 月 22 日决定）：`smtp.gmail.com`、端口 587、STARTTLS；账号开启两步验证，网站使用应用专用密码，不使用账号登录密码；发件地址必须是该 Gmail 地址；
+- Gmail 免费账号每天约 500 封的发送上限足以支撑首期会员规模；超出时 Gmail 会暂停发送约 24 小时，若会员规模或发信量明显增长，再评估专用邮件服务和自有域名发信（届时配置 SPF、DKIM 与 DMARC）；
 - 邮件模板使用纯文本和 HTML 两种版本；
 - 验证码和登录码不得写入应用日志；
-- Provider 尚未确定，代码通过 Django Email Backend 保持可替换。
+- 代码通过 Django Email Backend 与环境变量保持 Provider 可替换。
 
 ## 八、活动地点与地图外链
 
@@ -194,15 +197,16 @@ Object storage 和 error monitoring 在选定供应商后增加对应变量。
 - Tailwind 输出、JavaScript、Logo 和其他固定资源进入 `static/`；
 - Production 执行 `collectstatic`；
 - 静态文件使用 hashed filenames 和长期缓存；
-- 是否使用 CDN 由部署平台决定。
+- Production 由 Caddy 直接提供 `collectstatic` 输出，不经过 Django，首期不使用 CDN；
+- CSS 与图片生成物已提交仓库，服务器不安装 Node.js、不在线构建前端资产。
 
 ### 9.2 User media
 
 - Development 使用本地 `MEDIA_ROOT`；
 - Avatar 文件类型和大小必须校验；
-- Production 需要持久化 media storage；
-- Object storage 或平台持久卷的最终选择在部署阶段确定；
-- 用户上传内容不得作为可执行文件提供。
+- Production 使用 VPS 磁盘上的持久 Docker volume 保存 Avatar，由 Caddy 直接提供，不使用对象存储（项目负责人 2026 年 11 月 22 日决定，会员规模为几十人）；
+- Media volume 与数据库一起纳入每日备份；
+- 用户上传内容不得作为可执行文件提供；Caddy 对 media 路径发送 `X-Content-Type-Options: nosniff`，只提供文件、不执行脚本。
 
 ## 十、安全基线
 
@@ -262,38 +266,37 @@ Object storage 和 error monitoring 在选定供应商后增加对应变量。
 - Database 可用性监控；
 - 磁盘或 media storage 使用监控。
 
-具体 Provider 在 Phase 6 决定。
+首期不使用 Sentry 等第三方错误监控（项目负责人 2026 年 11 月 22 日决定）。改用无新增依赖的做法：Django 在服务器错误时通过同一 Gmail 向管理员发送错误邮件（不包含 Secret 与敏感表单值）；应用、Caddy 与 PostgreSQL 日志保留在服务器上并限制大小；health check endpoint 同时检查数据库连接；磁盘使用由备份脚本记录。
 
 ### 12.3 备份
 
-- PostgreSQL 使用自动备份；
+- 每天自动执行一次 PostgreSQL 逻辑备份（`pg_dump`）与 Avatar media 打包，保留最近 7 份（项目负责人 2026 年 11 月 22 日决定采用最短保留期；保留 7 份而不是 1 份，是为了在数据问题隔天才被发现时仍有完好的副本）；
+- 是否另存一份到 VPS 以外的位置见第十五章开放决策；
 - 上线前执行一次恢复演练；
-- Media storage 纳入备份策略；
-- 记录保留周期和删除规则需等待正式数据保留决定。
+- 会员数据本身的保留和删除规则仍需等待正式数据保留决定。
 
 ## 十三、部署拓扑
 
+项目负责人 2026 年 11 月 22 日决定：使用 BinaryLane 悉尼机房的入门 VPS（至少 1 GB 内存、带公网 IPv4，另配 1–2 GB swap），一台服务器以 Docker Compose 运行全部服务：
+
 ```text
 Internet
-   ↓ HTTPS
-Reverse proxy / Managed platform
+   ↓ HTTPS (80/443)
+Caddy（自动 TLS、静态文件、Avatar media）
    ↓
-Django WSGI application
-   ├─ Hosted PostgreSQL
-   ├─ SMTP provider
-   └─ Persistent media storage
+gunicorn → Django（Production settings，2 workers）
+   ├─ PostgreSQL 18（Docker volume）
+   ├─ Gmail SMTP（社团账号）
+   └─ Avatar media（Docker volume）
 ```
 
-正式托管平台、SMTP、media storage 和监控的供应商均未确定。选型时评估：
+选型理由与边界：
 
-- 澳大利亚访问延迟；
-- 月度成本；
-- PostgreSQL 与备份能力；
-- 持久化 media 支持；
-- Secret 管理；
-- 日志与回滚；
-- 域名和 TLS 配置；
-- 数据位置和服务条款。
+- 会员规模预计为几十人，入门 VPS 的 CPU 与内存足够；512 MB 内存档不采用，以免部署、迁移或备份时内存不足；只有 IPv6 的套餐不采用；
+- 悉尼机房访问延迟低，按澳元计价，账号可以随社团交接；
+- 托管平台、AWS 全套与中国大陆云服务商均已比较后不采用（成本、维护复杂度、悉尼机房缺失或账号交接问题）；
+- 系统补丁、备份与恢复由项目自行维护，因此必须有脚本化的部署、备份、恢复与回滚步骤和文档；
+- 配置不够时可在 BinaryLane 后台直接升级，不需要迁移数据。
 
 ## 十四、不采用的方案
 
@@ -319,13 +322,15 @@ Django WSGI application
 
 ## 十五、开放技术决策
 
-1. Production hosting provider；
-2. SMTP provider；
-3. Media storage；
-4. Error monitoring provider；
-5. CI Provider；
-6. WSGI server 与平台启动方式；
-7. 正式数据保留和备份周期。
+已于 2026 年 11 月 22 日决定：Production hosting（BinaryLane 悉尼入门 VPS + Docker Compose）、SMTP（社团 Gmail）、Media storage（VPS 磁盘 volume）、Error monitoring（不使用第三方，改用 Django 错误邮件与服务器日志）、WSGI server 与启动方式（gunicorn + Caddy）、备份保留期（7 天）。
+
+仍待决定：
+
+1. CI Provider（建议 GitHub Actions 运行现有 `scripts/verify_project.py`）；
+2. 备份是否另存一份到 VPS 以外（例如 BinaryLane 付费备份，或管理员定期下载）；
+3. 是否单独部署 Preview 环境（建议不单独购买服务器，上线前在本地用与 Production 相同的 Docker Compose 演练）；
+4. 域名 `nuldl.com` 的注册商与 DNS 管理（尚未注册；建议 Cloudflare）；
+5. 正式数据保留和删除规则。
 
 这些决定在对应阶段开始前完成 ADR 或更新本文档，不在代码中隐式确定。
 

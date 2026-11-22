@@ -576,15 +576,26 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | V21 | 第五轮质量门禁。`accept_phase_4.py` 全新环境验收通过；提交认证页面、Account、Edit Profile、Preview 与 Publish/Unpublish 的 desktop 与 mobile 截图供项目负责人走查；记录 `progress.md`，申请批准后更新 `architecture.md`。 |
 | V22 | Visual Refresh 补充：Home 整页背景照片（design_document.md 7.4）。图片构建清单改用 1440 × 2200 竖版源图 `hero-specimen-tall-source.png`（不透明、RGB 输出），删除旧横版源图；照片层从 Hero 移到整个 Home 内容区，宽度与内容区一致、按原比例缩放、顶端从导航栏下方开始，内部窗口高度的 sticky 层使照片到达窗口顶部后固定、到 Home 内容末尾随内容离开；光照在 Home 内容区任意位置响应指针；仍只在宽屏且可悬停时渲染并下载照片。更新依赖旧结构的测试。验证照片宽度与内容区一致、顶端位于导航栏下方、滚动后固定在窗口顶部、窗口越高显示越多、Footer 无照片、光照在 Hero 以下区块也能点亮与熄灭且不遮挡操作、mobile 与触屏不下载照片、无溢出与 page error。 |
 
-## 十、Phase 6 概要：上线与运维
+## 十、Phase 6：上线与运维
 
-**展开条件：** Phase 1–4 已验收，hosting、SMTP、media storage、monitoring 和数据保留决策已确认。
+**展开条件：** Phase 1–4 已验收，Visual Refresh 已结束；托管方式、SMTP、media storage、错误通知方式与备份保留期已在 `tech_stack.md` 第十三、十五章确认（2026 年 11 月 22 日）。CI、机外备份副本、Preview 环境与域名注册仍待项目负责人决定，正式 Risk Notice 仍待 USU 确认；这些只阻塞对应步骤。
 
-**范围：** Production image、部署流程、HTTPS、domain、collectstatic、migrations、health check、日志、监控、数据库和 media 备份、恢复演练、回滚及生产 smoke test。
+**范围：** 生产运行时、容器镜像与 Docker Compose、Caddy HTTPS、health check、服务器错误邮件、日志、每日备份与恢复、部署与回滚、服务器初始化、生产演练、首次部署与上线验收。
 
-**关键约束：** `DEBUG` 关闭；Secret 仅由平台管理；正式 Risk Notice 已锁定；Branding 获得批准；Production 与 Preview 数据和凭据隔离；上线步骤可回滚。
+**关键约束：** `DEBUG` 关闭；Secret 只保存在 VPS 上权限受限的环境文件中，不进入仓库、镜像、日志或对话；Production 继续强制关闭 Draft Risk Notice 与报名，直至正式 Risk Notice 批准并另行实施；Branding 保持中性；不引入对象存储、第三方错误监控或前端在线构建；每一步可重复执行、可回滚；只在项目负责人明确授权后操作真实服务器、域名与邮箱。
 
-**阶段验证：** Production deployment check、干净部署、升级与回滚、Email、持久化 media、备份恢复、health check、安全 headers、错误监控和核心用户流程全部通过。
+**阶段验证：** `check --deploy`、干净部署、升级与回滚、真实 Email、Avatar 持久化、备份与恢复演练、health check、安全 headers、错误邮件与核心用户流程全部通过。
+
+| 步骤 | 实施与验收 |
+| --- | --- |
+| 46 | 生产运行时设置。加入精确锁定的 `gunicorn` 运行依赖；Production settings 增加 `SECURE_PROXY_SSL_HEADER`（Caddy 反向代理，避免 HTTPS 重定向循环）、`MEDIA_ROOT`/`MEDIA_URL`、`STATIC_ROOT` 路径、服务器错误邮件收件人与 `SERVER_EMAIL`、结构化日志（不记录 Password、code、完整 Email、USU ID 或 session token）；新增 `/health/` endpoint（检查数据库连接，只返回状态，不输出版本或内部信息，不进入 sitemap）。验证 settings 缺值安全失败、health check 正常与数据库不可用时的状态码、错误邮件内容不含敏感值、`check --deploy` 通过。 |
+| 47 | 容器镜像与 Compose。`Dockerfile`（Python 3.13 slim、`uv sync --frozen --no-dev`、非 root 用户、构建时 `collectstatic`）、`compose.production.yaml`（PostgreSQL 18、web、Caddy，三个具名 volume：数据库、media、静态文件；适合 1 GB 内存的资源设置）、`Caddyfile`（自动 HTTPS、静态与 media 直出、media `nosniff`、gzip/zstd）、`.env.production.example`（只有占位值）。验证镜像本地构建、容器以非 root 运行、本地以 Production settings 启动后首页/静态/Avatar/health check 可用、镜像内不含 `.env`、测试与 Node 依赖。 |
+| 48 | 备份、恢复与日志。备份脚本每天 `pg_dump` 并打包 media，保留最近 7 份，记录磁盘使用；恢复脚本从指定备份重建数据库与 media；Docker 日志轮转限制大小。验证在本地 Production Compose 上完成一次“写入合成数据 → 备份 → 清空 → 恢复 → 数据一致”的演练，以及超过 7 份时删除最旧备份。 |
+| 49 | 部署、回滚与服务器初始化文档。部署脚本（按 Git tag 构建镜像、执行 migrations、重启服务、运行 smoke）；回滚说明（回到上一个镜像 tag，含 migration 时先恢复备份）；服务器初始化清单（Ubuntu LTS、SSH key 登录、关闭密码登录、防火墙只开 22/80/443、自动安全更新、swap、Docker）；管理员操作文档（创建首个 Superuser、Gmail 应用专用密码轮换、查看日志、手动备份与恢复）。验证文档中每条命令在本地演练中可执行，且不包含任何真实 Secret。 |
+| 50 | CI（待项目负责人决定 Provider；建议 GitHub Actions）。在 push 与 pull request 上运行 `scripts/verify_project.py` 与镜像构建，不部署、不使用生产 Secret。 |
+| 51 | 生产演练（是否单独部署 Preview 待决定；默认在本地用 Production Compose 演练）。用临时本地域名完整执行部署脚本、Production smoke、`check --deploy`、备份与恢复，确认 Production 中 Draft Risk Notice 与报名均关闭、活动显示 `Registration unavailable`。 |
+| 52 | 首次部署与上线验收（需要项目负责人完成：购买 BinaryLane 悉尼 VPS、注册域名并添加 DNS 记录、为社团 Gmail 生成应用专用密码并自行填入服务器环境文件）。按文档初始化服务器与部署；验证 HTTPS 与证书续期、安全 headers、真实注册/邮箱验证码/Magic Code/密码重置邮件、Avatar 上传后重启仍在、错误邮件、首次自动备份与一次服务器上的恢复演练；项目负责人完成线上人工走查。 |
+| 53 | 正式 Risk Notice（待 USU 确认正文后单独展开）。正文写入 `design_document.md` 后，再设计 Production 启用正式版本与报名的代码与测试变更；在此之前 Production 报名保持关闭。 |
 
 ## 十一、Phase 7 概要：Training Records & Leaderboards
 

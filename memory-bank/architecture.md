@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 22 日
-**对应进度：** Visual Refresh, Step V22
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 尚未开始
+**对应进度：** Phase 6, Step 46
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置完成）
 
 ## 一、当前架构结论
 
@@ -102,7 +102,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | --- | --- | --- | --- | --- |
 | Development | 开启 | 环境变量提供的 PostgreSQL | Console backend | Secret、hosts 和 CSRF origins 来自本地 `.env`；media 使用本地目录 |
 | Test | 关闭 | PostgreSQL，并显式指定独立 test database 名称 | In-memory backend | 使用测试专用 Secret 和快速 Password hasher；不访问外部邮件服务 |
-| Production | 关闭 | `DATABASE_URL` 提供的 PostgreSQL | 环境变量提供的 SMTP | Secret、hosts 和 CSRF origins 均为必填；启用 HTTPS redirect、secure cookies、HSTS、referrer policy 和 frame protection |
+| Production | 关闭 | `DATABASE_URL` 提供的 PostgreSQL | 环境变量提供的 SMTP（社团 Gmail） | Secret、hosts 和 CSRF origins 均为必填；启用 HTTPS redirect（信任 Caddy 的 `X-Forwarded-Proto`，只豁免 `/health/`）、secure cookies、HSTS、referrer policy 和 frame protection；Avatar 存于 `BASE_DIR / "media"`；服务器错误以私有报告邮件发给 `DJANGO_ADMINS` |
 
 公共解析逻辑只接受 PostgreSQL URL，并支持 percent-encoded credentials 和连接 query options。Production SMTP Provider 尚未选择，当前只建立可替换的 Django SMTP 配置边界。
 
@@ -110,7 +110,7 @@ ASGI / WSGI ───────────→ config.settings.production
 
 | App | 已建立边界 | 当前未实现 |
 | --- | --- | --- |
-| `core` | Home、About、Beginners & Safety、Home Upcoming Events 预览、全局页面壳、通用组件和 403/404/500 error pages | 后续 Phase 的业务页面 |
+| `core` | Home、About、Beginners & Safety、Home Upcoming Events 预览、全局页面壳、通用组件、403/404/500 error pages、`/health/`、私有错误报告过滤器与 deploy 检查 | 后续 Phase 的业务页面 |
 | `accounts` | Custom User、标准与专用审核权限、Email/USU ID 规范化、USYD 声明、状态转换、受控审核服务、signup、Magic Code request 与 Account identity forms、完整认证流程、`/account/` 本人身份信息管理，以及 `/admin/` 最小权限 USU ID 审核 | 统一认证页面表现及其他业务 App 的后台管理 |
 | `members` | MemberProfile schema、字段与 Avatar 验证、公开 queryset、幂等创建 service、Email 验证成功 signal receiver、本人资料编辑、Avatar 文件生命周期、本人 Preview、Publish/Unpublish、公开 Members 列表与详情、会员字段白名单、使用标准 change 权限的 Admin hide/unhide、Executive role 与 Researcher 编号维护，以及 Phase 3 响应式、Accessibility、隐私与全新环境验收 | — |
 | `events` | Event 模型、地点文字与可选 Google Maps 外链、公开查询、Sydney 日期分类、Event Admin、EventRegistration、报名与取消事务服务、Upcoming/Past 列表、已发布活动详情、报名/取消前台，以及最小权限只读 Admin 报名名单 | — |
@@ -621,7 +621,7 @@ ASGI / WSGI ───────────→ config.settings.production
 - 照片只在 `@variant hero`（≥ 54rem，Logo 位于标题右侧）内的 `@media (hover: hover)` 中渲染；照片 URL 也只在该条件内以 CSS 背景声明，因此窄屏与不能悬停的设备不渲染该层，也不下载照片。HTML 不引用照片文件。
 - 指针交互由 Hero 上的 Alpine 行内处理器完成：`pointermove`（忽略 touch）把指针相对 Hero 的坐标写入 `--light-x`/`--light-y` 并设置 `data-lit`，`pointerleave` 移除 `data-lit`。光照层以 `radial-gradient(circle 12.5rem …)` 遮罩形成跟随指针的 200px 柔边圆，`data-lit` 时不透明度 0 → 1（200ms 过渡，reduced motion 下即时）。没有持续动画、定时器或新增 JavaScript 文件。
 - 照片源图已由项目负责人替换为多名成员对抗场景的拼贴：1448 × 1086、完全不透明的 RGBA PNG（黑色底）。图片构建清单新增 `opaque` 标记——该源图须保持完全不透明并编码为 RGB；由于照片以 `cover`（定位 `center 20%`）铺满约 1280px 宽的 Hero，只生成接近源图宽度的 `hero-specimen-1440.webp`，原 560/1120 透明 WebP 删除。照片四边各 12% 以遮罩渐隐，避免黑色底在页面上形成矩形边。
-- `design_document.md` 9.6 记录：画面包含多名成员，按既有规则公开上线前需取得其同意，由项目负责人确认。
+- `design_document.md` 9.6 记录：画面包含多名成员，按既有规则公开上线前需取得其同意；项目负责人已于 2026 年 11 月 22 日确认取得同意。
 - 测试：Home 页面测试固定彩蛋层对辅助技术隐藏、不含标注、HTML 不引用照片、装饰文字已删除；Home 浏览器测试在 desktop 验证照片已请求、光照默认熄灭、指针进入后点亮并跟随、离开后熄灭、光照下 Hero 按钮仍可点击，在 390px mobile 与 1280px 触屏（`hover: none`）验证该层不显示且没有照片请求；图片测试以 `OPAQUE_SOURCES` 声明该源图不透明、生成物为 RGB。
 - 本步没有修改 view、URL、业务逻辑、表单字段或 migration。完整 pytest（含全部 Playwright 与 Accessibility 门禁）`409 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；1440/1920/900px 截图走查经项目负责人确认。
 
@@ -803,7 +803,24 @@ ASGI / WSGI ───────────→ config.settings.production
   - `.hero-specimen__figure` 宽度等于内容区宽度，以 `aspect-ratio: 1440 / 2200` 顶端对齐，窗口越高显示越多；照片左右各 12%、顶边 4%、底边 12% 渐隐；常态 7%、光照 85% 与 200px 柔边光圈不变；
   - 删除 `.home-hero` 上为照片层设置的 `position`/`isolation`。
 - 测试：图片测试改为新源图的 SHA-256 与尺寸；Home 页面测试断言照片层位于 `.home-page` 内、`.home-hero` 之前；浏览器测试断言照片与内容区等宽对齐、从导航栏下方开始、保持比例，光照跟随指针且在 `Upcoming Events` 旁也能点亮、移到 Footer 熄灭，滚到底后照片仍固定在视口顶部且没有位移、Footer 底边贴齐视口底边（没有多出的滚动），所有可见链接不被遮挡；mobile 与宽屏触屏不显示、不下载照片。完整 pytest `457 passed`；`static:check`、Ruff、Django check 与 `git diff --check` 通过；Development server 上 1440 × 900（顶部、中段、底部、点亮）、1920 × 1080、1234 × 1360、1080 × 1920、1000 × 800 与 390px 手机截图走查经项目负责人确认。
-- 没有修改 view、URL、业务逻辑或 migration。照片中成员的公开使用同意仍需在上线前取得（`design_document.md` 9.6）。
+- 没有修改 view、URL、业务逻辑或 migration。照片中成员的公开使用同意已由项目负责人于 2026 年 11 月 22 日确认取得（`design_document.md` 9.6）。
+
+### 3.70 Phase 6 Step 46：生产运行时设置
+
+- 托管决定见 `tech_stack.md` 第十三章：BinaryLane 悉尼入门 VPS，一台服务器以 Docker Compose 运行 PostgreSQL、gunicorn 与 Caddy。本步只准备 Django 侧的运行时设置，镜像、Compose 与 Caddyfile 属于 Step 47。
+- 运行依赖加入精确锁定的 `gunicorn==26.2.0`。没有采用当时最新的 27.0.1：它是发布不到两周的新大版本。
+- `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`：由 Caddy 终止 TLS，Django 以转发的协议判断 HTTPS，避免 `SECURE_SSL_REDIRECT` 形成重定向循环。gunicorn 只在 Compose 内部网络对 Caddy 开放，客户端不能伪造该 header。`SECURE_REDIRECT_EXEMPT` 只豁免 `health/`，供容器内部以 HTTP 检查；`ALLOWED_HOSTS` 不放宽。
+- Production 补上此前缺失的 `MEDIA_URL = "/media/"` 与 `MEDIA_ROOT = BASE_DIR / "media"`（原先上传会落到进程工作目录），Step 47 在此挂载持久 volume，并由 Caddy 直接提供。
+- 服务器错误邮件：
+  - Production 的 `LOGGING` 只让 `django.request` 的 ERROR 经 `AdminEmailHandler` 发给 `ADMINS`；
+  - `ADMINS` 来自可选的 `DJANGO_ADMINS`（逗号分隔），`SERVER_EMAIL` 等于 `DEFAULT_FROM_EMAIL`（Gmail 只能以账号本身发信）；
+  - `apps/core/checks.py` 的 deploy 检查 `core.W001` 在 `ADMINS` 为空时警告。共享门禁以 `--fail-level WARNING` 执行 deploy check，因此漏设收件人会阻止部署，而本地 `.env`、Development 与普通测试不需要该变量；`scripts/verify_project.py` 为门禁注入占位收件人。
+- `apps/core/error_reporting.py` 的 `PrivateExceptionReporterFilter` 由 base settings 的 `DEFAULT_EXCEPTION_REPORTER_FILTER` 在所有环境启用：DEBUG 关闭时，报告只保留 traceback、路径与异常类型；全部 POST 值、全部 cookie、全部 frame 局部变量，以及名称匹配 EMAIL、DATABASE、ADMINS、SESSION、CSRF、COOKIE、KEY、SECRET、PASS、TOKEN 等的 settings 都被替换。DEBUG 开启时沿用 Django 默认行为，本地调试页不变。报告仍包含路径、登录用户的 Username、IP 与 User-Agent，供排查使用。
+- 日志：Production 输出单行纯文本日志到 stdout（Docker 负责保存与轮转，Step 48 设置大小上限）；`django.security.DisallowedHost` 只记录、不发邮件，避免扫描请求刷屏。
+- `/health/`（`core:health`）：只接受 GET、`never_cache`，执行 `SELECT 1`。成功返回 `{"status": "ok"}`，数据库错误返回 503 `{"status": "unavailable"}`；日志只记一句固定文字，不含可能带主机名或用户名的异常原文。它不进入 sitemap allowlist。
+- 修复既有隐患：`production.py` 原先以 `STORAGES["staticfiles"] = …` 修改与 `base.py` 共享的字典，同一进程中导入 Production settings 后，Test settings 也会使用 Manifest 静态存储（新测试在收集阶段导入 Production 时暴露）。现改为建立新字典，并有回归测试。`test.py` 对 `DATABASES["default"]` 的同类修改只影响测试进程，本步未改。
+- 测试：新增 `tests/test_production_runtime.py`（13 项），覆盖上述设置、`DJANGO_ADMINS` 解析、`LOGGING` 可加载及邮件范围、deploy 检查、health check 的正常/仅 GET/数据库不可用/不在 sitemap、Production 重定向设置下 health 不跳转且转发 HTTPS 不循环，以及合成会员触发 500 后错误邮件不含 Email、验证码、Password、USU ID 与 session key。完整 pytest `470 passed`；Ruff、Django check、`makemigrations --check` 与 `git diff --check` 通过；Production `check --deploy --fail-level WARNING` 设置收件人时无问题，不设置时只报 `core.W001`。
+- 没有新增 migration，也没有修改业务逻辑、页面、URL 之外的路由或权限。
 
 ## 四、当前文件职责
 
@@ -811,17 +828,17 @@ ASGI / WSGI ───────────→ config.settings.production
 | --- | --- |
 | `.gitattributes` | 无论各机器的 `core.autocrlf` 如何设置，都让文本文件统一以 LF 签出，并把图片、字体与 PDF 标记为 binary；保证 manifest 中带 hash 校验的 vendor 文件与 license 在全新 clone 中字节一致。 |
 | `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、本地 `media/` 上传目录、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example` 与 `uv.lock`。 |
-| `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值，供开发者复制为未跟踪的 `.env`。 |
+| `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值（含注释说明的 Production 错误邮件收件人 `DJANGO_ADMINS`），供开发者复制为未跟踪的 `.env`。 |
 | `AGENTS.md` | 定义仓库级开发约束，包括编码前必读文档、架构变更审批、计划目录、测试原则、命名规范和敏感数据限制。 |
 | `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、安全数据边界和目录职责；明确中性 NULDL Branding。 |
-| `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
+| `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行（含 Production 使用的 `gunicorn`）及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
 | `package.json` | 定义锁定的浏览器 library、字体（Inter、Barlow Condensed、JetBrains Mono）与前端开发工具，并提供 vendor copy/check、图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
 | `package-lock.json` | 记录完整 npm 依赖树、下载来源和完整性信息，供 `npm ci` 可重复安装；不手工编辑。 |
 | `scripts/build-static-assets.mjs` | 按固定清单从锁定 npm packages 复制 Alpine.js、HTMX、Inter/Barlow Condensed/JetBrains Mono 字体与 license，并生成或校验包含版本和 SHA-256 的 vendor manifest。 |
 | `scripts/build_home_images.py` | 按源图清单校验 Home Logo、金色材质与 Hero 背景照片源文件的 SHA-256、格式、尺寸、mode 与透明通道（或声明为不透明的源图保持完全不透明并编码为 RGB），并以锁定 Pillow 和逐源固定编码参数确定性生成或检查去除 metadata 的响应式 WebP 版本；按钮材质变体先将暗部向金色亮部提亮。 |
 | `scripts/check-css-watch.mjs` | 在临时目录启动 Tailwind `--watch=always`，确认首次 watch build 完成后终止进程并清理临时输出。 |
-| `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check 与 manifest collectstatic，并传播所有子命令失败。 |
+| `scripts/verify_project.py` | 提供跨阶段共享的本地/CI 质量安全门禁，执行锁定依赖和浏览器准备、静态构建与 watch smoke、Ruff、migration/Django、干净 PostgreSQL branch coverage 测试、warning-level Production deploy check（注入占位 Secret 与错误邮件收件人）与 manifest collectstatic，并传播所有子命令失败。 |
 | `scripts/verify_phase_1.py` | 保留 Phase 1 命令兼容性，并将执行委派给 `scripts/verify_project.py`，不再维护独立门禁逻辑。 |
 | `scripts/_acceptance.py` | 提供各阶段共享的全新环境验收流程：建立临时 uv environment、等待 PostgreSQL、执行 Development migration 与指定门禁、启动并可靠清理真实 Development server、依次运行 smoke，并在失败时输出 server log。 |
 | `scripts/accept_phase_1.py` | Step 20 验收入口：以 `scripts/verify_phase_1.py` 为门禁，运行 Phase 1 desktop/mobile Development smoke。 |
@@ -858,20 +875,22 @@ ASGI / WSGI ───────────→ config.settings.production
 | `manage.py` | 本地运行 Django management command 的命令行入口，默认加载 `config.settings.development`。 |
 | `config/__init__.py` | 将 `config` 标记为 Python package。 |
 | `config/settings/__init__.py` | 将 `config.settings` 标记为环境配置 package，不隐式选择具体环境。 |
-| `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware、默认关闭的 Draft 开关、Safety 与导航 section context processors，以及严格的环境变量与 PostgreSQL URL 解析函数。 |
+| `config/settings/base.py` | 保存公共 Django 配置、根级 template 目录、项目 static 目录与 `STATIC_ROOT`、`AUTH_USER_MODEL`、Django Admin、Sites、allauth Apps、认证 backend、认证行为、项目 allauth form overrides、数字 code 格式、redirect settings、allauth middleware、默认关闭的 Draft 开关、Safety 与导航 section context processors、所有环境共用的私有错误报告过滤器，以及严格的必填/可选环境变量与 PostgreSQL URL 解析函数。 |
 | `config/settings/development.py` | 定义本地 Debug、Console Email、`/media/` local media、环境变量驱动的 PostgreSQL 配置，并明确开启 Draft Risk Notice。 |
 | `config/settings/test.py` | 定义关闭 Debug 的自动化测试环境、独立 PostgreSQL test database、in-memory Email、快速 Password hasher 及默认关闭的 Draft Risk Notice。 |
 | `config/settings/preview.py` | 继承 Production 安全配置并要求显式的 Draft Risk Notice Boolean 开关；缺少变量时拒绝加载。 |
-| `config/settings/production.py` | 定义环境变量驱动的 Production Secret、hosts、PostgreSQL、SMTP、HTTPS 安全设置及 `ManifestStaticFilesStorage`，并强制关闭 Draft Risk Notice；缺少必填值时拒绝加载。 |
+| `config/settings/production.py` | 定义环境变量驱动的 Production Secret、hosts、PostgreSQL、SMTP、HTTPS 安全设置（信任 Caddy 转发协议、只豁免 `/health/` 的 HTTPS 重定向）、不修改共享 base 字典的 `ManifestStaticFilesStorage`、Avatar media 路径、错误邮件收件人与发件人，以及输出到 stdout、只对请求错误发邮件的 `LOGGING`，并强制关闭 Draft Risk Notice；缺少必填值时拒绝加载。 |
 | `config/urls.py` | 项目根 URL 配置，开放 `/admin/`，依次接入 core、events、safety、accounts 和 members URLConf，将 `/accounts/` 委托给 `allauth.urls`，注册 403、404 与 500 handlers，并只在 Debug 环境附加 local media patterns。 |
 | `config/asgi.py` | 暴露 ASGI application 入口，默认加载 Production settings。 |
 | `config/wsgi.py` | 暴露 WSGI application 入口，默认加载 Production settings。 |
 | `apps/__init__.py` | 将 `apps` 标记为承载领域 App 的 Python package。 |
 | `apps/core/__init__.py` | 将 `core` 标记为 Python package。 |
-| `apps/core/apps.py` | 定义 `CoreConfig`，将 `apps.core` 注册为 Django App。 |
-| `apps/core/views.py` | 提供查询最多三条已发布 Upcoming Event 的 Home view、无数据库的 About 与 Beginners & Safety views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view（含 Members 列表、不含个人 detail 或 Events），以及不向模板传递异常详情的 403、404 与 500 handlers。 |
+| `apps/core/apps.py` | 定义 `CoreConfig`，将 `apps.core` 注册为 Django App，并在 `ready()` 中登记 deploy 检查。 |
+| `apps/core/checks.py` | deploy 检查 `core.W001`：`ADMINS` 为空、服务器错误不会发邮件时警告。 |
+| `apps/core/error_reporting.py` | `PrivateExceptionReporterFilter`：DEBUG 关闭时错误报告只保留 traceback，替换全部 POST 值、cookie、局部变量和身份相关 settings。 |
+| `apps/core/views.py` | 提供查询最多三条已发布 Upcoming Event 的 Home view、无数据库的 About 与 Beginners & Safety views、基于显式 allowlist 和当前 request 构造绝对 URL 的 sitemap view（含 Members 列表、不含个人 detail 或 Events），不向模板传递异常详情的 403、404 与 500 handlers，以及只检查数据库连接、不缓存、不输出内部信息的 `/health/`。 |
 | `apps/core/validators.py` | 提供 Members 与 Events 共用的 HTTPS URL validator（先给出明确的 HTTPS 提示，再执行 `URLValidator`）和 `https://` scheme 小写规范化函数。 |
-| `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/` 与 `/sitemap.xml` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
+| `apps/core/urls.py` | 将空路径、`/about/`、`/beginners-safety/`、`/sitemap.xml` 与 `/health/` 映射为具名路由；精确匹配保证其他根级 URL 可继续交给对应 App。 |
 | `apps/core/templates/core/base.html` | 定义前台全局 HTML 页面壳、skip link、语义化 landmarks、title、description、robots、Open Graph 与额外 head 扩展区块；加载本地 CSS 与 Alpine.js，并在初始化后恢复 validation error focus。 |
 | `apps/core/templates/core/home.html` | 提供正式英文 Home、页面 Metadata、覆盖整个 Home 内容区的背景照片与指针光照层（对辅助技术隐藏，Alpine 坐标更新位于 `.home-page`）、Hero（材质标签与等宽 eyebrow、三行金色 H1、介绍、等宽按钮行、右侧响应式 Logo、图纸标题栏）、认证状态分支 CTA、页内新手入口与四张编号功能卡片，以及标题区带 `View all events` 的最多三条 Upcoming Event 预览和 empty state。 |
 | `apps/core/templates/core/about.html` | 提供正式英文 About 与页面 Metadata：等宽小标签页头，四个带编号的报告分节（组织目的、以编号功能卡片呈现的活动内容、含补充说明的参与资格、训练方式），以及只向 Anonymous 显示、在页面末尾居中的 Hero 尺寸 `Join`。 |
@@ -993,6 +1012,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `tests/privacy.py` | 提供公开页面私有值扫描断言与 Email/USU ID/审核状态集合，一次报告全部泄露值。 |
 | `tests/test_project_scaffold.py` | 验证每个 `PROJECT_APPS` 条目可导入，且 AppConfig 名称与所在包路径一致。 |
 | `tests/test_database_settings.py` | 验证 PostgreSQL URL 解析、encoded credentials、连接 options、非 PostgreSQL 拒绝和必填变量失败行为。 |
+| `tests/test_production_runtime.py` | 验证 Production 代理 header、重定向豁免、media/static 路径、错误邮件收件人与发件人、`LOGGING` 及其邮件范围、导入 Production 不改动 base 设置、私有错误报告过滤器与 deploy 检查、`/health/` 的状态与边界，以及错误邮件不含会员私有值。 |
 | `tests/test_environment_settings.py` | 验证 Development、Test、Production 的环境职责、Production 安全设置、manifest static storage 和缺少 Secret 时的安全失败。 |
 | `tests/test_user_model.py` | 验证 Custom User 创建、标准权限字段、身份与审核默认值、Email 必填与唯一，以及审核人 Self ForeignKey 的 `SET_NULL` 行为。 |
 | `tests/test_user_identity_rules.py` | 验证 Email 和数字型 USU ID 规范化、全部 USU 状态转换、专用审核权限、前导零保留及数据库对直接写入的约束。 |
