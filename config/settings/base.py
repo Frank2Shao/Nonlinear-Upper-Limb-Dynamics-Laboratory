@@ -127,6 +127,13 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Server error reports (the administrator emails in Production) carry the
+# traceback only: form values, cookies, local variables and identity settings
+# are redacted. See apps/core/error_reporting.py.
+DEFAULT_EXCEPTION_REPORTER_FILTER = (
+    "apps.core.error_reporting.PrivateExceptionReporterFilter"
+)
+
 
 def required_env(name: str) -> str:
     """Return a required environment variable or fail with a clear message."""
@@ -144,6 +151,13 @@ def required_csv_env(name: str) -> list[str]:
             f"Required environment variable {name} has no usable values."
         )
     return values
+
+
+def optional_csv_env(name: str) -> list[str]:
+    """Return a comma-separated environment variable as a list, or an empty list."""
+    return [
+        value.strip() for value in os.environ.get(name, "").split(",") if value.strip()
+    ]
 
 
 def required_bool_env(name: str) -> bool:

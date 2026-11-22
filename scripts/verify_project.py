@@ -59,6 +59,8 @@ def main() -> None:
     production_environment["DJANGO_SECRET_KEY"] = (
         "project-deploy-check-only-7vQ2!kP9#xM4@cR8$zT6&wN3"
     )
+    # Placeholder recipient so the error-email deploy check (core.W001) passes.
+    production_environment["DJANGO_ADMINS"] = "deploy-check@example.invalid"
     run(
         [
             sys.executable,

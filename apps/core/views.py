@@ -1,11 +1,18 @@
-from django.http import HttpRequest, HttpResponse
+import logging
+
+from django.db import DatabaseError, connection
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET
 
 from apps.events.models import Event
 from apps.safety.services import current_risk_notice
 
 PUBLIC_SITEMAP_URL_NAMES = ("home", "about", "beginners_safety", "members:list")
+
+logger = logging.getLogger(__name__)
 
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -39,6 +46,20 @@ def sitemap(request: HttpRequest) -> HttpResponse:
         {"locations": locations},
         content_type="application/xml",
     )
+
+
+@require_GET
+@never_cache
+def health(request: HttpRequest) -> JsonResponse:
+    """Report whether the app can reach its database, and nothing else."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except DatabaseError:
+        # The exception text can name hosts or users, so it is not logged.
+        logger.error("Health check failed: the database is unavailable.")
+        return JsonResponse({"status": "unavailable"}, status=503)
+    return JsonResponse({"status": "ok"})
 
 
 def permission_denied(request: HttpRequest, exception: Exception) -> HttpResponse:
