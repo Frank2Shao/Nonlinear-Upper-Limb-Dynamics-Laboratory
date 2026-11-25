@@ -3,7 +3,7 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **文档职责：** 定义技术选型、架构边界、环境、安全和运维方案  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 22 日
+**最后更新：** 2026 年 11 月 23 日
 
 ## 一、文档边界
 
@@ -204,7 +204,7 @@ DJANGO_CSRF_TRUSTED_ORIGINS
 
 - Development 使用本地 `MEDIA_ROOT`；
 - Avatar 文件类型和大小必须校验；
-- Production 使用 VPS 磁盘上的持久 Docker volume 保存 Avatar，由 Caddy 直接提供，不使用对象存储（项目负责人 2026 年 11 月 22 日决定，会员规模为几十人）；
+- Production 使用 VPS 磁盘上的持久 Docker volume 保存 Avatar，以随机文件名保存、由 Caddy 不经鉴权直接提供（取舍见 `design_document.md` 11.1），不使用对象存储（项目负责人 2026 年 11 月 22 日决定，会员规模为几十人）；
 - Media volume 与数据库一起纳入每日备份；
 - 用户上传内容不得作为可执行文件提供；Caddy 对 media 路径发送 `X-Content-Type-Options: nosniff`，只提供文件、不执行脚本。
 

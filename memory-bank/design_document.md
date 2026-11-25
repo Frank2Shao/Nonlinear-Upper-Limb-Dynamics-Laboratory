@@ -4,7 +4,7 @@
 **文档职责：** 定义产品目标、用户体验、页面、流程、业务规则和权限  
 **首期语言：** English  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 22 日
+**最后更新：** 2026 年 11 月 25 日
 
 ## 一、文档边界
 
@@ -186,8 +186,11 @@ NULDL Armwrestling Club 网站首先承担社团信息发布和会员入口功�
 - 系统记录本次确认的版本和时间；
 - 新版本不修改历史报名记录；
 - 同一时间只有一个当前版本；
-- 正式 Risk Notice 尚未批准。Phase 4 的报名开发与测试仅使用明确标记的合成文本，Production 在正式文本获批前不开放报名；
-- 在与 USU 确认前，预览环境必须明确标记正文为 draft。
+- 正式 Risk Notice 已获 USU 批准（项目负责人 2026 年 11 月 25 日告知），版本号 `2026-11-24`，正文与网站用法见 7.7 “Risk Notice — 正式版本”；
+- USU 批准的是活动现场的纸质签字表（中英文各一份）。网站只逐字展示其中三段风险告知，会员在线点击 `Confirm registration` 只记录“已阅读该版本”；参与确认（acknowledgement）与签名仍在每场活动现场以纸质完成，网站不改写、不展示该确认句；
+- 中文版只用于现场纸质签字，网站不提供中文版本或 PDF；
+- 纸质表上的 `Notice version` / `文件版本` 填写与网站相同的版本号；
+- Production 在 Step 53 实施并验收前仍不开放报名；实施前预览环境继续明确标记现有正文为 draft。
 
 ## 五、信息架构
 
@@ -260,7 +263,7 @@ Visitor 打开 Sign up
 - 提交注册表单后进入独立的邮箱验证码页面；
 - 条件字段在前端即时显示或隐藏；
 - 后端执行相同规则，不能依赖前端隐藏；
-- 密码错误、邮箱已使用、Username 已使用和验证码错误分别给出明确提示；
+- 密码错误、Username 已使用和验证码错误分别给出明确提示；邮箱已被注册时沿用与正常注册相同的通用流程，不在页面上提示（防枚举，项目负责人 2026 年 11 月 23 日确认）；
 - 不通过登录或重置流程泄露任意邮箱是否存在；
 - 验证码过期后允许在频率限制内重发。
 
@@ -326,11 +329,11 @@ POST Publish
 
 - 接受 JPG、PNG 和 WebP，最大 5 MB；
 - 保留扩展名、声明 MIME 和真实图片内容三层验证；
-- 验证成功后直接保存原文件，不处理 EXIF 方向、不移除 metadata、不缩放、不转换格式；
+- 验证成功后直接保存原文件内容，不处理 EXIF 方向、不移除 metadata、不缩放、不转换格式；保存时文件名换成随机名称，只保留扩展名；
 - 页面使用方形容器与 CSS 裁切展示，不修改保存文件；
 - 替换或主动删除 Avatar 后清理旧文件；失败的更新不得提前删除当前有效文件；
 - 上传字段显示：`Uploaded images are stored as provided and may contain location, device or other metadata. Remove sensitive metadata before uploading.`
-- Development 与 Test 使用本地 media；Production persistent media storage 继续由 Phase 6 决定。
+- Development 与 Test 使用本地 media；Production 存在 VPS 的持久 volume，由 Caddy 按随机文件名直接公开提供（见 11.1、11.2）。
 
 ### 6.6 活动报名
 
@@ -416,7 +419,7 @@ Registered Member 选择 Cancel registration
   - 页面底部以等宽字体显示图纸式标题栏（`Dwg no.`、`Scale`、`Est. 2026`）作为装饰；
 - Home 背景彩蛋（项目负责人在 Visual Refresh 第五轮后决定改为整页背景，取代原先只铺满 Hero 的照片层）：社团对抗照片拼贴（黑金调色、黑色底、竖版长图）作为整个 Home 页的背景层，可被文字、Logo 和卡片遮挡，不为其单独预留布局空间：
   - 照片宽度与页面内容区一致（大屏约 1280px），按原比例缩放，不裁切比例；顶端从导航栏下方开始；
-  - 页面滚动时照片先随页面上移，到达窗口顶部后固定，Hero、`New to Armwrestling?` 与 `Upcoming Events` 在其上滑过；到 Home 内容末尾时随内容离开，不进入 Footer；
+  - 页面滚动时照片先随页面上移，到达窗口顶部后固定，Hero、`New to Armwrestling?` 与 `Upcoming Events` 在其上滑过；一直固定到 Home 内容末尾、不随内容位移，并在 Footer 之前裁切，不进入 Footer；
   - 窗口越高，显示照片越多的下半部分；宽屏矮窗口只显示上半部分；
   - 平时仅显示极淡轮廓，指针在 Home 内容区任意位置移动时以跟随指针的圆形光照局部显现照片；照片为装饰性内容，对辅助技术隐藏；
   - 背景照片只用于 Home；其他页面保持深黑底加金色坐标网格（项目负责人决定，避免长文、表单、会员资料与安全内容上的可读性、隐私与语气问题）；
@@ -576,6 +579,25 @@ Registered Member 选择 Cancel registration
 
 实现时必须逐字使用上述正文，包括源文件中重复的 acknowledgement；在最终文本获批前不得擅自修订法律或责任限制措辞。Development 和 Preview 可以显示上述 banner 与正文；Production 必须禁用正文路由、从导航和 sitemap 排除该页面，并且不得提供报名功能。
 
+上述 Draft 正文将在 Step 53 由下方正式版本取代。
+
+#### Risk Notice — 正式版本（USU 已批准，Step 53 实施）
+
+- 来源：社团资料中的 `Armwrestling_Risk_Notice_EN.pdf` 与 `Armwrestling_Risk_Notice_CN.pdf`（2026 年 11 月 24 日定稿，USU 已批准）；
+- 版本号：`2026-11-24`；
+- 标题：`Armwrestling Activity Risk Notice`；组织方：`Nonlinear Upper Limb Dynamics Laboratory`；
+- 网站只使用以下三段正文，逐字照录，不得修改：
+
+> Participation in armwrestling is voluntary. Armwrestling involves physical exertion against an opponent. Injuries can occur even when safety rules are followed and the activity is supervised. Possible injuries include muscle strains, tendon or ligament injuries, joint sprains or dislocations, and fractures.
+>
+> Before taking part, consider any previous injuries or health conditions that may affect your ability to participate safely. Examples include previous shoulder, elbow or wrist injuries, other musculoskeletal conditions, cardiovascular or cerebrovascular disease, osteoporosis, and neurological conditions. If you are unsure whether you should take part, seek advice from a health professional before participating.
+>
+> Attend the safety briefing before taking part and participate under the supervision of the person in charge. You may stop at any time. Stop immediately if you experience pain, numbness, dizziness or other discomfort, or if the person in charge asks you to stop. Tell the person in charge if you feel unwell or are injured.
+
+- 纸质表中的 `Event sign-off record`、`Participant acknowledgement` 与签名栏只在现场使用，网站不展示；
+- 网站在正文之后增加一句非法律性的提示（项目负责人在 Step 53 审批时确认措辞）：`You will also be asked to sign the participant acknowledgement on site before taking part.`；
+- 页面不显示 draft banner；Production 公开展示，可进入导航与 sitemap；具体页面、入口与报名门禁变更在 Step 53 设计。
+
 #### Global Footer
 
 - Social link text：`Follow NULDL Armwrestling Club on Instagram: @nuldl_armwrestlingclub`
@@ -662,11 +684,12 @@ Registered Member 选择 Cancel registration
 
 | 场景 | 用户结果 |
 | --- | --- |
-| 邮箱或 Username 已存在 | 显示可执行的通用提示，同时避免无必要的信息泄露 |
+| Username 已存在 | 显示可执行的提示 |
+| 邮箱已存在 | 进入与正常注册相同的通用流程，不透露邮箱是否已注册 |
 | 验证码错误 | 保留验证页面，显示剩余操作提示 |
 | 验证码过期 | 提供受频率限制的重发入口 |
-| 账户停用 | 拒绝登录并提供联系入口 |
-| 报名已关闭 | 隐藏报名和取消按钮并显示 Closed |
+| 账户停用 | 拒绝登录，并提示通过社团既有渠道联系管理员；首期不公开联系方式或联系入口 |
+| 报名已关闭 | 隐藏报名和取消按钮并显示 `Registration unavailable` |
 | 活动已归入 Past | 保留活动信息，隐藏报名和取消按钮 |
 | 重复提交报名 | 返回当前报名状态，不建立重复有效记录 |
 | Risk Notice 已更新 | 要求重新阅读并确认当前版本 |
@@ -779,14 +802,15 @@ Registered Member 选择 Cancel registration
 - 会员主动发布的 Avatar、公开名称、Bio、Experience level、Preferred arm、Instagram Username 和一个 HTTPS social URL；
 - 已发布资料上由管理员分配的 Researcher 编号；
 - Published Profile 的 Username detail URL，以及 Display name 为空时的 Username 回退名称；
-- 已发布 Avatar 原文件中保留的 metadata；上传界面必须提前提示其中可能包含位置、设备或其他信息。
+- 已发布 Avatar 原文件中保留的 metadata；上传界面必须提前提示其中可能包含位置、设备或其他信息；
+- 任何 Avatar 文件本身：文件名随机、不可猜测，但知道完整网址的人都能打开，不按发布状态鉴权。项目负责人 2026 年 11 月 23 日决定不为几十人的普通社团做更细的控制，并接受取消发布、被隐藏或停用后旧链接仍可打开；替换或删除 Avatar 会删除旧文件。
 
 ### 11.2 仅本人和获授权管理员可见
 
 - Email；
 - USYD 学生声明；
 - USU ID 及审核状态；
-- 未公开的 MemberProfile；
+- 未公开的 MemberProfile（Avatar 文件除外，见 11.1；页面不会公开它的网址）；
 - 本人在活动详情页的当前报名状态。
 
 ### 11.3 仅获授权管理员可见
@@ -812,12 +836,12 @@ Registered Member 选择 Cancel registration
 
 ## 十三、待确认事项
 
-1. Risk Notice 最终文本及 USU 确认结果；
+1. ~~Risk Notice 最终文本及 USU 确认结果~~（已解决：2026 年 11 月 25 日，见 4.6 与 7.7 “Risk Notice — 正式版本”）；
 2. University Branding 的书面批准范围；
 3. 复杂人体结构、受力轨迹插画的最终范围和制作时间；
 4. 各场活动可公开的地点名称或地址，由管理员在确认后录入；
 5. 会员退出、账户删除和数据保留规则；
-6. 中文版本的时间和范围；
+6. 中文版本的时间和范围（Risk Notice 中文版已定为只用于现场纸质签字）；
 7. Phase 7 排行榜的训练动作、成绩单位、左右手区分、审核方式、并列规则和公开范围。
 
 待确认事项不得由开发者自行补全。任何决定都应先更新本文档，再进入技术和实施文件。

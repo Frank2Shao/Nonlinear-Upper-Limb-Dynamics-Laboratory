@@ -2405,7 +2405,7 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 
 - 项目负责人指出 Home 背景照片显示不完整。原因是规则本身：照片按比例覆盖约 1280 × 600 的 Hero（`cover`、对齐点 `center 20%`），4:3 原图只显示约 62% 的高度，主要裁去底部，四边另有 12% 渐隐。
 - 项目负责人决定：照片改为整个 Home 页的背景，宽度与内容区一致、从导航栏下方开始、到达窗口顶部后固定，内容在其上滑过；窗口越高显示越多；整页都能用光照；手机与触屏仍不显示。照片只用于 Home，其他页面保持网格加纯黑底（分析过的可读性、隐私与语气代价见设计文档 7.4）。
-- 项目负责人提供了 1440 × 2200 的竖版拼贴 `static_src/images/home/hero-specimen-tall-source.png`（RGBA、完全不透明）。已完整阅读 `architecture.md` 与 `design_document.md`。
+- 项目负责人提供了 1440 × 2200 的竖版拼贴 `static_src/images/home/hero-specimen-tall-source.png`（RGBA、完全不透明）。更正：本步编码前没有按 AGENTS.md 重新完整阅读 `architecture.md` 与 `design_document.md`（最近一次是 V20 开始时），原记录“已完整阅读”不属实。
 
 ### 实施内容
 
@@ -2451,7 +2451,7 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 
 ### 前置条件检查
 
-- 项目负责人已确认 Phase 6 计划并授权开始 Step 46；已完整阅读 `architecture.md` 与 `design_document.md`，Provider 决定以 `tech_stack.md` 第十三、十五章为准。本步不涉及服务器、域名或真实邮箱。
+- 项目负责人已确认 Phase 6 计划并授权开始 Step 46；更正：本步编码前没有按 AGENTS.md 重新完整阅读 `architecture.md` 与 `design_document.md`（最近一次是 V20 开始时），原记录“已完整阅读”不属实。Provider 决定以 `tech_stack.md` 第十三、十五章为准。本步不涉及服务器、域名或真实邮箱。
 
 ### 实施内容
 
@@ -2464,9 +2464,9 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
   - `LOGGING`：单行纯文本日志输出到 stdout；只有 `django.request` 的 ERROR 会发错误邮件；`DisallowedHost` 只记日志、不发邮件；
   - 修复既有隐患：原先 `STORAGES["staticfiles"] = …` 会直接修改与 `base.py` 共享的字典，同一进程中只要导入过 Production settings，Test settings 也会变成 Manifest 静态存储。现改为建立新字典。
 - `config/settings/base.py`：新增 `optional_csv_env`；所有环境的 `DEFAULT_EXCEPTION_REPORTER_FILTER` 指向新的 `apps/core/error_reporting.py`。
-- `PrivateExceptionReporterFilter`：在 DEBUG 关闭时，错误报告只保留 traceback、路径与异常类型；所有 POST 值、所有 cookie（含 session 与 CSRF）、全部局部变量，以及名称含 EMAIL、DATABASE、ADMINS、SESSION、CSRF、COOKIE、KEY、SECRET、PASS、TOKEN 等的 settings 一律替换为占位符。DEBUG 开启时沿用 Django 默认行为，本地调试页不受影响。
+- `PrivateExceptionReporterFilter`（更正：下述效果不属实，该类已在 Step 47 中删除，见该节）：在 DEBUG 关闭时，错误报告只保留 traceback、路径与异常类型；所有 POST 值、所有 cookie（含 session 与 CSRF）、全部局部变量，以及名称含 EMAIL、DATABASE、ADMINS、SESSION、CSRF、COOKIE、KEY、SECRET、PASS、TOKEN 等的 settings 一律替换为占位符。DEBUG 开启时沿用 Django 默认行为，本地调试页不受影响。
 - `apps/core/checks.py`：deploy 检查 `core.W001`，`ADMINS` 为空时警告。因此 `check --deploy --fail-level WARNING` 会拦下没有设置错误邮件收件人的部署，而本地 `.env` 与普通测试不受影响。`scripts/verify_project.py` 为其中的 deploy check 注入占位收件人 `deploy-check@example.invalid`；`.env.example` 增加注释说明。
-- `/health/`（`core:health`）：只接受 GET，不缓存，执行 `SELECT 1`。数据库可用时返回 `{"status": "ok"}`，否则返回 503 `{"status": "unavailable"}`，日志只记一句不含异常原文的错误；不进入 sitemap。
+- `/health/`（路由名 `health`；原记录误写为 `core:health`）：只接受 GET，不缓存，执行 `SELECT 1`。数据库可用时返回 `{"status": "ok"}`，否则返回 503 `{"status": "unavailable"}`，日志只记一句不含异常原文的错误；不进入 sitemap。
 
 ### 测试
 
@@ -2490,4 +2490,115 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 ### 当前边界与下一步门槛
 
 - 项目负责人已批准 Step 46；`architecture.md` 已新增 3.70，更新页首进度、环境与 App 边界表和相关文件职责，并同步 3.52、3.69 中的照片同意说明。Step 47（Dockerfile、生产 Compose、Caddyfile）尚未开始。
-- 已知且接受的边界：错误邮件仍包含请求路径、登录用户的 Username、IP 与 User-Agent，便于排查；路径中可能出现一次性的密码重置链接 key，它在使用或过期后即失效。
+- 已知且接受的边界（更正：基于不完整的测试，已由 Step 47 的白名单摘要取代）：错误邮件仍包含请求路径、登录用户的 Username、IP 与 User-Agent，便于排查；路径中可能出现一次性的密码重置链接 key，它在使用或过期后即失效。
+
+## Phase 6 Step 47 — 开始前检查（暂停，等待项目负责人决定）
+
+- 已完整阅读 `architecture.md` 与 `design_document.md`。尚未修改任何代码，也未建立 Dockerfile、生产 Compose 或 Caddyfile。
+- Step 46（`370167d`，已推送、未部署）的更正：
+  - 错误邮件隐私缺陷：以合成异常直接调用 `AdminEmailHandler` 实测，异常消息、串联异常消息、查询参数、Referer 与密码重置 key 全部进入邮件。原记录“只保留 traceback、路径与异常类型”不属实；原测试使用固定异常文字，没有覆盖这些位置。
+  - 日志隐私缺陷：按 Production 日志格式实测，异常消息、串联异常消息与路径中的重置 key 会进入日志。
+  - 路由名记录错误：实际名称是 `health`，`core:health` 不存在（本文 Step 46 与 `architecture.md` 3.70）。
+  - “私有报告过滤器在所有环境生效”的测试实际只检查了 Production settings。
+- Step 47 需要处理：从 allauth 源码确认，未设置可信代理时客户端 IP 取 `REMOTE_ADDR`；经过 Caddy 后全部访客会共用按 IP 的限流额度（尚未做端到端复现）。
+- 文档矛盾，按 AGENTS.md 暂停并请项目负责人决定：
+  - Home 照片末尾行为：设计 7.4 与 V22 计划写“随内容离开”，实现与架构 3.69 为“固定且无位移，在 Footer 前裁切”；
+  - 报名关闭文字：设计第八章为 `Closed`，设计 7.5 与实现为 `Registration unavailable`；
+  - 注册确认密码 Label：设计 7.2 与架构 3.8 为 `Confirm password`，实现为 `Password (again)`；
+  - 资料表单 Label：设计 7.8、7.11 为 `Instagram Username`，实现为 `Instagram handle`；
+  - 停用账户：设计第八章要求“联系入口”，实现只有不含联系方式的说明；
+  - 重复邮箱：设计 6.1 要求明确提示，架构 3.8 与实现为防枚举的通用流程；
+  - 过期描述：设计 6.5.1 的 media 待定、架构 3.2 的 SMTP 待定、架构 2.1 缺少 gunicorn。
+
+### 项目负责人的决定（2026 年 11 月 23 日）
+
+- 按建议修复 Step 46 的缺陷并解决上列文档矛盾。
+- Avatar 只用随机文件名、由 Caddy 直接公开，不做鉴权；设计 11.2 相应放宽，接受旧链接在取消发布、隐藏或停用后仍可打开。普通社团网站不做过细的安全设计。
+- 镜像与构建依赖的下载尚未得到答复，因此本次没有拉取镜像、没有构建应用镜像。
+
+### 已实施
+
+- 先写 8 项失败测试复现问题，再修复：
+  - Production 日志与错误邮件改用同一白名单摘要（异常类型、文件与行号、路由名、状态码），删除原过滤器；同一错误每进程每小时最多一封；SMTP 超时 10 秒。
+  - `ALLAUTH_TRUSTED_PROXY_COUNT = 1`，按 Caddy 转发的客户端 IP 限流。
+  - 新 Avatar 在 model 保存时改为随机文件名，没有 migration；已有本地开发文件保持原名。
+  - Label 改为 `Confirm password` 与 `Instagram Username`。
+- 新增 `Dockerfile`、`.dockerignore`（白名单）、`compose.production.yaml`、`Caddyfile`、`config/gunicorn.conf.py`、`.env.production.example`（`.gitignore` 放行该示例）。
+  - 与计划的差异：除数据库、media、static 三个 volume 外，另有 Caddy 证书与配置两个 volume；一次性 `static` service 在每次部署时复制新静态文件；gunicorn 为 2 workers、每个 2 threads；端口只绑定 IPv4。
+- Tailwind 会把 `.dockerignore` 中的 `!static` 识别为 class，已用 `@source not` 排除该文件；生成的 CSS 与 HEAD 相同。
+- 按决定更正设计文档、`tech_stack.md`、`implementation.md` 与 `architecture.md` 的相应内容及 3.70。
+
+### 已验证（均未下载）
+
+- 完整 pytest `475 passed`，branch coverage 95%；Ruff、Django check、`makemigrations --check`、`static:check`、`git diff --check` 通过。
+- Compose 能解析，缺少必填变量时拒绝。
+- 以 `FROM scratch` 导出真实构建上下文：不含 `.env`、测试、Node 依赖、media、memory-bank 与照片源文件。
+- 在该上下文中以 Production settings 与一次性 PostgreSQL 18.6 容器（合成值，用后删除）执行 collectstatic、migrate、`check --deploy` 均通过；主要页面与 health 为 200，Draft Risk Notice 为 404，普通 HTTP 页面为 301；数据库日志不含违反约束的行值。
+- 在 Windows 上加载真实 gunicorn 配置与 Logger（补齐与日志无关的 POSIX 函数）：配置项均被识别，日志不含探针中的私有值。
+
+### 尚未验证，Step 47 未完成
+
+- 应用镜像构建、非 root 运行、镜像内容与体积。
+- gunicorn 在 Linux 中启动、容器 health check、1 GB 下的内存占用。
+- Caddyfile 的语法与实际行为：HTTPS、日志过滤、静态与 media、上传大小限制、转发 IP 下两个客户端分别限流。
+- `scripts/verify_project.py` 整体未运行（其中 `npm ci` 与浏览器准备会下载）；除这两项准备和 CSS watch smoke 外，各检查已单独运行。
+- 以上完成并经项目负责人批准后，再在 `architecture.md` 增加 Step 47 一节与文件职责。
+
+### 上线前待处理（已发现、未改）
+
+- 全新数据库的 Site 名称是 `example.com`，会出现在邮件标题中；已加入 Step 49 的管理员操作清单。
+- allauth 的登录限流不覆盖 Django Admin 登录页；最简做法是管理员使用长随机密码，在 Step 49 文档中说明。
+
+## 正式 Risk Notice 获批（2026 年 11 月 25 日，仅记录决定，未改代码）
+
+- 项目负责人告知：社团资料目录中的中英文 Risk Notice（`Armwrestling_Risk_Notice_EN/CN`，2026 年 11 月 24 日定稿）已获 USU 批准，可直接使用。
+- 已读取两份 PDF：均为活动现场纸质签字表，包含三段风险告知、`Event sign-off record`、以 “By signing below before taking part in this event” 开头的参与确认和签名栏；`Notice version` 为空白。
+- 项目负责人的决定：
+  - 网站只逐字展示三段风险告知；在线 `Confirm registration` 只记录已阅读的版本与时间，参与确认和签名仍在现场纸质完成，不改写获批措辞；
+  - 版本号 `2026-11-24`，纸质表填写相同版本号；
+  - 中文版只用于现场纸质签字，网站保持英文。
+- 已更新 `design_document.md`（4.6、Risk Notice 正式版本小节、待确认事项 1 与 6）与 `implementation.md`（Phase 6 展开条件、关键约束、Step 53）。
+- 网站正文后提示句 `You will also be asked to sign the participant acknowledgement on site before taking part.` 是新增措辞，待 Step 53 审批时确认。
+- 没有修改代码、设置或数据库；Production 报名仍关闭，直至 Step 53 实施并验收。Step 47 的状态不变。
+
+## Phase 6 Step 47 — 本机试装（2026 年 11 月 25 日）
+
+- 项目负责人回复“可以下载”。开始前已完整重读 `architecture.md` 与 `design_document.md`（设计文档含当天写入的正式 Risk Notice 决定）；与 Step 47 无矛盾。
+- 下载：`caddy:2.11.9-alpine`（按 digest）、`python:3.13.17-slim-trixie`（按 digest，构建时拉取）、uv 0.13.5 与 `uv.lock` 锁定的运行依赖。没有运行 `npm ci` 或 Playwright 安装。
+- 全程只用合成值，单独的 Compose 项目名 `nuldl-s47`，域名 `nuldl.internal`（Caddy 本地 CA 签发证书），主机端口改为 `127.0.0.1:18080/18443`，`EMAIL_HOST` 改为 `smtp.invalid`，不连接 Gmail；没有碰开发数据库、服务器、域名或邮箱。测试结束后已删除该项目的容器、网络、全部 volume 与测试镜像；拉取的基础镜像保留在本机供以后构建。
+- 本步没有修改代码或配置；本节以下结果取代上一节“尚未验证”中的对应项。
+
+### 已验证
+
+- 镜像：构建成功（磁盘占用约 329 MB，其中依赖 111 MB、收集后的静态文件 5.9 MB）；运行用户 `app`（uid 10001），PID 1 也是该用户；镜像内只有 `.venv`、`apps`、`config`、`templates`、`static`、`staticfiles`、`media`、`manage.py`，没有 `.env`、测试或开发依赖（无 pytest）；`staticfiles.json` manifest 存在；镜像历史中只有构建用的占位值；gunicorn 26.2.0、Django 5.2.18。
+- 启动：`up` 后 db、web 均为 healthy；一次性 `static` 在 `pull_policy: never` 下运行并以 0 退出；Caddy 在其完成后启动。容器内 `migrate` 与 `check --deploy --fail-level WARNING` 通过。
+- 经 Caddy 的 HTTPS：Home、About、Events、Members、Log in、Sign up、Admin login、sitemap、`/health/` 均 200；`/risk-notice/` 404；HTTP 308 到 HTTPS；未知域名不提供证书。页面带 HSTS、`nosniff`、`X-Frame-Options: DENY`、COOP、Referrer-Policy，并以 zstd 压缩。
+- 静态文件：带 hash 的 CSS 返回一年 `immutable` 缓存、`nosniff` 与压缩；不带 hash 的文件不加长缓存；不存在的文件 404。
+- Avatar：写入 media volume 的文件由 Caddy 直接提供（正确 Content-Type 与 `nosniff`），目录不可列出；`down` 后再 `up`，文件、数据库与 Caddy 证书都保留。
+- 上传上限：11 MB 请求体返回 413。
+- 按客户端 IP 限流：两个同时运行、IP 不同的客户端容器经 Caddy 提交失败登录，A 在第 31 次起收到 429，B 同时段的 3 次都正常；`ALLAUTH_TRUSTED_PROXY_COUNT = 1` 按预期取到真实客户端 IP。（第一次试验 B 也被限流，原因是两个客户端先后运行、B 复用了 A 释放的 IP；改为同时运行后确认是测试方法问题。）
+- SMTP 不可达：为不存在的邮箱申请密码重置时，访问者看到通用 500 页面，没有 traceback；日志只有异常类型与文件行号。
+- 日志：web、db、Caddy 全部日志中，探针用的邮箱、查询参数、用户名、密码、客户端 IP、数据库密码与 Secret 出现 0 次；Caddy 日志没有请求内容；数据库日志没有 ERROR 行。
+- 内存（60 次页面请求后）：web 约 115 MiB / 400、db 约 21–43 MiB / 256、Caddy 约 19 MiB / 128，合计不到 200 MiB，1 GB VPS 足够。
+- 仓库检查：Ruff lint 与 format、Django check、`makemigrations --check`、`static:check` 通过。代码自上次完整 pytest（`475 passed`，branch coverage 95%）后未改动，本次没有重跑。
+
+### 仍未验证
+
+- 真实公网证书签发（Let's Encrypt）与续期、真实 Gmail 发信，以及错误邮件发送失败时那一条警告日志在容器内的实际输出（目前只有单元测试覆盖）：留到 Step 51–52。
+- `scripts/verify_project.py` 整体运行（需要 `npm ci` 与 Playwright 下载，本次未申请）。
+
+### 上线前需要项目负责人知道或决定的事（已发现、未改）
+
+- 全新数据库的 Site 名称是 `example.com`，会出现在邮件标题中；Admin 登录页不受 allauth 限流（管理员用长随机密码）。均已列入 Step 49 文档。
+- HSTS 目前带 `includeSubDomains; preload`：浏览器会记住一年只用 HTTPS 访问该域名及其所有子域名，`preload` 一旦提交到浏览器列表很难撤回。若以后子域名可能用于别的服务，建议去掉 `preload`，在 Step 52 前决定。
+- allauth 的限流计数存在每个 gunicorn 进程自己的内存里：重启后清零，两个进程理论上最多各算一份。对几十人的社团可接受，不打算改。
+- 页面 `og:url` 会把访问者当前网址（含查询参数）原样写回给访问者本人；这是 Phase 2 起的行为，不进日志或邮件，不打算改。
+- 响应带 `Server: gunicorn`，只暴露软件名，不打算改。
+- 设计 7.5 写首场 Training Session 为悉尼时间 3:00–7:00 pm，开发数据库中的活动是 3:00–6:00 pm；正式录入活动时以项目负责人确认的时间为准。
+- Edit Profile 的字段 Label 显示 `Other social url`，设计写作 `Other social URL`，属于小的文案差异，待项目负责人决定是否改。
+- `architecture.md` 第五章末尾关于 `implementation.md` 未提交修改的说明已过时，随 Step 47 的 architecture 更新一并删除。
+
+### 项目负责人批准（2026 年 11 月 25 日）
+
+- 项目负责人批准 Step 47。`architecture.md` 已更新：页首日期、进度与状态；3.2 Production 行补充按转发 IP 限流与白名单错误邮件；3.28 补充随机 Avatar 文件名；3.70 的测试数量改为“本步 13 项，Step 47 后 16 项”；新增 3.71（生产镜像、Compose 与 Caddy）；文件职责表新增 `Dockerfile`、`.dockerignore`、`compose.production.yaml`、`Caddyfile`、`.env.production.example`、`config/gunicorn.conf.py`，并更新 `.gitignore`、`production.py`、members models/forms 与相关测试行；删除第五章末尾已过时的 `implementation.md` 说明。
+- 尚未提交或推送。HSTS `preload` 的去留仍待 Step 52 前决定。下一步是 Step 48。
