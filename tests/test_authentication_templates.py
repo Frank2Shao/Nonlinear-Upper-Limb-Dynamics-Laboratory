@@ -220,7 +220,7 @@ def test_login_keeps_one_password_reset_link_and_moves_alternatives_below(client
         ("account_login", "id_login", "Username"),
         ("account_login", "id_password", "Password"),
         ("account_signup", "id_email", "Email"),
-        ("account_signup", "id_password2", "Password (again)"),
+        ("account_signup", "id_password2", "Confirm password"),
         ("account_reset_password", "id_email", "Email"),
     ],
 )

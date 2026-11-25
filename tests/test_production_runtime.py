@@ -2,15 +2,18 @@
 
 import importlib
 import json
+import logging
 import os
 import subprocess
 import sys
 
 import pytest
+from allauth.core.internal.httpkit import get_client_ip
 from django.core import mail
 from django.db import OperationalError
-from django.test import Client, override_settings
+from django.test import Client, RequestFactory, override_settings
 from django.urls import reverse
+from django.utils.module_loading import import_string
 
 from apps.core.checks import server_error_recipients
 from tests.factories import create_user
@@ -80,12 +83,6 @@ def test_production_logging_is_valid_and_only_emails_request_errors():
     assert "mail_admins" not in loggers["django.security.DisallowedHost"]["handlers"]
 
 
-def test_error_reports_use_the_private_filter_everywhere():
-    assert PRODUCTION.DEFAULT_EXCEPTION_REPORTER_FILTER == (
-        "apps.core.error_reporting.PrivateExceptionReporterFilter"
-    )
-
-
 @pytest.mark.parametrize(
     ("admins", "expected_ids"),
     ((["admin@example.invalid"], []), ([], ["core.W001"])),
@@ -146,43 +143,106 @@ def test_health_answers_plain_http_while_pages_redirect_to_https(client):
         assert forwarded.status_code == 200
 
 
-@pytest.mark.django_db
-@override_settings(
-    ROOT_URLCONF="tests.error_urls",
-    ADMINS=[("Admin", "admin@example.invalid")],
-)
-def test_server_error_email_keeps_the_traceback_and_redacts_member_data():
+def production_formatter() -> logging.Formatter:
+    config = dict(PRODUCTION.LOGGING["formatters"]["plain"])
+    factory = config.pop("()", None)
+    return import_string(factory)() if factory else logging.Formatter(config["format"])
+
+
+def production_email_handler() -> logging.Handler:
+    return import_string(PRODUCTION.LOGGING["handlers"]["mail_admins"]["class"])()
+
+
+@pytest.fixture
+def failed_request_record(db, caplog):
+    """The real django.request record of a failure full of member data."""
     member = create_user(
-        "error-email-member",
+        "private-username",
         email="private-member@example.test",
         verified=True,
     )
-    client = Client(raise_request_exception=False)
-    client.force_login(member)
-    session_key = client.session.session_key
+    with override_settings(ROOT_URLCONF="tests.error_urls", ADMINS=[]):
+        client = Client(raise_request_exception=False)
+        client.force_login(member)
+        response = client.post(
+            "/test-error/private/RESET-KEY/?email=QUERY-PRIVATE@example.test",
+            {"code": "482913", "password": "Private-password-2026"},
+            headers={"Referer": "http://testserver/?x=REFERER-PRIVATE"},
+            REMOTE_ADDR="203.0.113.9",
+        )
+        assert response.status_code == 500
+    mail.outbox.clear()
+    return next(record for record in caplog.records if record.name == "django.request")
 
-    response = client.post(
-        "/test-error/500/",
-        {
-            "email": "private-member@example.test",
-            "code": "482913",
-            "password": "Private-password-2026",
-            "usu_id": "001234567",
-        },
-    )
 
-    assert response.status_code == 500
-    assert len(mail.outbox) == 1
+PRIVATE_VALUES = (
+    "RESET-KEY",
+    "QUERY-PRIVATE",
+    "REFERER-PRIVATE",
+    "MESSAGE-PRIVATE",
+    "CHAINED-PRIVATE",
+    "private-member@example.test",
+    "private-username",
+    "482913",
+    "Private-password-2026",
+    "203.0.113.9",
+)
+
+
+@override_settings(ADMINS=[("Admin", "admin@example.invalid")])
+def test_error_email_has_only_types_locations_route_and_status(failed_request_record):
+    production_email_handler().handle(failed_request_record)
+
     report = mail.outbox[0]
     text = report.subject + report.body
     assert report.to == ["admin@example.invalid"]
+    for useful in ("RuntimeError", "ValueError", "error_urls.py:", "status=500"):
+        assert useful in text
+    assert "route=test_private_failure" in text
+    assert [value for value in PRIVATE_VALUES if value in text] == []
+
+
+def test_error_log_has_only_types_locations_route_and_status(failed_request_record):
+    text = production_formatter().format(failed_request_record)
+
     assert "RuntimeError" in text
-    assert "/test-error/500/" in text
-    for private in (
-        "private-member@example.test",
-        "482913",
-        "Private-password-2026",
-        "001234567",
-        session_key,
+    assert "route=test_private_failure" in text
+    assert [value for value in PRIVATE_VALUES if value in text] == []
+
+
+@override_settings(ADMINS=[("Admin", "admin@example.invalid")])
+def test_repeated_error_is_emailed_once_an_hour(failed_request_record):
+    handler = production_email_handler()
+
+    handler.handle(failed_request_record)
+    handler.handle(failed_request_record)
+
+    assert len(mail.outbox) == 1
+
+
+def test_production_logging_never_prints_library_messages_or_arguments():
+    result = run_production(
+        "import logging.config, config.settings.production as s;"
+        " logging.config.dictConfig(s.LOGGING);"
+        " logging.getLogger('django.request').warning('Not Found: %s', '/RESET-KEY');"
+        " logging.getLogger('gunicorn.error').warning('Invalid PREFORMATTED');"
+        " logging.getLogger('apps.example').error('Safe fixed text %s', 'ARG-PRIVATE')"
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Safe fixed text" in result.stderr
+    for private in ("RESET-KEY", "PREFORMATTED", "ARG-PRIVATE"):
+        assert private not in result.stderr
+
+
+def test_rate_limits_use_the_client_ip_that_caddy_forwards():
+    request = RequestFactory().get(
+        "/", REMOTE_ADDR="172.18.0.4", HTTP_X_FORWARDED_FOR="203.0.113.9"
+    )
+
+    with override_settings(
+        ALLAUTH_TRUSTED_PROXY_COUNT=getattr(
+            PRODUCTION, "ALLAUTH_TRUSTED_PROXY_COUNT", 0
+        )
     ):
-        assert private not in text
+        assert get_client_ip(request) == "203.0.113.9"

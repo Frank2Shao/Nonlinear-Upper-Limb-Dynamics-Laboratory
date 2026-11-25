@@ -25,6 +25,9 @@ class MemberProfileForm(forms.ModelForm):
             "other_social_url",
         )
         widgets: ClassVar[dict[str, forms.Widget]] = {"avatar": forms.FileInput()}
+        labels: ClassVar[dict[str, str]] = {
+            "instagram_handle": "Instagram Username",
+        }
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

@@ -1,3 +1,4 @@
+import uuid
 from pathlib import PurePath
 from typing import ClassVar
 
@@ -230,7 +231,14 @@ class MemberProfile(models.Model):
     def save(self, *args, **kwargs) -> None:
         self._normalize_optional_fields()
         self.full_clean()
+        self._randomize_new_avatar_name()
         super().save(*args, **kwargs)
+
+    def _randomize_new_avatar_name(self) -> None:
+        """Avatars are served publicly, so their URLs must not be guessable."""
+        if self.avatar and not self.avatar._committed:
+            extension = PurePath(self.avatar.name).suffix.lower()
+            self.avatar.name = f"{uuid.uuid4().hex}{extension}"
 
     def _normalize_optional_fields(self) -> None:
         self.display_name = self._optional_text(self.display_name)

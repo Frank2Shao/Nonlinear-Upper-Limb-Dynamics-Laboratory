@@ -259,3 +259,12 @@ def test_profile_edit_groups_fields_into_three_numbered_sections(client):
     assert 'class="avatar-editor"' in content
     assert 'name="remove_avatar"' not in content
     assert content.index('name="other_social_url"') < content.index("Save changes")
+
+
+def test_profile_edit_calls_the_instagram_field_instagram_username(client):
+    member, _profile = create_member(username="instagram-label")
+    client.force_login(member)
+
+    content = client.get(reverse("members:profile_edit")).content.decode()
+
+    assert '<label for="id_instagram_handle">Instagram Username</label>' in content

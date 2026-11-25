@@ -1,3 +1,4 @@
+import re
 from io import BytesIO
 from pathlib import Path
 
@@ -309,3 +310,23 @@ def test_development_media_patterns_serve_local_files(settings, tmp_path):
 def test_production_urlconf_does_not_add_development_media_patterns():
     with override_settings(DEBUG=False, MEDIA_URL="/media/"):
         assert development_media_urlpatterns() == []
+
+
+@pytest.mark.django_db
+def test_avatar_is_stored_under_a_random_name(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    names = []
+    for username in ("random-name-one", "random-name-two"):
+        _member, profile = create_member_with_avatar(
+            username=username,
+            avatar=image_upload(filename="Casey_Nguyen.png"),
+        )
+        names.append(profile.avatar.name)
+        assert re.fullmatch(r"member_avatars/[0-9a-f]{32}\.png", profile.avatar.name)
+        assert Path(tmp_path, profile.avatar.name).exists()
+
+        profile.bio = "Saving again keeps the stored file."
+        profile.save()
+        assert profile.avatar.name == names[-1]
+
+    assert names[0] != names[1]

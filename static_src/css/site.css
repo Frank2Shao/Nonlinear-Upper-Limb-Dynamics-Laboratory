@@ -2,6 +2,8 @@
 
 @source "../../templates/**/*.html";
 @source "../../apps/**/*.html";
+/* Not markup: its negated paths would be read as important utilities. */
+@source not "../../.dockerignore";
 
 @font-face {
   font-family: "Inter";

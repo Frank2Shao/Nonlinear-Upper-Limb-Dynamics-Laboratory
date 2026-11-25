@@ -1,0 +1,14 @@
+# Allow list: only what the production image needs.
+*
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!manage.py
+!apps
+!config
+!templates
+!static
+**/__pycache__
+**/*.py[cod]
+**/.env
+**/.env.*

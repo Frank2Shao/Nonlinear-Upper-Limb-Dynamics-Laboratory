@@ -121,6 +121,8 @@ class RequestLoginCodeForm(AllauthRequestLoginCodeForm):
 class SignupForm(UsuIdentityFields, AllauthSignupForm):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.fields["password2"].label = "Confirm password"
+        self.fields["password2"].widget.attrs["placeholder"] = "Confirm password"
         self.order_fields(
             (
                 "username",

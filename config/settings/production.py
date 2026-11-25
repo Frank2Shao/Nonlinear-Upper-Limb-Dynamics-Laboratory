@@ -28,6 +28,7 @@ EMAIL_HOST_USER = required_env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = required_env("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = required_bool_env("EMAIL_USE_TLS")
 DEFAULT_FROM_EMAIL = required_env("DEFAULT_FROM_EMAIL")
+EMAIL_TIMEOUT = 10
 # Gmail only sends as the account itself, so error emails use the same address.
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 # Recipients of server error emails. `check --deploy` warns while it is empty
@@ -42,6 +43,8 @@ SECURE_SSL_REDIRECT = True
 # Caddy terminates HTTPS and sets X-Forwarded-Proto; gunicorn is reachable only
 # from Caddy, so the header cannot be forged by clients.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Caddy replaces X-Forwarded-For, so its single address is the real client.
+ALLAUTH_TRUSTED_PROXY_COUNT = 1
 # The container health check calls this over plain HTTP from inside the server.
 SECURE_REDIRECT_EXEMPT = [r"^health/$"]
 SESSION_COOKIE_SECURE = True
@@ -52,9 +55,9 @@ SECURE_HSTS_PRELOAD = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-# Plain one-line logs on stdout (Docker keeps and rotates them). Server errors
-# are also emailed to ADMINS with the private report filter. Requests with a
-# disallowed Host are logged but never emailed.
+# Logs and error emails share one allow-listed summary (see
+# apps/core/error_reporting.py). Requests with a disallowed Host are logged
+# but never emailed.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -62,12 +65,12 @@ LOGGING = {
         "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
     },
     "formatters": {
-        "plain": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+        "plain": {"()": "apps.core.error_reporting.SafeFormatter"},
     },
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "plain"},
         "mail_admins": {
-            "class": "django.utils.log.AdminEmailHandler",
+            "class": "apps.core.error_reporting.SafeAdminEmailHandler",
             "level": "ERROR",
             "filters": ["require_debug_false"],
         },
