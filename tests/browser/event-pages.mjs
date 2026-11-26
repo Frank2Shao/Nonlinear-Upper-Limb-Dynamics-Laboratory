@@ -39,6 +39,7 @@ try {
       "View all events must sit in the section heading, clearly above the Event cards.",
     );
     await viewAllEvents.click();
+    await page.waitForURL((url) => url.pathname === "/events/");
     await assertPageStructure(page, `Events list ${JSON.stringify(options)}`);
     await assertNoHorizontalOverflow(page, `Events list ${JSON.stringify(options)}`);
     await assertVisibleContentFits(page, `Events list ${JSON.stringify(options)}`, VISIBLE_CONTENT);

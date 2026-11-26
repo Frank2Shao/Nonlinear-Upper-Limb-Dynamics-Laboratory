@@ -50,7 +50,16 @@ export async function addSessionCookie(
   await context.addCookies([{ name, value, url: baseUrl }]);
 }
 
+// Layout checks measure the rendered page. After a click navigation the new
+// document's DOM can be ready before its stylesheet on a slow machine (CI), so
+// wait for the load event first. `scope` is a page or a locator within one.
+async function waitForStyles(scope) {
+  const page = typeof scope.page === "function" ? scope.page() : scope;
+  await page.waitForLoadState("load");
+}
+
 export async function assertNoHorizontalOverflow(page, label) {
+  await waitForStyles(page);
   const dimensions = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth,
@@ -68,6 +77,7 @@ export async function assertPageBounds(page, label) {
 }
 
 export async function assertPageStructure(page, label) {
+  await waitForStyles(page);
   const structure = await page.evaluate(() => ({
     footer: document.querySelectorAll("body > footer").length,
     h1: [...document.querySelectorAll("h1")].filter((element) =>
@@ -90,6 +100,7 @@ export async function assertVisibleContentFits(
   label,
   { selector, rejectEmptyBoxes = false },
 ) {
+  await waitForStyles(page);
   const clipped = await page.locator(selector).evaluateAll(
     (elements, rejectEmpty) =>
       elements
@@ -116,6 +127,7 @@ export async function assertVisibleContentFits(
 export const INTERACTIVE_TARGETS = "a:not(.skip-link), button, summary, input, select, textarea";
 
 export async function assertTouchTargets(page, label, selector = INTERACTIVE_TARGETS) {
+  await waitForStyles(page);
   const undersized = await page.locator(selector).evaluateAll((elements) =>
     elements
       .filter((element) => element.checkVisibility())

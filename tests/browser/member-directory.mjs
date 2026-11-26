@@ -147,6 +147,7 @@ try {
   await desktopPage.getByText("Public bio for Alpha Member.").waitFor();
   await desktopPage.getByRole("link", { name: "Back to members" }).waitFor();
   await desktopPage.getByRole("heading", { level: 2, name: "Bio" }).waitFor();
+  await desktopPage.waitForLoadState("load");
   const desktopPanel = await panelLayout(desktopPage);
   assert.ok(
     desktopPanel.mediaRight <= desktopPanel.identityLeft,
@@ -179,6 +180,7 @@ try {
   await assertDirectory(mobilePage, "Mobile");
   await mobilePage.goto(`${baseUrl}/members/browser-bravo/`);
   await mobilePage.getByRole("heading", { level: 1, name: "Bravo Member" }).waitFor();
+  await mobilePage.waitForLoadState("load");
   const mobilePanel = await panelLayout(mobilePage);
   assert.ok(
     mobilePanel.mediaBottom <= mobilePanel.identityTop,
