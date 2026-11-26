@@ -2818,3 +2818,24 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
   - 新增 3.74（GitHub Actions CI）；
   - 文件职责表新增 `.github/workflows/ci.yml`，并更新 `docs/operations.md` 与 `README.md` 行。
 - CI 尚未在 GitHub 上实际运行；尚未提交或推送。
+
+### CI 首次运行与修复（2026 年 11 月 27 日）
+
+- **首次运行：** 推送 `7f676cd` 后自动运行（run 45839369039）。
+  - `Production image builds` 通过；
+  - `Quality gate` 失败：`475` 个测试中 `3 failed, 472 passed`，静态资源、Ruff、migration 与 Django 检查都已通过。
+- **读取日志：** GitHub 只向登录用户提供日志。项目负责人在内置浏览器中登录后，我从页面读取了完整日志，没有输入或接触任何凭据。
+- **失败的三处：**
+  - Events 列表：状态标签宽 1424 px；
+  - 无 JavaScript 报名确认页：Header 品牌链接高 17 px；
+  - Member detail：头像位于身份信息上方，距左边 8 px。
+  - 三处都是“页面没有样式”的尺寸：1424 = 1440 − 2 × 8 px 浏览器默认边距。共同点是都在点击链接跳转后立即测量布局。CI 机器较慢，新页面的 DOM 已经就绪而 CSS 尚未加载完，测量到的是无样式页面。这是测试的时序问题，网站代码没有问题。
+- **本机复现：** 临时让测试浏览器把每个 CSS 请求延迟 1.5 秒，三个测试以完全相同的数值失败，确认了原因。
+- **修复（只改测试辅助代码）：**
+  - `tests/browser/browser-support.mjs`：新增 `waitForStyles`，`assertNoHorizontalOverflow`、`assertPageStructure`、`assertVisibleContentFits`、`assertTouchTargets` 先等待页面 `load` 事件；传入的若是页面中的一块区域（locator），就等待它所在的页面；
+  - `tests/browser/event-pages.mjs`：点击 `View all events` 后等待 URL 变为 `/events/`，再测量，避免量到旧页面上的同名卡片；
+  - `tests/browser/member-directory.mjs`：测量详情面板前等待 `load`。
+- **验证：**
+  - 仍在 CSS 延迟 1.5 秒的条件下，三个测试通过，全部 17 个浏览器测试也都通过；
+  - 随后删除临时延迟代码（已确认没有残留），完整 pytest `475 passed`，Ruff 与 `git diff --check` 通过。
+- **尚未完成：** 修复尚未提交与推送；推送后需要再看一次 CI 结果，才能确认 Step 50 在 GitHub 上通过。
