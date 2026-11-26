@@ -3,7 +3,9 @@
 # The project name keeps it apart from the development compose.yaml.
 name: nuldl-production
 
-x-app-image: &app-image nuldl-website:${IMAGE_TAG:-local}
+# scripts/deploy.sh builds nuldl-website:<release tag> and also tags the deployed
+# one as "current", so backups, restores and restarts use the live release.
+x-app-image: &app-image nuldl-website:${IMAGE_TAG:-current}
 
 # Each service keeps at most 3 log files of 10 MB; the oldest is discarded.
 x-logging: &logging

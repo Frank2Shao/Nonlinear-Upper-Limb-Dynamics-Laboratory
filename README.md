@@ -151,7 +151,7 @@ Use synthetic accounts and temporary media only. Remove the synthetic records an
 7. Repeat the main profile and Members paths at desktop and mobile widths using keyboard navigation. Confirm visible focus, associated errors, no horizontal scrolling, and working forms with JavaScript disabled.
 8. Confirm public responses contain no Email, USYD declaration, USU ID, review metadata, Executive role, unpublished content, or age/guardian information.
 
-Production media storage remains unresolved and will be selected during Phase 6. Development uses local media; tests and acceptance use isolated temporary media.
+Development uses local media; tests and acceptance use isolated temporary media. Production keeps avatars in a Docker volume on the server, served by Caddy.
 
 ## Manual Phase 4 review
 
@@ -170,12 +170,19 @@ Use synthetic accounts, a synthetic Event, a synthetic digits-only USU ID, and a
 
 Production registration remains disabled until the final Risk Notice is approved. Phase 4 Development and test data must remain explicitly synthetic.
 
+## Production
+
+Production runs on one VPS with Docker Compose (`compose.production.yaml`): PostgreSQL, gunicorn and Caddy with automatic HTTPS. Releases are Git tags deployed with `scripts/deploy.sh <tag>`; `scripts/backup.sh` runs daily and `scripts/restore.sh` restores a backup.
+
+- [docs/server-setup.md](docs/server-setup.md): one-time server preparation.
+- [docs/operations.md](docs/operations.md): deploying, rolling back, the first admin account, settings, logs, backups and restores.
+
 ## Security and data boundaries
 
 - Never commit `.env`, credentials, verification or login codes, database dumps, real member data, or user uploads.
 - Tests and examples use synthetic identities. Phase 1 tests block external network access after dependency and browser installation.
 - Email, USU ID, review metadata, unpublished profiles, passwords, codes, and session tokens are private data.
-- Production requires independent secrets, hosted PostgreSQL, SMTP, persistent media storage, HTTPS, monitoring, and the remaining provider decisions documented in `memory-bank/`. Production media storage remains unresolved.
+- Production secrets live only in `.env.production` on the server (permission 600), never in the repository, the image, logs or chat.
 - University branding remains excluded until written approval is recorded.
 
 ## Project structure
