@@ -144,8 +144,26 @@ scripts/backup.sh                    # take one now
 If the last line of `backup.log` is older than a day or says `FAILED`, check
 that the stack is running (`dc ps`) and that the disk is not full (`df -h`).
 
-The backups are on the same server as the site, so they do not protect against
-losing the server itself.
+These backups are on the same server as the site. To survive losing the server,
+download a copy every week (next section).
+
+## Download a backup copy (weekly)
+
+On your own computer (PowerShell, macOS or Linux terminal), list the backups and
+copy the newest one:
+
+```bash
+ssh nuldl@<server> ls /var/backups/nuldl
+scp -r nuldl@<server>:/var/backups/nuldl/nuldl-20261207T160000Z <local backup folder>
+```
+
+- Keep only the newest 4 copies and delete older ones, so deleted member data
+  disappears from every copy within about a month.
+- The copies hold real member data. Keep them only on a device with disk
+  encryption turned on (BitLocker or FileVault). Do not put them in shared cloud
+  folders or send them to anyone.
+- To use a copy after losing the server, set up a new server, copy the folder
+  into `/var/backups/nuldl/` and follow **Restore a backup**.
 
 ## Restore a backup
 
@@ -165,6 +183,34 @@ longer needed:
 ```bash
 rm -rf /var/backups/nuldl/pre-restore-20261201T161500Z
 ```
+
+## Delete a member's account
+
+When a member asks through the club's usual channels to have their account
+deleted, confirm the request comes from them, then run (replace `USERNAME`):
+
+```bash
+dc exec web python manage.py shell -c "
+from django.contrib.auth import get_user_model
+user = get_user_model().objects.get(username='USERNAME')
+profile = getattr(user, 'member_profile', None)
+if profile and profile.avatar:
+    profile.avatar.delete(save=False)
+print(user.delete())
+"
+```
+
+This removes the account, its email addresses, profile, USYD/USU details and
+event registrations, and the avatar file. It cannot be undone.
+
+- Do not delete accounts from Django Admin: that leaves the avatar file in place,
+  and anyone who has its link can still open it.
+- The signed paper acknowledgement from each session is the record of
+  participation; deleting the online registrations does not affect it.
+- The data stays in older backups until they rotate out: 7 days on the server,
+  about a month in downloaded copies.
+- To stop someone from signing in without deleting their data, untick
+  **Active** on their account in Django Admin instead.
 
 ## Disk space
 

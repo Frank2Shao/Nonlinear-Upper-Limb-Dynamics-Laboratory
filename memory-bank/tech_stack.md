@@ -3,7 +3,7 @@
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
 **文档职责：** 定义技术选型、架构边界、环境、安全和运维方案  
 **文档状态：** Baseline  
-**最后更新：** 2026 年 11 月 23 日
+**最后更新：** 2026 年 11 月 27 日
 
 ## 一、文档边界
 
@@ -135,7 +135,7 @@ Django 同时负责 HTML 页面、账户、业务逻辑、数据库访问和后�
 | Preview | 私有验收 | 测试 SMTP | 独立 PostgreSQL | `False` |
 | Production | 正式公开 | 社团 Gmail SMTP | 同一 VPS 上 Docker 运行的 PostgreSQL | `False` |
 
-Preview 环境不得被搜索引擎索引，不应显示未经确认的正式声明。首期是否单独部署 Preview 环境见第十五章开放决策。
+Preview 环境不得被搜索引擎索引，不应显示未经确认的正式声明。项目负责人 2026 年 11 月 27 日决定首期不单独部署 Preview 环境，上线前在本机用与 Production 相同的 Docker Compose 演练；`config.settings.preview` 保留备用。
 
 ### 6.2 Settings 划分
 
@@ -243,7 +243,7 @@ DJANGO_CSRF_TRUSTED_ORIGINS
 - `Ruff` 用于 lint 和格式化；
 - Django system checks 用于配置检查；
 - 浏览器端测试工具在 Phase 1 建立前确定并锁定，默认优先 Playwright；
-- CI Provider 尚未确定，但所有检查必须可以通过单一脚本在本地执行。
+- CI 使用 GitHub Actions（项目负责人 2026 年 11 月 27 日决定），运行与本地相同的单一门禁脚本；所有检查仍必须可以在本地执行。
 
 覆盖率只作为风险提示，不能替代关键业务流程测试。账户、权限、报名和 Risk Notice 规则必须有明确行为断言。
 
@@ -271,9 +271,9 @@ DJANGO_CSRF_TRUSTED_ORIGINS
 ### 12.3 备份
 
 - 每天自动执行一次 PostgreSQL 逻辑备份（`pg_dump`）与 Avatar media 打包，保留最近 7 份（项目负责人 2026 年 11 月 22 日决定采用最短保留期；保留 7 份而不是 1 份，是为了在数据问题隔天才被发现时仍有完好的副本）；
-- 是否另存一份到 VPS 以外的位置见第十五章开放决策；
+- 服务器以外的副本：管理员每周把最新一份备份下载到开启磁盘加密的个人设备，只保留最近 4 份，不放进共享网盘（项目负责人 2026 年 11 月 27 日决定，零成本；服务器整机丢失时最多丢失约一周的数据）；
 - 上线前执行一次恢复演练；
-- 会员数据本身的保留和删除规则仍需等待正式数据保留决定。
+- 会员数据的保留与删除规则见 `design_document.md` 4.1；已删除的数据随备份轮换，最迟约一个月后从所有副本中消失。
 
 ## 十三、部署拓扑
 
@@ -324,15 +324,17 @@ gunicorn → Django（Production settings，2 workers）
 
 已于 2026 年 11 月 22 日决定：Production hosting（BinaryLane 悉尼入门 VPS + Docker Compose）、SMTP（社团 Gmail）、Media storage（VPS 磁盘 volume）、Error monitoring（不使用第三方，改用 Django 错误邮件与服务器日志）、WSGI server 与启动方式（gunicorn + Caddy）、备份保留期（7 天）。
 
-仍待决定：
+项目负责人 2026 年 11 月 27 日按“最经济”的原则决定其余事项：
 
-1. CI Provider（建议 GitHub Actions 运行现有 `scripts/verify_project.py`）；
-2. 备份是否另存一份到 VPS 以外（例如 BinaryLane 付费备份，或管理员定期下载）；
-3. 是否单独部署 Preview 环境（建议不单独购买服务器，上线前在本地用与 Production 相同的 Docker Compose 演练）；
-4. 域名 `nuldl.com` 的注册商与 DNS 管理（尚未注册；建议 Cloudflare）；
-5. 正式数据保留和删除规则。
+1. CI：GitHub Actions 运行现有 `scripts/verify_project.py` 与镜像构建，在免费额度内使用；
+2. 服务器以外的备份：管理员每周手动下载（见 12.3 与 `docs/operations.md`），不购买付费备份；
+3. Preview：不单独部署，上线前在本机用 Production Compose 演练；
+4. 域名：`nuldl.com`，经 Cloudflare Registrar 按成本价注册（约 11 美元一年，续费同价），DNS 由 Cloudflare 免费管理：
+   - A 记录设为 DNS only，不经 Cloudflare 代理，否则服务器只能看到 Cloudflare 的地址，按 IP 限流失效；不添加 AAAA 记录；
+   - 在社团网站获得 USU 书面批准、可以使用社团经费后由项目负责人购买；此前只阻塞 Step 52；
+5. 数据保留与删除：不建立自动化流程，按 `design_document.md` 4.1 由管理员手动处理。
 
-这些决定在对应阶段开始前完成 ADR 或更新本文档，不在代码中隐式确定。
+以后的新决定在对应阶段开始前更新本文档，不在代码中隐式确定。
 
 ## 十六、官方参考资料
 

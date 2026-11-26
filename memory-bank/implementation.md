@@ -4,7 +4,7 @@
 **文档职责：** 为 AI 开发者提供可验证、可逐步执行的开发指令  
 **实施根目录：** `../`  
 **文档状态：** Progressive  
-**最后更新：** 2026 年 11 月 20 日
+**最后更新：** 2026 年 11 月 27 日
 
 ## 一、输入与优先级
 
@@ -578,7 +578,7 @@ AI 开发者一次只执行一个步骤。每一步必须：
 
 ## 十、Phase 6：上线与运维
 
-**展开条件：** Phase 1–4 已验收，Visual Refresh 已结束；托管方式、SMTP、media storage、错误通知方式与备份保留期已在 `tech_stack.md` 第十三、十五章确认（2026 年 11 月 22 日）。CI、机外备份副本、Preview 环境与域名注册仍待项目负责人决定，正式 Risk Notice 已于 2026 年 11 月 25 日确认获 USU 批准（实施见 Step 53）；这些只阻塞对应步骤。
+**展开条件：** Phase 1–4 已验收，Visual Refresh 已结束；托管方式、SMTP、media storage、错误通知方式与备份保留期已在 `tech_stack.md` 第十三、十五章确认（2026 年 11 月 22 日）。CI、机外备份副本、Preview 环境、域名与数据保留已于 2026 年 11 月 27 日决定（`tech_stack.md` 第十五章）；域名在社团网站获得 USU 书面批准、可以使用社团经费后购买，只阻塞 Step 52。正式 Risk Notice 已于 2026 年 11 月 25 日确认获 USU 批准（实施见 Step 53）。
 
 **范围：** 生产运行时、容器镜像与 Docker Compose、Caddy HTTPS、health check、服务器错误邮件、日志、每日备份与恢复、部署与回滚、服务器初始化、生产演练、首次部署与上线验收。
 
@@ -592,9 +592,9 @@ AI 开发者一次只执行一个步骤。每一步必须：
 | 47 | 容器镜像与 Compose。`Dockerfile`（Python 3.13 slim、`uv sync --frozen --no-dev`、非 root 用户、构建时 `collectstatic`）、`compose.production.yaml`（PostgreSQL 18、web、Caddy，三个具名 volume：数据库、media、静态文件；适合 1 GB 内存的资源设置）、`Caddyfile`（自动 HTTPS、静态与 media 直出、media `nosniff`、gzip/zstd）、`.env.production.example`（只有占位值）。验证镜像本地构建、容器以非 root 运行、本地以 Production settings 启动后首页/静态/Avatar/health check 可用、镜像内不含 `.env`、测试与 Node 依赖。 |
 | 48 | 备份、恢复与日志。备份脚本每天 `pg_dump` 并打包 media，保留最近 7 份，记录磁盘使用；恢复脚本从指定备份重建数据库与 media；Docker 日志轮转限制大小。验证在本地 Production Compose 上完成一次“写入合成数据 → 备份 → 清空 → 恢复 → 数据一致”的演练，以及超过 7 份时删除最旧备份。 |
 | 49 | 部署、回滚与服务器初始化文档。部署脚本（按 Git tag 构建镜像、执行 migrations、重启服务、运行 smoke）；回滚说明（回到上一个镜像 tag，含 migration 时先恢复备份）；服务器初始化清单（Ubuntu LTS、SSH key 登录、关闭密码登录、防火墙只开 22/80/443、自动安全更新、swap、Docker）；管理员操作文档（创建首个 Superuser、把 Site 名称与域名从默认的 `example.com` 改为社团名称与正式域名，否则邮件标题会显示 `[example.com]`、Gmail 应用专用密码轮换、查看日志、手动备份与恢复）。验证文档中每条命令在本地演练中可执行，且不包含任何真实 Secret。 |
-| 50 | CI（待项目负责人决定 Provider；建议 GitHub Actions）。在 push 与 pull request 上运行 `scripts/verify_project.py` 与镜像构建，不部署、不使用生产 Secret。 |
-| 51 | 生产演练（是否单独部署 Preview 待决定；默认在本地用 Production Compose 演练）。用临时本地域名完整执行部署脚本、Production smoke、`check --deploy`、备份与恢复，确认 Production 中 Draft Risk Notice 与报名均关闭、活动显示 `Registration unavailable`。 |
-| 52 | 首次部署与上线验收（需要项目负责人完成：购买 BinaryLane 悉尼 VPS、注册域名并只添加 IPv4 的 A 记录（不加 AAAA，否则按 IP 限流失效）、为社团 Gmail 生成应用专用密码并自行填入服务器环境文件）。按文档初始化服务器与部署；验证 HTTPS 与证书续期、安全 headers、真实注册/邮箱验证码/Magic Code/密码重置邮件、Avatar 上传后重启仍在、错误邮件、首次自动备份与一次服务器上的恢复演练；项目负责人完成线上人工走查。 |
+| 50 | CI（GitHub Actions，项目负责人 2026 年 11 月 27 日决定）。在 push 与 pull request 上运行 `scripts/verify_project.py` 与镜像构建，不部署、不使用生产 Secret。 |
+| 51 | 生产演练（不单独部署 Preview，在本地用 Production Compose 演练）。用临时本地域名完整执行部署脚本、Production smoke、`check --deploy`、备份与恢复，确认 Production 中 Draft Risk Notice 与报名均关闭、活动显示 `Registration unavailable`。 |
+| 52 | 首次部署与上线验收（需要项目负责人完成：购买 BinaryLane 悉尼 VPS、在 Cloudflare 注册 `nuldl.com`（社团网站获 USU 书面批准后用社团经费购买）并只添加 IPv4、DNS only 的 A 记录（不加 AAAA、不开 Cloudflare 代理，否则按 IP 限流失效）、为社团 Gmail 生成应用专用密码并自行填入服务器环境文件）。按文档初始化服务器与部署；验证 HTTPS 与证书续期、安全 headers、真实注册/邮箱验证码/Magic Code/密码重置邮件、Avatar 上传后重启仍在、错误邮件、首次自动备份与一次服务器上的恢复演练；项目负责人完成线上人工走查。 |
 | 53 | 正式 Risk Notice（USU 已批准，版本 `2026-11-24`，正文与用法已写入 `design_document.md` 4.6 与“Risk Notice — 正式版本”）。展开时设计：正式页面与入口取代 Draft 页面、Production 启用正式版本与报名、以 data migration 或管理员操作写入正式版本、开发期合成版本的处理，以及相应测试；在此之前 Production 报名保持关闭。 |
 
 ## 十一、Phase 7 概要：Training Records & Leaderboards

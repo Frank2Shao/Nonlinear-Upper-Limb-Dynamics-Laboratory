@@ -2748,3 +2748,27 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
   - 文件职责表新增 `scripts/deploy.sh`、`docs/server-setup.md`、`docs/operations.md`；
   - `compose.production.yaml` 行补充默认 `current` 镜像，`README.md` 行补充 Production 概览与文档链接。
 - 尚未提交或推送。下一步是 Step 50（CI，待项目负责人决定 Provider）。
+
+## 剩余开放决策（2026 年 11 月 27 日，项目负责人决定，按最经济的方式）
+
+- 项目负责人要求其余待定事项都按最经济的方式处理，并确认以下方案（“nuldl.com，按方案来”）：
+  - **CI：** GitHub Actions，在免费额度内运行现有门禁与镜像构建（Step 50）。
+  - **服务器以外的备份：** 管理员每周手动下载最新一份，只保留最近 4 份，只存放在开启磁盘加密的个人设备上；不购买付费备份。代价是完全依赖人工，服务器整机丢失时最多丢失约一周的数据。
+  - **Preview：** 不单独部署，Step 51 在本机用 Production Compose 演练。
+  - **域名：** `nuldl.com`，在 Cloudflare 以成本价注册（项目负责人查到的价格为每年 11.17 美元，续费同价）。A 记录设为 DNS only，不添加 AAAA。项目负责人说明：要等社团网站获得 USU 书面批准、可以使用社团经费后才购买，目前尚未购买；这只阻塞 Step 52，不影响 Step 50–51。
+  - **数据保留与删除：** 不做自动化流程。会员通过社团既有渠道提出删除后，由管理员删除账户及其资料、邮箱、USYD/USU 信息、报名记录与 Avatar 文件；长期不活跃的账户不自动清理。已删除的数据随备份轮换，最迟约一个月后从所有副本中消失。线上报名记录只表示已阅读某版本 Risk Notice，正式确认以现场纸质表为准。
+- 选域名时的考虑：
+  - 便宜的 `.bid`、`.win` 等后缀常被用于垃圾邮件，验证码邮件里的链接容易被误判；
+  - `.online`、`.site` 等首年便宜但续费贵 5–8 倍；
+  - `nuldl.fyi` 价格最低且稳定，但项目负责人选择了只贵约 6 美元、信任度最高的 `.com`。
+- 发现的问题：Django Admin 删除账户不会删除 Avatar 文件（项目没有删除时清理文件的逻辑），旧链接仍可打开。按“最省事”处理：
+  - 不改代码，`docs/operations.md` 给出删除命令，先删 Avatar 文件再删账户，并说明不要从 Admin 删除账户；
+  - 该命令已在开发数据库上用合成账户验证：删除了账户、EmailAddress、MemberProfile 与 Avatar 文件，没有留下数据。
+- 文档更新：
+  - `tech_stack.md`（第七、十一、十二、十五章与日期）；
+  - `design_document.md`（4.1 新的保留与删除规则、第十二章排除项、第十三章第 5 项标为已解决、日期）；
+  - `项目开发_Roadmap.md`（域名、阶段状态、外部依赖、外部确认表）；
+  - `implementation.md`（展开条件、Step 50–52、日期）；
+  - `docs/operations.md`：新增“Download a backup copy (weekly)”与“Delete a member's account”两节。下载命令要在 Step 52 有真实服务器后才能执行确认。
+- `architecture.md` 中 `docs/operations.md` 的文件职责行尚未更新，等 Step 50 完成并获批准时一并更新。
+- 尚未提交或推送。下一步是 Step 50（GitHub Actions）。

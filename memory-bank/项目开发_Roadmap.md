@@ -1,9 +1,9 @@
 # NULDL 网站开发 Roadmap
 
 **项目名称：** Nonlinear Upper Limb Dynamics Laboratory Website  
-**候选域名：** `nuldl.com`  
+**域名：** `nuldl.com`（已选定；社团网站获 USU 书面批准后用社团经费购买）  
 **文档职责：** 定义交付阶段、依赖、里程碑、退出门槛和项目状态  
-**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成，Phase 6 进行中（Provider 已确认，实施步骤待确认）
+**当前阶段：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成，Phase 6 进行中（Step 46–49 已完成；Provider、CI、机外备份、Preview、域名与数据保留均已决定）
 **最后更新：** 2026 年 11 月 22 日
 
 ## 一、文档体系
@@ -286,7 +286,7 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 - Error monitoring（已决定：不使用第三方，改用 Django 错误邮件与服务器日志）；
 - Risk Notice 确认；
 - University Branding 书面批准范围；
-- `nuldl.com` 注册和 DNS 控制权。
+- `nuldl.com` 注册和 DNS 控制权（Cloudflare；社团网站获 USU 书面批准后用社团经费购买）。
 
 ### 退出门槛
 
@@ -302,7 +302,7 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 
 ### 阶段状态
 
-`In progress`。2026 年 11 月 22 日确认 Provider 与备份保留期；实施步骤见 `implementation.md` 第十节（Step 46–53），待项目负责人确认后开始。
+`In progress`。2026 年 11 月 22 日确认 Provider 与备份保留期；2026 年 11 月 27 日确认 CI、机外备份、Preview、域名与数据保留（`tech_stack.md` 第十五章）。实施步骤见 `implementation.md` 第十节（Step 46–53），Step 46–49 已完成。
 
 ## 十一、Phase 7：Training Records & Leaderboards
 
@@ -355,9 +355,9 @@ Phase 3 不包含训练成绩或排行榜；该功能已登记为首期上线后
 | Risk Notice 最终文本 | Phase 4 正式启用报名前 | Phase 2 仅允许非正式环境展示 draft；Production 禁用正文；限制正式报名 |
 | University Branding 批准 | 任何相关内容公开前 | 使用中性 `NULDL Armwrestling Club` Branding，不公开 USYD affiliation |
 | 各场活动可公开的地点 | 管理员公布活动地点前 | 地点未确认时显示 `Venue details to be confirmed` |
-| Hosting 与相关 Provider | 已于 2026 年 11 月 22 日决定 | CI、机外备份副本与 Preview 环境仍待决定 |
-| `nuldl.com` 注册与 DNS | Phase 6 首次部署前 | 尚未注册；阻塞 Step 52 |
-| 会员退出和数据保留规则 | 对外提供删除流程前 | 首期不实现退出工作流 |
+| Hosting 与相关 Provider | 已于 2026 年 11 月 22 日决定 | CI、机外备份副本与 Preview 环境已于 2026 年 11 月 27 日决定 |
+| `nuldl.com` 注册与 DNS | Phase 6 首次部署前 | 已选定 Cloudflare 与 `nuldl.com`；等社团网站获 USU 书面批准后用社团经费购买；阻塞 Step 52 |
+| 会员退出和数据保留规则 | 已于 2026 年 11 月 27 日决定 | 管理员手动删除，见 `design_document.md` 4.1；首期不实现自助退出 |
 | 中文版本 | 首期完成后再决定 | 不进入首期范围 |
 
 ## 十四、项目状态更新规则
