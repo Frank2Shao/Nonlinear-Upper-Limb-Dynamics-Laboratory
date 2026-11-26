@@ -2666,3 +2666,85 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 
 - 项目负责人批准 Step 48。`architecture.md` 已更新：页首日期、进度与状态；3.70 的日志说明改为指向 3.72；新增 3.72（备份、恢复与日志上限）；文件职责表新增 `scripts/backup.sh`、`scripts/restore.sh`，并在 `compose.production.yaml` 行补充日志大小上限。
 - 尚未提交或推送。下一步是 Step 49。
+
+## Phase 6 Step 49 — 部署、回滚与服务器文档（2026 年 11 月 26 日）
+
+- 项目负责人回复“按计划开始”，同意计划中的四个推荐做法：文档用英文；部署时自动设置 Site 名称与域名；版本标签用 `vYYYY.MM.DD`（同日再发加 `.2`）；部署前的备份计入日常 7 份轮换。
+- 开始前已完整重读 `architecture.md` 与 `design_document.md`，与 Step 49 无矛盾。
+- 没有修改 Python 代码、模板、CSS、settings、migration 或测试；没有下载（镜像由本机构建缓存重建，没有下载 `ubuntu:24.04`）。
+
+### 新增与修改
+
+- `scripts/deploy.sh <tag>`（在服务器的仓库目录运行），任何一步失败就停下：
+  1. 检查已跟踪文件没有本地改动，`git fetch --tags`，确认标签存在后切换到该标签；
+  2. 构建 `nuldl-website:<tag>`；
+  3. 网站在运行时先调用 `backup.sh` 备份（首次部署跳过）；
+  4. 用新镜像执行 `migrate` 与 `check --deploy --fail-level WARNING`；
+  5. 把 Site 设为名称 `NULDL Armwrestling Club`、域名取自 `SITE_DOMAIN`（邮件标题不再显示 `example.com`）；
+  6. 把新镜像标为 `current` 并 `up -d`；若本次版本改了 `Caddyfile`，强制重建 Caddy 容器，因为 Caddy 只在启动时读取配置；
+  7. 等 web healthy，再经 Caddy 检查：`/health/` 为 ok、首页 200、带 hash 的 CSS 200、`/admin/login/` 200、`/risk-notice/` 404；
+  8. 在 `deploy.log`（已被 `.gitignore` 的 `*.log` 排除）记一行时间、标签和备份名，并删除最近 3 次部署以外的旧镜像。
+  - 失败时按阶段说明影响：migration 之前失败，运行中的网站没有变化；migration 阶段失败，提示用哪份备份恢复；重启之后失败，提示回滚方法。
+  - 脚本主体在 `main` 函数里，最后一行 `main "$@"; exit $?`，避免切换标签后 bash 读到被替换的新版本脚本。
+- `compose.production.yaml`：镜像 tag 默认值从 `local` 改为 `current`。原先部署后镜像只按版本命名，`restore.sh` 中的 `docker compose run web` 会找不到镜像而尝试临时构建；现在备份、恢复与重启都使用当前上线的版本。
+- `docs/server-setup.md`（英文）：服务器一次性初始化清单，包括 Ubuntu 24.04、管理员用户、SSH 只用 key 并禁止 root 登录、ufw 只开 22/80/443、自动安全更新（需要时 04:30 自动重启，在 03:00 备份之后）、时区 `Australia/Sydney`、2 GB swap、Docker 官方源、代码与 `.env.production`（600）、备份目录（700）、首次部署、每日备份 cron，以及最终核对表。
+- `docs/operations.md`（英文）：发布与部署、两种回滚、首个 Superuser（Admin 登录不受限流，必须用长随机密码；日常工作用按权限分配的 Staff 账户）、Site 检查、修改设置与轮换 Gmail 应用专用密码、日志、备份、恢复与 pre-restore 清理、磁盘空间。
+- `README.md`：新增 Production 一节，链接两份文档；删除“Production media storage remains unresolved”等过时说明。
+
+### 已验证（本机演练）
+
+- 演练环境：
+  - 在 scratchpad 中临时 clone 仓库，用本机裸仓库充当 GitHub，建立四个只存在于演练中的标签：
+    - `v-drill.1`：当前工作区；
+    - `v-drill.2`：加一个建表 migration；
+    - `v-drill.3`：只改 `Caddyfile` 注释；
+    - `v-drill.bad`：一个语法错误的 migration。
+  - 单独的 Compose 项目 `nuldl-s49`，合成值、`nuldl.internal` 域名、端口 18080/18443，邮件发往 `smtp.invalid`。
+  - 结束后已删除容器、全部 volume、演练镜像、仓库副本与备份目录。
+- **首次部署 `v-drill.1`：** 不做备份；全部 migration、deploy 检查与 5 项 smoke 通过；Site 为 `nuldl.internal | NULDL Armwrestling Club`；web 使用 `nuldl-website:current`。
+- **文档命令：**
+  - `createsuperuser` 用 `--noinput` 加合成环境变量执行，因为演练中不能交互输入；
+  - Site 检查命令与三条日志命令都能执行。
+- **升级到 `v-drill.2`：** 先备份，migration 生效（测试表存在）；除 migration 本身外数据指纹不变；smoke 通过。
+- **带 migration 的回滚：** 按文档先 `restore.sh` 部署前备份，再部署 `v-drill.1`；测试表消失，数据指纹与升级前完全一致，`migrate --check` 无待执行项。
+- **不带 migration 的回滚：**
+  - 部署 `v-drill.3` 时 Caddy 被重建，容器内配置是新版本；
+  - 再部署 `v-drill.1`，Caddy 再次重建，数据不变。
+- **拒绝：**
+  - 标签不存在：报 `No such tag`；
+  - 有本地改动：列出改动的文件；
+  - 两种情况都说明“The running site was not changed”，`current` 镜像不变。
+- **失败的 migration：**
+  - 在 migrating 阶段停下，提示用哪份备份恢复，没有写入 `deploy.log`；
+  - web 仍 healthy，仍是原镜像，数据指纹不变（PostgreSQL 的 migration 在事务中整体回滚）。
+- **修改设置：** 改 `.env.production` 中的 Gmail 应用专用密码后 `dc up -d web`，web 被重建，读到新值（只比较 hash），并恢复 healthy。
+- **镜像清理：** 5 次成功部署后只保留最近 3 次部署用到的版本（`v-drill.1`、`v-drill.3`）与 `current`；失败部署的 `v-drill.bad` 镜像要到下次成功部署时才删除。
+- **隐私：** 全部容器日志与 `deploy.log` 中合成密码、邮箱、USU ID 出现 0 次。
+- **演练中发现并修复的问题：**
+  - 首页 CSS 检查原用 `curl | grep | head`，`head` 提前关闭管道后 curl 返回 23，部署被误判失败，改为先保存页面再查找；
+  - 状态码检查原用 `-o /dev/null`，Git Bash 的 Windows 版 curl 在关闭路径转换时无法写入，这只发生在演练环境，但也改为不经过 `/dev/null`。
+- **仓库检查：** `bash -n`、`docker compose config`、Ruff lint 与 format、Django check、`makemigrations --check`、`git diff --check` 通过；与 README、敏感文件扫描和 Production 设置相关的 4 个测试文件 `43 passed`。
+
+### 仍未验证
+
+- 服务器初始化清单中的系统命令（SSH 配置、ufw、自动更新与自动重启、时区、swap、Docker 安装、cron）在 Windows 上无法执行，留到 Step 52 在真实服务器上逐条执行确认。
+- 真实证书下的 smoke（演练使用 Caddy 本地 CA，以 `SMOKE_TLS_VERIFY=no` 跳过证书验证）。
+- 在 1 GB 内存的 VPS 上构建镜像的耗时与内存。
+- 私有仓库的 deploy key 流程（文档已写，未演练）。
+
+### 需要项目负责人知道的事
+
+- 每次部署都会做一份备份并计入 7 份轮换：一天内部署多次，会把较早的每日备份挤掉。
+- migration 在旧版本仍运行时执行，切换到新版本之前有几秒新旧不一致；对几十人的社团可接受。
+- 带 migration 的回滚会丢失部署之后写入的数据，文档已写明只在无法修复向前时使用。
+- 部署失败后，服务器上的代码停在新标签，但运行中的仍是旧镜像；下次部署任何标签都会重新切换，不需要手动处理。
+- 尚未提交或推送。下一步是 Step 50（CI，待决定 Provider）。
+
+### 项目负责人批准（2026 年 11 月 26 日）
+
+- 项目负责人批准 Step 49。`architecture.md` 已更新：
+  - 页首进度与状态；
+  - 新增 3.73（部署、回滚与服务器文档）；
+  - 文件职责表新增 `scripts/deploy.sh`、`docs/server-setup.md`、`docs/operations.md`；
+  - `compose.production.yaml` 行补充默认 `current` 镜像，`README.md` 行补充 Production 概览与文档链接。
+- 尚未提交或推送。下一步是 Step 50（CI，待项目负责人决定 Provider）。

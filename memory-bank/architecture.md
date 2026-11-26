@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
 **最后更新：** 2026 年 11 月 26 日
-**对应进度：** Phase 6, Step 48
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置、Step 47 镜像、Compose 与 Caddy、Step 48 备份、恢复与日志上限完成）
+**对应进度：** Phase 6, Step 49
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置、Step 47 镜像、Compose 与 Caddy、Step 48 备份、恢复与日志上限、Step 49 部署、回滚与服务器文档完成）
 
 ## 一、当前架构结论
 
@@ -862,6 +862,53 @@ ASGI / WSGI ───────────→ config.settings.production
 - 留到服务器上确认：700/600 权限（Step 51）、cron 定时运行（Step 49 安装后）、日志达到上限时的实际轮转、真实数据量下的备份大小与耗时。
 - 没有新增 migration，也没有修改 Python 代码、页面、权限或业务流程。
 
+### 3.73 Phase 6 Step 49：部署、回滚与服务器文档
+
+- 发布以 Git 标签 `vYYYY.MM.DD`（同日再发加 `.2`）为单位；服务器在仓库目录运行 `scripts/deploy.sh <tag>`，镜像在服务器上按标签构建为 `nuldl-website:<tag>`。
+- 部署顺序与理由：
+  1. 拒绝已跟踪文件有本地改动的工作区，`git fetch --tags` 后切换到标签；
+  2. 构建镜像；
+  3. 网站运行中时先调用 `backup.sh`（计入日常 7 份轮换，首次部署跳过）；
+  4. 以新镜像的一次性容器执行 `migrate` 与 `check --deploy --fail-level WARNING`，此时运行中的仍是旧版本；
+  5. 把 Site 设为名称 `NULDL Armwrestling Club`、域名取自 `SITE_DOMAIN`，使邮件标题与链接不再使用默认 `example.com`；
+  6. 把新镜像标为 `current` 并 `up -d`；版本改动 `Caddyfile` 时强制重建 Caddy，因为它只在启动时读取被替换的挂载文件；
+  7. 等 web healthy 后经 Caddy 做 smoke：`/health/`、首页、带 hash 的 CSS、`/admin/login/` 与 `/risk-notice/` 必须为 404；
+  8. 在被 Git 忽略的 `deploy.log` 记录时间、标签与部署前备份名，只保留最近 3 次部署的镜像。
+- 失败处理：EXIT trap 按阶段说明影响。migration 之前失败时，运行中的网站没有变化；migration 阶段失败时提示用哪份备份恢复；重启之后失败时提示回滚方法。脚本主体在 `main` 中，最后一行 `main "$@"; exit $?`，避免切换标签后 bash 继续读取被替换的脚本。
+- `compose.production.yaml` 的镜像 tag 默认值为 `current`（原为 `local`），因此 `backup.sh`、`restore.sh` 中的 `docker compose run web` 和日常重启都使用当前上线版本，不会在服务器上意外构建。
+- 回滚：
+  - 两个版本之间没有 migration 时，直接部署上一个标签；
+  - 有 migration 时，先 `restore.sh` 部署前备份，再部署上一个标签；部署后写入的数据会丢失。
+- `docs/server-setup.md`（英文）是服务器一次性初始化清单：
+  - 系统与登录：Ubuntu 24.04 LTS，只用 SSH key 登录并禁止 root 登录；
+  - 防火墙：ufw 只开 22/80/443（Docker 只发布 80/443）；
+  - 更新与时区：自动安全更新，需要重启时在 04:30 自动重启（03:00 备份之后）；时区 `Australia/Sydney`，使 cron 的 03:00 为悉尼时间；
+  - 运行环境：2 GB swap，Docker 从官方源安装；
+  - 网站文件与备份：代码放在 `/opt/nuldl`；`.env.production` 权限 600，由项目负责人在服务器上填写；备份目录 700；每日备份 cron。
+- `docs/operations.md`（英文）是管理员操作文档：
+  - 部署与回滚、Site 检查；
+  - 首个 Superuser：Django Admin 登录不受 allauth 限流，必须用长随机密码，日常工作用按权限分配的 Staff 账户；
+  - 修改设置与轮换 Gmail 应用专用密码（改 `.env.production` 后 `up -d web` 重建）；
+  - 日志、备份、恢复与 pre-restore 清理、磁盘空间。
+- README 增加 Production 一节，链接两份文档。
+- 已知取舍：
+  - 每次部署的备份计入 7 份轮换，一天内多次部署会挤掉较早的每日备份；
+  - migration 执行时到切换版本前有几秒新旧不一致；
+  - 部署失败后工作区停在新标签而运行的仍是旧镜像，下次部署会重新切换。
+- 本机演练（临时 clone 与本机裸仓库、四个只在演练中存在的标签、合成数据，用后删除容器、volume、镜像与目录；没有下载）：
+  - 首次部署；
+  - 升级到带 migration 的版本，数据不变；
+  - 先恢复备份再部署旧版本的回滚，数据库与 media 指纹与升级前完全一致；
+  - 只改 `Caddyfile` 的版本使 Caddy 重建，并可直接回滚；
+  - 未知标签与本地改动被拒绝且网站不变；
+  - 错误 migration 在 migration 阶段停止，网站与数据不变；
+  - 改设置后 web 重建并读到新值；
+  - 只保留最近 3 次部署的镜像；
+  - 日志中私有值 0 次出现。
+  - 演练发现并修复两处 smoke 问题：`curl | head` 触发的 SIGPIPE，以及只在 Git Bash 中出现的 `/dev/null` 写入失败。
+- 留到真实服务器确认：初始化清单中的系统命令、真实证书下的 smoke、1 GB VPS 上的构建耗时与内存，以及私有仓库的 deploy key。
+- 没有新增 migration，也没有修改 Python 代码、页面、权限或业务流程。
+
 ## 四、当前文件职责
 
 | 文件 | 当前作用 |
@@ -870,7 +917,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、本地 `media/` 上传目录、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example`、`.env.production.example` 与 `uv.lock`。 |
 | `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值（含注释说明的 Production 错误邮件收件人 `DJANGO_ADMINS`），供开发者复制为未跟踪的 `.env`。 |
 | `AGENTS.md` | 定义仓库级开发约束，包括编码前必读文档、架构变更审批、计划目录、测试原则、命名规范和敏感数据限制。 |
-| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、安全数据边界和目录职责；明确中性 NULDL Branding。 |
+| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、Production 概览与两份运维文档链接、安全数据边界和目录职责；明确中性 NULDL Branding。 |
 | `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行（含 Production 使用的 `gunicorn`）及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
 | `package.json` | 定义锁定的浏览器 library、字体（Inter、Barlow Condensed、JetBrains Mono）与前端开发工具，并提供 vendor copy/check、图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
@@ -914,8 +961,11 @@ ASGI / WSGI ───────────→ config.settings.production
 | `compose.yaml` | 定义本地 PostgreSQL 18.6 service、端口映射、健康检查、重启策略和持久化 named volume。 |
 | `Dockerfile` | 两阶段构建 Production 镜像：digest 固定的 Python 基础镜像、uv 锁定安装运行依赖、只复制应用所需目录、以构建占位值 collectstatic，并以非 root 用户运行 gunicorn。 |
 | `.dockerignore` | 以白名单限定构建上下文，只放行镜像所需文件，排除字节码与任何 `.env*`。 |
-| `compose.production.yaml` | 定义单台 VPS 上的 Production 栈 `nuldl-production`：PostgreSQL、web、每次部署复制静态文件的一次性 `static` service 与 Caddy，各自的内存上限、健康检查、共用的日志大小上限（每个服务 10 MB × 3 个文件）、只绑 IPv4 的端口及五个持久 volume；必填环境变量缺失时拒绝启动。 |
+| `compose.production.yaml` | 定义单台 VPS 上的 Production 栈 `nuldl-production`：默认使用部署脚本标记的 `nuldl-website:current` 镜像；PostgreSQL、web、每次部署复制静态文件的一次性 `static` service 与 Caddy，各自的内存上限、健康检查、共用的日志大小上限（每个服务 10 MB × 3 个文件）、只绑 IPv4 的端口及五个持久 volume；必填环境变量缺失时拒绝启动。 |
 | `scripts/backup.sh` | 在服务器上把 Production 数据库（`pg_dump` custom 格式）与 media volume 备份到 `/var/backups/nuldl/nuldl-<UTC 时间>/`：先写临时目录、成功才改名，只保留最新 7 份，权限 700/600，并在 `backup.log` 记录大小、磁盘空间或失败；由每日 cron 运行。 |
+| `scripts/deploy.sh` | 在服务器上按 Git 标签部署：拒绝本地改动、切换标签、构建 `nuldl-website:<tag>`、部署前备份、migrate 与 deploy 检查、设置 Site 名称与域名、标为 `current` 并重启（`Caddyfile` 变化时重建 Caddy）、经 Caddy smoke、记录 `deploy.log` 并只保留最近 3 次部署的镜像；失败时按阶段说明影响与回退方法。 |
+| `docs/server-setup.md` | 服务器一次性初始化清单（英文）：SSH key 与禁止 root、ufw、自动安全更新与 04:30 重启、悉尼时区、swap、Docker、代码与 600 权限的 `.env.production`、700 权限的备份目录、首次部署、每日备份 cron 与最终核对。 |
+| `docs/operations.md` | 管理员操作文档（英文）：发布标签与部署、两种回滚、首个 Superuser 与长随机密码、Site 检查、修改设置与轮换 Gmail 应用专用密码、日志、备份、恢复、pre-restore 清理与磁盘空间。 |
 | `scripts/restore.sh` | 检查并确认后，从指定备份恢复 Production 数据库与 media：先自动做不参与轮换的 pre-restore 备份，停 web、重建数据库并单事务导入、替换 media，再启动 web 并等待 healthy；失败时提示回退方法。 |
 | `Caddyfile` | 自动 HTTPS、zstd/gzip、10 MB 请求体上限、不含请求内容的日志、直接提供静态文件（hash 文件一年 immutable 缓存）与 Avatar media（`nosniff`、不列目录），其余反向代理到 gunicorn。 |
 | `.env.production.example` | 列出服务器上 `.env.production` 需要的变量、安全占位值与生成方法；真实文件不进入仓库。 |
