@@ -60,10 +60,24 @@ async function waitForStyles(scope) {
 
 export async function assertNoHorizontalOverflow(page, label) {
   await waitForStyles(page);
-  const dimensions = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-  }));
+  const dimensions = await page.evaluate(() => {
+    const clientWidth = document.documentElement.clientWidth;
+    // Name the elements that stick out, so a failure says what to fix.
+    const outside = [...document.querySelectorAll("body *")]
+      .filter((element) => {
+        const box = element.getBoundingClientRect();
+        return box.width > 0 && (box.right > clientWidth + 1 || box.left < -1);
+      })
+      .slice(0, 5)
+      .map((element) => {
+        const box = element.getBoundingClientRect();
+        const classes = typeof element.className === "string" ? element.className.trim() : "";
+        const name = element.tagName.toLowerCase() + (classes ? `.${classes.split(/\s+/).join(".")}` : "");
+        const text = (element.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40);
+        return `${name} [${Math.round(box.left)}..${Math.round(box.right)}] "${text}"`;
+      });
+    return { clientWidth, scrollWidth: document.documentElement.scrollWidth, outside };
+  });
   assert.ok(
     dimensions.scrollWidth <= dimensions.clientWidth + 1,
     `${label} has horizontal overflow: ${JSON.stringify(dimensions)}`,
