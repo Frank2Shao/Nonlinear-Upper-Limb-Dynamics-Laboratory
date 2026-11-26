@@ -2772,3 +2772,49 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
   - `docs/operations.md`：新增“Download a backup copy (weekly)”与“Delete a member's account”两节。下载命令要在 Step 52 有真实服务器后才能执行确认。
 - `architecture.md` 中 `docs/operations.md` 的文件职责行尚未更新，等 Step 50 完成并获批准时一并更新。
 - 尚未提交或推送。下一步是 Step 50（GitHub Actions）。
+
+## Phase 6 Step 50 — GitHub Actions CI（2026 年 11 月 27 日）
+
+- 项目负责人回复“按计划开始”。`architecture.md` 与 `design_document.md` 已在本次会话中完整读过，此后只有项目负责人批准的修改，与 Step 50 无矛盾。
+- 没有修改 Python 代码、模板、CSS、settings、migration 或测试；没有下载文件。只向 GitHub 查询了四个 Action 的公开版本列表。
+
+### 新增与修改
+
+- `.github/workflows/ci.yml`：
+  - 触发：push 到 `main`、任何 pull request，以及手动触发；同一分支的新提交会取消仍在运行的旧检查，节省额度；
+  - 权限：只读，`checkout` 不保留凭据；不使用任何 GitHub Secret，所有环境变量都是 CI 专用占位值；
+  - 任务 `quality`（Ubuntu 24.04，40 分钟超时）：
+    - 准备 PostgreSQL 18.6 service，按 digest 固定为与 `compose.production.yaml` 相同的镜像；
+    - 安装 Python 3.13，用 `uv==0.13.5` 执行 `uv sync --frozen`；
+    - 安装 Node 24（与本机一致，缓存 npm），再安装 Chromium 所需的系统库；
+    - 最后运行 `uv run python scripts/verify_project.py`，与本机门禁完全相同；
+  - 任务 `image`（20 分钟超时）：`docker build` 检查 Production 镜像能构建，不推送、不部署。
+  - 四个 Action 都用当时最新的主版本 `@v7`（最早的 v7 发布于 2026 年 7 月，已稳定数月），按主版本号引用而不锁定提交哈希：workflow 无密钥、只读，风险小，换来维护简单。
+- `README.md`：在质量门禁说明后加一句 CI 的作用与边界。
+
+### 已验证
+
+- 用 Docker Compose 的 YAML 解析器检查语法：文件能被读通，只报“不是 Compose 结构”；故意写错的对照文件则报语法错误。本机没有 YAML 库，安装需要下载，因此没有用 Python 检查。
+- PostgreSQL service 镜像与生产 Compose 的 digest 一致；`.dockerignore` 白名单不包含 `.github`，镜像内容不受影响。
+- `tests/test_quality_security.py`（含已跟踪文件的凭据扫描）、`tests/test_quality_gate.py`、`tests/test_acceptance.py` `24 passed`；`git diff --check` 通过。
+
+### 仍未验证
+
+- **CI 还没有在 GitHub 上实际运行过。** 推送到 `main` 后才会运行，届时读取结果；若失败，再修复并记录。
+- 可能出现的差异：
+  - Linux 上的字体渲染可能让个别浏览器布局断言与 Windows 不同；
+  - Playwright 系统库的安装方式。
+- 私有仓库会消耗每月 2000 分钟的免费额度（预计每次 10–15 分钟）；公开仓库不计时。
+
+### 当前状态
+
+- 决定文档提交 `99ec79e` 已在本地提交、尚未推送；Step 50 尚未提交。下一步：项目负责人批准后提交并推送，再查看 GitHub 上的首次运行结果。
+
+### 项目负责人批准（2026 年 11 月 27 日）
+
+- 项目负责人批准 Step 50。`architecture.md` 已更新：
+  - 页首日期、进度与状态；
+  - 3.73 末尾补充剩余开放决策带来的两节运维文档，以及不用 Admin 删除账户的原因；
+  - 新增 3.74（GitHub Actions CI）；
+  - 文件职责表新增 `.github/workflows/ci.yml`，并更新 `docs/operations.md` 与 `README.md` 行。
+- CI 尚未在 GitHub 上实际运行；尚未提交或推送。

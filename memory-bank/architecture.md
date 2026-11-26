@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 11 月 26 日
-**对应进度：** Phase 6, Step 49
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置、Step 47 镜像、Compose 与 Caddy、Step 48 备份、恢复与日志上限、Step 49 部署、回滚与服务器文档完成）
+**最后更新：** 2026 年 11 月 27 日
+**对应进度：** Phase 6, Step 50
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置、Step 47 镜像、Compose 与 Caddy、Step 48 备份、恢复与日志上限、Step 49 部署、回滚与服务器文档、Step 50 GitHub Actions CI 完成；剩余开放决策已按最经济的方式确定）
 
 ## 一、当前架构结论
 
@@ -908,6 +908,25 @@ ASGI / WSGI ───────────→ config.settings.production
   - 演练发现并修复两处 smoke 问题：`curl | head` 触发的 SIGPIPE，以及只在 Git Bash 中出现的 `/dev/null` 写入失败。
 - 留到真实服务器确认：初始化清单中的系统命令、真实证书下的 smoke、1 GB VPS 上的构建耗时与内存，以及私有仓库的 deploy key。
 - 没有新增 migration，也没有修改 Python 代码、页面、权限或业务流程。
+- 2026 年 11 月 27 日补充：项目负责人按最经济的方式确定剩余开放决策（`tech_stack.md` 第十五章）。`docs/operations.md` 因此增加两节：
+  - 每周把最新备份下载到开启磁盘加密的个人设备，只保留 4 份；
+  - 用一条 shell 命令删除会员账户：先删除 Avatar 文件，再删除 User，由 CASCADE 删除 EmailAddress、MemberProfile 与报名记录。不使用 Admin 删除，因为项目没有删除时清理文件的逻辑，Admin 删除会留下仍可公开访问的 Avatar 文件。该命令已在开发数据库上用合成账户验证。
+
+### 3.74 Phase 6 Step 50：GitHub Actions CI
+
+- `.github/workflows/ci.yml` 在 push 到 `main`、pull request 与手动触发时运行；同一 ref 的新运行取消旧运行。workflow 权限只读，`checkout` 不保留凭据，不使用任何 Secret，所有环境变量都是 CI 专用占位值。
+- `quality` 任务：
+  - 以 digest 固定的 PostgreSQL 18.6 service 提供数据库，与 `compose.production.yaml` 使用同一镜像；
+  - 用 Python 3.13 与 `uv==0.13.5` 执行 `uv sync --frozen`，Node 24 加 npm 缓存，并安装 Chromium 系统库；
+  - 运行 `uv run python scripts/verify_project.py`。CI 与本机共用同一个门禁脚本，没有另一套检查逻辑。
+- `image` 任务只执行 `docker build`，不推送、不部署；生产密钥与服务器访问都不进入 CI。
+- Action 以主版本号 `@v7` 引用，不锁定提交哈希：workflow 无密钥且只读，供应链风险小，维护更简单。这是项目负责人接受的取舍。
+- README 的质量门禁一节说明 CI 的作用与边界。
+- 验证：
+  - YAML 经 Docker Compose 的解析器读通，并以故意写错的文件对照确认该方法能发现语法错误；
+  - 相关测试 `24 passed`。
+  - **首次在 GitHub 上的实际运行待推送后确认**，结果记录在 `progress.md`。
+- 没有新增 migration，也没有修改 Python 代码、页面、权限或业务流程。
 
 ## 四、当前文件职责
 
@@ -917,7 +936,7 @@ ASGI / WSGI ───────────→ config.settings.production
 | `.gitignore` | 排除 Python 构建产物、虚拟环境、测试缓存、Django 本地数据库、本地 `media/` 上传目录、`.env`、其他本地 `.env.*`、`node_modules/`、Production `staticfiles/` 收集目录、日志和常见工具生成文件；明确保留 `.env.example`、`.env.production.example` 与 `uv.lock`。 |
 | `.env.example` | 声明本地 PostgreSQL、Django Development/Test 和 Production 配置所需变量及安全示例值（含注释说明的 Production 错误邮件收件人 `DJANGO_ADMINS`），供开发者复制为未跟踪的 `.env`。 |
 | `AGENTS.md` | 定义仓库级开发约束，包括编码前必读文档、架构变更审批、计划目录、测试原则、命名规范和敏感数据限制。 |
-| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、Production 概览与两份运维文档链接、安全数据边界和目录职责；明确中性 NULDL Branding。 |
+| `README.md` | 提供项目定位、工具要求、首次安装、日常开发、migration/static/runserver 命令、共享质量门禁、Phase 1–3 自动验收、Phase 3 合成账户与临时 media 人工流程、Production 概览与两份运维文档链接、CI 说明、安全数据边界和目录职责；明确中性 NULDL Branding。 |
 | `pyproject.toml` | 定义项目元数据、Python 3.13.x 要求、精确运行（含 Production 使用的 `gunicorn`）及开发依赖，并配置 pytest strict mode/test root、pytest-django Test settings、`apps`/`config` branch coverage 与 Python 3.13 Ruff lint/format；只保留 settings wildcard import 和 migration class attributes 所需的文件级豁免。 |
 | `uv.lock` | 记录由 `uv` 解析的完整 Python 依赖图、版本和包来源，用于可重复安装；不手工编辑。 |
 | `package.json` | 定义锁定的浏览器 library、字体（Inter、Barlow Condensed、JetBrains Mono）与前端开发工具，并提供 vendor copy/check、图片 build/check、Tailwind build/watch、watch smoke 和完整 static build/check scripts。 |
@@ -965,7 +984,8 @@ ASGI / WSGI ───────────→ config.settings.production
 | `scripts/backup.sh` | 在服务器上把 Production 数据库（`pg_dump` custom 格式）与 media volume 备份到 `/var/backups/nuldl/nuldl-<UTC 时间>/`：先写临时目录、成功才改名，只保留最新 7 份，权限 700/600，并在 `backup.log` 记录大小、磁盘空间或失败；由每日 cron 运行。 |
 | `scripts/deploy.sh` | 在服务器上按 Git 标签部署：拒绝本地改动、切换标签、构建 `nuldl-website:<tag>`、部署前备份、migrate 与 deploy 检查、设置 Site 名称与域名、标为 `current` 并重启（`Caddyfile` 变化时重建 Caddy）、经 Caddy smoke、记录 `deploy.log` 并只保留最近 3 次部署的镜像；失败时按阶段说明影响与回退方法。 |
 | `docs/server-setup.md` | 服务器一次性初始化清单（英文）：SSH key 与禁止 root、ufw、自动安全更新与 04:30 重启、悉尼时区、swap、Docker、代码与 600 权限的 `.env.production`、700 权限的备份目录、首次部署、每日备份 cron 与最终核对。 |
-| `docs/operations.md` | 管理员操作文档（英文）：发布标签与部署、两种回滚、首个 Superuser 与长随机密码、Site 检查、修改设置与轮换 Gmail 应用专用密码、日志、备份、恢复、pre-restore 清理与磁盘空间。 |
+| `docs/operations.md` | 管理员操作文档（英文）：发布标签与部署、两种回滚、首个 Superuser 与长随机密码、Site 检查、修改设置与轮换 Gmail 应用专用密码、日志、备份、每周下载备份副本（磁盘加密设备、保留 4 份）、恢复、pre-restore 清理、连同 Avatar 文件删除会员账户的命令与磁盘空间。 |
+| `.github/workflows/ci.yml` | GitHub Actions：push 到 `main`、pull request 与手动触发时，以 PostgreSQL 18.6 service 运行共享门禁 `scripts/verify_project.py`，并检查 Production 镜像可以构建；只读权限、无 Secret、不部署。 |
 | `scripts/restore.sh` | 检查并确认后，从指定备份恢复 Production 数据库与 media：先自动做不参与轮换的 pre-restore 备份，停 web、重建数据库并单事务导入、替换 media，再启动 web 并等待 healthy；失败时提示回退方法。 |
 | `Caddyfile` | 自动 HTTPS、zstd/gzip、10 MB 请求体上限、不含请求内容的日志、直接提供静态文件（hash 文件一年 immutable 缓存）与 Avatar media（`nosniff`、不列目录），其余反向代理到 gunicorn。 |
 | `.env.production.example` | 列出服务器上 `.env.production` 需要的变量、安全占位值与生成方法；真实文件不进入仓库。 |
