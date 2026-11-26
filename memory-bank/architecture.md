@@ -1,8 +1,8 @@
 # NULDL 已实施架构
 
-**最后更新：** 2026 年 11 月 25 日
-**对应进度：** Phase 6, Step 47
-**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置与 Step 47 镜像、Compose 与 Caddy 完成）
+**最后更新：** 2026 年 11 月 26 日
+**对应进度：** Phase 6, Step 48
+**当前状态：** Phase 1–4 已完成，Phase 5 已取消，Visual Refresh 已完成（第一轮 V1–V3、V5–V7 完成，V4 已取消；第二轮 Events 的 V8–V10 完成；第三轮 About 与 Beginners & Safety 的 V11–V13 完成；第四轮 Members 的 V14–V17 完成；第五轮认证与 Account 的 V18–V21 完成；错误页经决定保持现有布局；其后补充 V22 Home 整页背景照片），Phase 6 进行中（Provider 已确认，Step 46 生产运行时设置、Step 47 镜像、Compose 与 Caddy、Step 48 备份、恢复与日志上限完成）
 
 ## 一、当前架构结论
 
@@ -817,7 +817,7 @@ ASGI / WSGI ───────────→ config.settings.production
   - `ADMINS` 来自可选的 `DJANGO_ADMINS`（逗号分隔），`SERVER_EMAIL` 等于 `DEFAULT_FROM_EMAIL`（Gmail 只能以账号本身发信）；
   - `apps/core/checks.py` 的 deploy 检查 `core.W001` 在 `ADMINS` 为空时警告。共享门禁以 `--fail-level WARNING` 执行 deploy check，因此漏设收件人会阻止部署，而本地 `.env`、Development 与普通测试不需要该变量；`scripts/verify_project.py` 为门禁注入占位收件人。
 - `apps/core/error_reporting.py` 以白名单生成 Production 日志与错误邮件：只含时间、级别、logger 名、异常类型链、文件与行号、路由名和状态码；项目自身与 gunicorn 的固定文字只输出模板、不代入参数。不读取异常消息、网址、header、表单、用户与 IP。（2026 年 11 月 23 日更正：最初提交的 `PrivateExceptionReporterFilter` 只替换表单、cookie 与局部变量，实测会在邮件与日志中泄露异常消息、查询参数、Referer 和密码重置 key，已删除并由本实现取代；从未部署。）
-- 日志：Production 通过同一摘要格式输出纯文本日志（Docker 负责保存与轮转，Step 48 设置大小上限）；`django.security.DisallowedHost` 只记录、不发邮件，避免扫描请求刷屏。
+- 日志：Production 通过同一摘要格式输出纯文本日志（Docker 负责保存与轮转，大小上限见 3.72）；`django.security.DisallowedHost` 只记录、不发邮件，避免扫描请求刷屏。
 - `/health/`（路由名 `health`）：只接受 GET、`never_cache`，执行 `SELECT 1`。成功返回 `{"status": "ok"}`，数据库错误返回 503 `{"status": "unavailable"}`；日志只记一句固定文字，不含可能带主机名或用户名的异常原文。它不进入 sitemap allowlist。
 - 修复既有隐患：`production.py` 原先以 `STORAGES["staticfiles"] = …` 修改与 `base.py` 共享的字典，同一进程中导入 Production settings 后，Test settings 也会使用 Manifest 静态存储（新测试在收集阶段导入 Production 时暴露）。现改为建立新字典，并有回归测试。`test.py` 对 `DATABASES["default"]` 的同类修改只影响测试进程，本步未改。
 - 测试：新增 `tests/test_production_runtime.py`（本步 13 项；Step 47 修复后为 16 项，见 3.71），覆盖上述设置、`DJANGO_ADMINS` 解析、`LOGGING` 可加载及邮件范围、deploy 检查、health check 的正常/仅 GET/数据库不可用/不在 sitemap、Production 重定向设置下 health 不跳转且转发 HTTPS 不循环，以及合成会员触发 500 后错误邮件不含 Email、验证码、Password、USU ID 与 session key。完整 pytest `470 passed`；Ruff、Django check、`makemigrations --check` 与 `git diff --check` 通过；Production `check --deploy --fail-level WARNING` 设置收件人时无问题，不设置时只报 `core.W001`。
@@ -841,6 +841,26 @@ ASGI / WSGI ───────────→ config.settings.production
 - 测试：新增 8 项复现 Step 46 缺陷的测试（`tests/test_production_runtime.py` 增至 16 项，含异常消息、串联异常、查询参数与重置 key 不进入日志和邮件、同类错误限频、受信代理 IP；`tests/error_urls.py` 增加只在测试中使用的私有失败 endpoint），以及随机 Avatar 名与两个 Label。完整 pytest `475 passed`，branch coverage 95%；Ruff、Django check、`makemigrations --check`、`static:check` 与 `git diff --check` 通过。
 - 本机试装（合成值、`.internal` 域名与 Caddy 本地 CA，用后删除）：镜像约 329 MB、以非 root 运行、不含 `.env` 与测试；容器内 `migrate` 与 `check --deploy --fail-level WARNING` 通过；经 Caddy 的主要页面 200、Draft Risk Notice 404、HTTP 308 到 HTTPS、安全 header 与压缩齐全；静态缓存、media 提供、413 上限、两个不同 IP 分别限流、SMTP 不可达时的通用 500 页面，以及日志中私有值 0 次出现均已验证；`down`/`up` 后数据库、media 与证书保留；三个服务合计内存不到 200 MiB。真实 Let's Encrypt 证书与 Gmail 发信留到 Step 51–52。
 - 没有新增 migration，也没有修改页面布局、权限或业务流程。
+
+### 3.72 Phase 6 Step 48：备份、恢复与日志上限
+
+- 两个服务器 shell 脚本在 VPS 的仓库目录运行，经 `docker compose exec` 操作 Production 栈；默认使用 `.env.production`、`compose.production.yaml` 与 `/var/backups/nuldl`，可用环境变量 `ENV_FILE`、`COMPOSE_FILE`、`BACKUP_DIR`、`KEEP` 覆盖（本机演练即以此指向一次性测试项目）。
+- `scripts/backup.sh`：
+  - 每份备份是一个目录 `nuldl-<UTC 时间>/`，含 `pg_dump` custom 格式的 `database.dump`（运行中也是一致快照）与 media volume 的 `media.tar.gz`；
+  - 先写入 `.partial-` 临时目录，全部成功才改为正式名称；失败时删除临时目录，不计入轮换；
+  - 只保留最新 7 份 `nuldl-*`；`umask 077`，备份目录 700、文件 600，因为备份含真实会员数据；
+  - 每次在 `backup.log` 追加一行：成功时记本份大小、删除的旧备份数、全部备份总大小与磁盘剩余空间，失败时记 `FAILED` 与退出码；日志不含数据内容；
+  - 每天悉尼凌晨 3 点由 cron 运行（脚本头部给出 cron 行，安装属于 Step 49 的服务器初始化清单）。
+- `scripts/restore.sh <备份名或目录>`：
+  - 先以 `pg_restore --list` 与 `tar -t` 检查两个文件可读，再要求输入备份名确认（`--yes` 仅用于演练）；输错则什么都不改；
+  - 恢复前自动做一份 `pre-restore-<时间>` 备份；它不参与 7 份轮换，否则恢复最旧那份时可能正好删掉要恢复的备份；代价是需要手动清理；
+  - 顺序：停 web → 删除并重建数据库 → 单事务 `pg_restore --exit-on-error` → 由一次性 web 容器清空并解开 media（文件属主保持 uid 10001）→ 启动 web 并等待 healthy；中途失败时提示 web 仍停着及如何用 pre-restore 备份回退；
+  - 恢复期间网站动态页面短暂返回 502；若备份来自较旧版本，恢复后需跑一次部署以执行 migrate。
+- `compose.production.yaml` 新增 `x-logging` 锚点（`json-file`、`max-size: 10m`、`max-file: "3"`），四个服务共用；每个服务日志最多约 30 MB。
+- 已知取舍：备份仍只在同一台服务器上，服务器整机丢失时会一起丢；是否另存到服务器以外仍待决定（`tech_stack.md` 15.2）。
+- 本机演练（一次性 Compose 项目、合成数据，用后删除容器、volume、镜像与备份；没有下载）：备份后修改数据再恢复，以及 `down -v` 清空后恢复，两次的数据库每表行数与内容 md5、序列位置、media 文件 sha256/属主/权限都与备份时完全一致，`migrate --check` 无待执行项，经 Caddy 的公开页面、Avatar 与原密码正常；确认输错不改变任何状态；数据库停止时备份失败、不留文件并记录 `FAILED`；共 9 份备份后正好剩最新 7 份，pre-restore 备份保留；四个容器的日志限制生效，日志中私有值 0 次出现。`bash -n`、`docker compose config`、Ruff、Django check、`makemigrations --check`、`static:check` 与 `git diff --check` 通过；没有修改 Python 代码，未重跑 pytest。
+- 留到服务器上确认：700/600 权限（Step 51）、cron 定时运行（Step 49 安装后）、日志达到上限时的实际轮转、真实数据量下的备份大小与耗时。
+- 没有新增 migration，也没有修改 Python 代码、页面、权限或业务流程。
 
 ## 四、当前文件职责
 
@@ -894,7 +914,9 @@ ASGI / WSGI ───────────→ config.settings.production
 | `compose.yaml` | 定义本地 PostgreSQL 18.6 service、端口映射、健康检查、重启策略和持久化 named volume。 |
 | `Dockerfile` | 两阶段构建 Production 镜像：digest 固定的 Python 基础镜像、uv 锁定安装运行依赖、只复制应用所需目录、以构建占位值 collectstatic，并以非 root 用户运行 gunicorn。 |
 | `.dockerignore` | 以白名单限定构建上下文，只放行镜像所需文件，排除字节码与任何 `.env*`。 |
-| `compose.production.yaml` | 定义单台 VPS 上的 Production 栈 `nuldl-production`：PostgreSQL、web、每次部署复制静态文件的一次性 `static` service 与 Caddy，各自的内存上限、健康检查、只绑 IPv4 的端口及五个持久 volume；必填环境变量缺失时拒绝启动。 |
+| `compose.production.yaml` | 定义单台 VPS 上的 Production 栈 `nuldl-production`：PostgreSQL、web、每次部署复制静态文件的一次性 `static` service 与 Caddy，各自的内存上限、健康检查、共用的日志大小上限（每个服务 10 MB × 3 个文件）、只绑 IPv4 的端口及五个持久 volume；必填环境变量缺失时拒绝启动。 |
+| `scripts/backup.sh` | 在服务器上把 Production 数据库（`pg_dump` custom 格式）与 media volume 备份到 `/var/backups/nuldl/nuldl-<UTC 时间>/`：先写临时目录、成功才改名，只保留最新 7 份，权限 700/600，并在 `backup.log` 记录大小、磁盘空间或失败；由每日 cron 运行。 |
+| `scripts/restore.sh` | 检查并确认后，从指定备份恢复 Production 数据库与 media：先自动做不参与轮换的 pre-restore 备份，停 web、重建数据库并单事务导入、替换 media，再启动 web 并等待 healthy；失败时提示回退方法。 |
 | `Caddyfile` | 自动 HTTPS、zstd/gzip、10 MB 请求体上限、不含请求内容的日志、直接提供静态文件（hash 文件一年 immutable 缓存）与 Avatar media（`nosniff`、不列目录），其余反向代理到 gunicorn。 |
 | `.env.production.example` | 列出服务器上 `.env.production` 需要的变量、安全占位值与生成方法；真实文件不进入仓库。 |
 | `manage.py` | 本地运行 Django management command 的命令行入口，默认加载 `config.settings.development`。 |

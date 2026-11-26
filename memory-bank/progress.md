@@ -2602,3 +2602,67 @@ Step 19 已通过项目负责人验证。不得开始 Step 20，直至项目负�
 
 - 项目负责人批准 Step 47。`architecture.md` 已更新：页首日期、进度与状态；3.2 Production 行补充按转发 IP 限流与白名单错误邮件；3.28 补充随机 Avatar 文件名；3.70 的测试数量改为“本步 13 项，Step 47 后 16 项”；新增 3.71（生产镜像、Compose 与 Caddy）；文件职责表新增 `Dockerfile`、`.dockerignore`、`compose.production.yaml`、`Caddyfile`、`.env.production.example`、`config/gunicorn.conf.py`，并更新 `.gitignore`、`production.py`、members models/forms 与相关测试行；删除第五章末尾已过时的 `implementation.md` 说明。
 - 尚未提交或推送。HSTS `preload` 的去留仍待 Step 52 前决定。下一步是 Step 48。
+
+## Phase 6 Step 48 — 备份、恢复与日志（2026 年 11 月 25 日）
+
+- 项目负责人回复“按计划开始”。开始前已完整重读 `architecture.md` 与 `design_document.md`，与 Step 48 无矛盾。
+- 本步只新增两个服务器脚本并修改 Production Compose；没有修改 Python 代码、模板、CSS、settings、migration 或测试。
+- 没有下载：镜像完全由本机构建缓存重建。
+
+### 新增与修改
+
+- `scripts/backup.sh`（在服务器的仓库目录运行）：
+  - 用 `pg_dump` custom 格式导出数据库，并把 media volume 打包为 `media.tar.gz`；数据库在网站运行中也能得到一致快照。
+  - 写入 `/var/backups/nuldl/nuldl-<UTC 时间>/`。先写到 `.partial-` 临时目录，全部成功才改为正式名称，所以失败的备份不会被计入，也不会留下文件。
+  - 只保留最新 7 份。
+  - 目录权限 700、文件 600（`umask 077`），因为备份含真实会员数据。
+  - 每次在 `backup.log` 追加一行：成功时记本份大小、删除了几份旧备份、全部备份的总大小和磁盘剩余空间；失败时记 `FAILED` 和退出码。
+  - 头部注释给出每天悉尼凌晨 3 点的 cron 行，实际安装放在 Step 49 的服务器初始化清单。
+  - 可用环境变量 `ENV_FILE`、`COMPOSE_FILE`、`BACKUP_DIR`、`KEEP` 改默认值（演练就是这样指向测试项目的）。
+- `scripts/restore.sh <备份名或目录>`：
+  - 先检查数据库备份能被 `pg_restore` 读取、media 压缩包完整，再要求输入备份名确认；输错就退出，什么都不改。`--yes` 跳过确认，只用于演练。
+  - 恢复前自动做一份 `pre-restore-<时间>` 备份。它不参与 7 份轮换（否则恢复最旧那份时，它可能正好把要恢复的备份删掉），需要手动清理。
+  - 先停 web，再删除并重建数据库，以单事务导入备份；然后清空 media，换成备份里的文件。media 由一次性 web 容器处理，所以文件属主保持为 uid 10001。最后启动 web，并等待它恢复 healthy。
+  - 中途失败时，会提示 web 仍停着，以及如何用 pre-restore 备份回到恢复前的状态。
+  - 如果备份来自较旧的版本，恢复后需要跑一次部署（会执行 migrate），这一点写在脚本头部。
+- `compose.production.yaml`：新增 `x-logging` 锚点（`json-file`，`max-size: 10m`，`max-file: "3"`），四个服务都使用。每个服务的日志最多约 30 MB，四个合计最多约 120 MB。
+
+### 已验证（本机演练）
+
+- 演练环境：
+  - 单独的 Compose 项目 `nuldl-s48`，所有值都是合成的，域名 `nuldl.internal`，端口 `127.0.0.1:18080/18443`，`EMAIL_HOST` 为 `smtp.invalid`；
+  - 备份目录放在 scratchpad，没有碰开发数据库、服务器、域名或邮箱；
+  - 演练结束后已删除容器、网络、全部 volume、测试镜像和备份目录。
+- 合成数据：4 个会员（含 USU ID，2 个带 Avatar，3 个已公开）、1 个 Risk Notice 版本、1 个活动，以及 3 条报名记录（含一条已取消后又重新报名）。
+- 一致性检查的“指纹”包括：数据库每张表的行数和全部行内容的 md5、所有序列的当前位置，以及每个 media 文件的 sha256、属主和权限。
+- **恢复覆盖备份后的改动：**
+  - 备份后新增了一个会员，改了一个活动标题和一个 Bio，并在 media 放了一个多余文件；
+  - 恢复后指纹与备份时完全一致：新增的会员和多余文件都消失了，改动也都还原了。
+- **恢复到全新环境：**
+  - 用 `down -v` 删除全部 volume，重新启动（数据库 0 张表、media 0 个文件）后再恢复；
+  - 指纹同样完全一致，`migrate --check` 没有待执行的 migration。
+- 两次恢复后，经 Caddy 访问时 Members 页面显示 3 个公开会员，未公开的不显示；Avatar 返回 200；活动标题正确；合成会员原来的密码仍能通过校验。
+- 确认提示输错时，脚本退出且返回非零，数据和网站都没有变化，web 一直 healthy。
+- **备份失败：** 先停数据库再运行备份，脚本以非零退出；备份目录没有新增任何东西（包括 `.partial`），`backup.log` 记下 `FAILED`。
+- **轮换：** 第一份备份之后又连续做了 8 份，结果正好剩最新 7 份，最旧的两份（含第一份）被删除；两份 pre-restore 备份保留。
+- **日志：** `docker inspect` 显示 db、web、static、caddy 四个容器都是 `json-file`，并带有 `max-size 10m`、`max-file 3`。全部日志中合成密码、邮箱、USU ID、数据库密码和 Secret 出现 0 次。
+- 本次合成数据下每份备份约 61 KB。
+- **仓库检查：** `bash -n`（两个脚本）、`docker compose config`、Ruff lint 与 format、Django check、`makemigrations --check`、`static:check`、`git diff --check` 通过。Python 代码自上次完整 pytest（`475 passed`）后没有改动，本次没有重跑。
+
+### 仍未验证
+
+- 备份目录与文件的 700/600 权限：Windows 的 NTFS 不能体现 Unix 权限，留到 Step 51 在服务器上确认。
+- cron 实际每天定时运行，以及 Docker 在日志达到 10 MB 时真正轮转：分别留到 Step 49 安装 cron 后、Step 51 上线后确认。本次只确认了日志限制配置已经生效。
+- 真实数据量下的备份大小和耗时。
+
+### 需要项目负责人知道的事
+
+- 备份仍然只存在同一台服务器上：服务器整机损坏或被删除时，备份会一起丢失。是否另存一份到服务器以外，仍待决定（`tech_stack.md` 15.2）。
+- pre-restore 备份不会自动删除，每次恢复多一份，需要偶尔手动清理。
+- 恢复期间 web 停止，网站动态页面会短暂返回 502（合成数据下只有几十秒；本次没有精确计时）。
+- 尚未提交或推送。下一步是 Step 49。
+
+### 项目负责人批准（2026 年 11 月 26 日）
+
+- 项目负责人批准 Step 48。`architecture.md` 已更新：页首日期、进度与状态；3.70 的日志说明改为指向 3.72；新增 3.72（备份、恢复与日志上限）；文件职责表新增 `scripts/backup.sh`、`scripts/restore.sh`，并在 `compose.production.yaml` 行补充日志大小上限。
+- 尚未提交或推送。下一步是 Step 49。
