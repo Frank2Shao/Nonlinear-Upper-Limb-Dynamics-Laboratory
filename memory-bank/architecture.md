@@ -925,7 +925,10 @@ ASGI / WSGI ───────────→ config.settings.production
 - 验证：
   - YAML 经 Docker Compose 的解析器读通，并以故意写错的文件对照确认该方法能发现语法错误；
   - 相关测试 `24 passed`。
-  - **首次在 GitHub 上的实际运行待推送后确认**，结果记录在 `progress.md`。
+  - GitHub 上的实际运行：
+    - 第一次有 3 个浏览器测试失败，原因是点击跳转后在 CSS 加载完之前就测量了布局；修复方式是测试辅助函数先等待页面 `load` 事件；
+    - 第二次出现一次偶发的 About 页 3 px 横向超出；`assertNoHorizontalOverflow` 因此改为在失败时列出超出视口的元素；
+    - 第三次（run 45907182025）两个任务全部通过，质量门禁约 2 分钟。详细记录见 `progress.md`。
 - 没有新增 migration，也没有修改 Python 代码、页面、权限或业务流程。
 
 ## 四、当前文件职责
