@@ -76,6 +76,8 @@ python -m uv run --env-file .env python scripts\verify_project.py
 
 Both commands return a non-zero exit status if any required check fails. Earlier phase commands remain available for historical verification.
 
+GitHub Actions (`.github/workflows/ci.yml`) runs the same quality gate against a PostgreSQL 18 service on every push to `main` and every pull request, and checks that the Production image builds. It never deploys and uses no secrets.
+
 ### Phase 3 compatibility
 
 The Step 36 acceptance command remains available for the member-profile baseline:
